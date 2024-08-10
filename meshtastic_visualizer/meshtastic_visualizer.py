@@ -10,12 +10,13 @@ from datetime import datetime
 from typing import List
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QTableWidgetItem
+from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import pyqtSignal
 from dataclasses import fields
 
 from .meshtastic_manager import MeshtasticManager
 from .resources import MessageLevel, \
-                MeshtasticMessage
+    MeshtasticMessage
 
 
 class MeshtasticQtApp(QtWidgets.QMainWindow):
@@ -33,30 +34,32 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         uic.loadUi('resources/app.ui', self)
         self.show()
 
-        self._markers:list = []
+        self._markers: list = []
         self._map = None
 
         # Variables
-        self.status_var:str = ""
-        self.device_path:str = ""
-        self.active_channel:str = ""
-        self.destination_id:str = ""
-        self._friends:list = []
-        self._local_board_id:str = ""
+        self.status_var: str = ""
+        self.device_path: str = ""
+        self.active_channel: str = ""
+        self.destination_id: str = ""
+        self._friends: list = []
+        self._local_board_id: str = ""
         self._action_buttons = []
         # Set up the UI elements
         self.setup_ui()
 
         self._manager = MeshtasticManager(
-            dev_path=None, # set afterwards
+            dev_path=None,  # set afterwards
         )
         self._manager.start()
 
         self._manager.notify_frontend_signal.connect(self.refresh)
         self._manager.notify_data_signal.connect(self.update_received_data)
-        self._manager.notify_message_signal.connect(self.update_received_message)
+        self._manager.notify_message_signal.connect(
+            self.update_received_message)
         self._manager.notify_traceroute_signal.connect(self.update_traceroute)
-        self._manager.notify_channels_signal.connect(self.update_channels_table)
+        self._manager.notify_channels_signal.connect(
+            self.update_channels_table)
         self._manager.notify_nodes_signal.connect(self.update_nodes_map)
         self._manager.notify_nodes_signal.connect(self.update_nodes_table)
 
@@ -68,7 +71,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.send_message_signal.connect(self._manager.send_text_message)
         self.retrieve_channels_signal.connect(self._manager.retrieve_channels)
         self.scan_mesh_signal.connect(self._manager.retrieve_nodes)
-        self.retrieve_local_node_config_signal.connect(self._manager.retrieve_local_node_configuration)
+        self.retrieve_local_node_config_signal.connect(
+            self._manager.retrieve_local_node_configuration)
         self.traceroute_signal.connect(self._manager.sendTraceRoute)
         # Load friends/addresses from JSON file
         self.load_friends()
@@ -85,21 +89,23 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def retrieve_channels_event(self):
         self.retrieve_channels_signal.emit()
 
-    def traceroute_event(self, dest_id:str, maxhops:int, channel_index:int):
+    def traceroute_event(self, dest_id: str, maxhops: int, channel_index: int):
         self.traceroute_signal.emit(dest_id, maxhops, channel_index)
 
     def retrieve_local_node_config_event(self):
         self.retrieve_local_node_config_signal.emit()
 
-    def send_message_event(self, message:MeshtasticMessage):
+    def send_message_event(self, message: MeshtasticMessage):
         self.send_message_signal.emit(message)
 
-    def update_status(self, status:MessageLevel=MessageLevel.UNKNOWN) -> None:
+    def update_status(
+            self,
+            status: MessageLevel = MessageLevel.UNKNOWN) -> None:
         data = self._manager.get_data()
         last_status = data.get_last_status()
         self.set_status(status, last_status)
 
-    def set_status(self, loglevel:MessageLevel, message:str) -> None:
+    def set_status(self, loglevel: MessageLevel, message: str) -> None:
         if loglevel.value == MessageLevel.ERROR.value:
             self.notification_label.setText(message)
 
@@ -115,8 +121,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.traceroute_button.clicked.connect(self.traceroute)
         self.init_map()
 
-        self.messages_table.setColumnCount(len(self._get_meshtastic_message_fields()))
-        self.messages_table.setHorizontalHeaderLabels(self._get_meshtastic_message_fields())
+        self.messages_table.setColumnCount(
+            len(self._get_meshtastic_message_fields()))
+        self.messages_table.setHorizontalHeaderLabels(
+            self._get_meshtastic_message_fields())
         self.traceroute_table.setColumnCount(1)
         self.traceroute_table.setHorizontalHeaderLabels(["Id"])
         self.batterylevel_progressbar.hide()
@@ -131,9 +139,23 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             button.setEnabled(False)
 
     def _get_meshtastic_message_fields(self) -> list:
-        return ["date", "ack", "from_id", "to_id", "content", "rx_rssi", "rx_snr", "channel_index", "hop_start", "hop_limit", "want_ack"]
+        return [
+            "date",
+            "ack",
+            "from_id",
+            "to_id",
+            "content",
+            "rx_rssi",
+            "rx_snr",
+            "channel_index",
+            "hop_start",
+            "hop_limit",
+            "want_ack"]
 
-    def refresh(self, status:MessageLevel=MessageLevel.UNKNOWN, message=None) -> None:
+    def refresh(
+            self,
+            status: MessageLevel = MessageLevel.UNKNOWN,
+            message=None) -> None:
         """
         Refresh all UI at once
         """
@@ -142,7 +164,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         config = self._manager.get_config()
         data = self._manager.get_data()
         if message is not None:
-             self.set_status(status, message)
+            self.set_status(status, message)
 
         if data.get_is_connected():
             self.connect_button.setEnabled(False)
@@ -157,14 +179,14 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         mapping = {
             "timeout_linedit": config.get_timeout,
-            "retransmission_linedit":  config.get_retransmission_limit,
+            "retransmission_linedit": config.get_retransmission_limit,
         }
-        
+
         for label, value in mapping.items():
             getattr(self, label).setText(str(value()))
 
         self.update_local_node_config()
-        
+
         self._lock.release()
 
     def connect_device(self):
@@ -177,7 +199,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def disconnect_device(self):
         self.disconnect_device_event()
 
-    def update_traceroute(self, route:list) -> None:
+    def update_traceroute(self, route: list) -> None:
         for hop in route:
             device = hop
             if hop == self._local_board_id:
@@ -186,8 +208,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 device = self._friends[hop]
 
             self.traceroute_table.insertRow(self.traceroute_table.rowCount())
-            self.traceroute_table.setItem(self.traceroute_table.rowCount()-1, 0, QTableWidgetItem(device))
-            self.traceroute_table.resizeColumnsToContents() 
+            self.traceroute_table.setItem(
+                self.traceroute_table.rowCount() - 1, 0, QTableWidgetItem(device))
+            self.traceroute_table.resizeColumnsToContents()
 
     def init_map(self):
         self._map = folium.Map(zoom_start=7)
@@ -214,13 +237,18 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             strl.append(f"Battery Level: {node.batterylevel}")
             strl.append(f"Role: {node.role}")
             if node.lat is not None and node.lon is not None:
-                marker = folium.Marker(location=[node.lat, node.lon], popup="\n".join(strl))
+                marker = folium.Marker(
+                    location=[
+                        node.lat,
+                        node.lon],
+                    popup="\n".join(strl))
                 marker.add_to(self._map)
                 self._markers.append(marker)
         if self._markers:
             markers_lat = [x.location[0] for x in self._markers]
             markers_lon = [x.location[1] for x in self._markers]
-            self._map.fit_bounds([[min(markers_lat), min(markers_lon)],[max(markers_lat), max(markers_lon)]])
+            self._map.fit_bounds([[min(markers_lat), min(markers_lon)], [
+                                 max(markers_lat), max(markers_lon)]])
 
         self.update_map()
 
@@ -267,27 +295,29 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         channel_name = self.channel_combobox.currentText()
         recipient = self.recipient_combobox.currentText()
         channel_index = self._manager.get_channel_index_from_name(channel_name)
-        self._manager.set_timeout(self.timeout_linedit.text())  # Update timeout before sending
-        self._manager.set_retransmission_limit(self.retransmission_linedit.text())  # Update timeout before sending
+        # Update timeout before sending
+        self._manager.set_timeout(self.timeout_linedit.text())
+        self._manager.set_retransmission_limit(
+            self.retransmission_linedit.text())  # Update timeout before sending
         if channel_index != -1 and message:
             m = MeshtasticMessage(
-                    mid=-1,
-                    date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    from_id="Me",
-                    to_id=recipient,
-                    content=message,
-                    rx_rssi="",
-                    rx_snr="",
-                    hop_limit="",
-                    hop_start="",
-                    want_ack=True,
-                    channel_index=channel_index,
-                )
+                mid=-1,
+                date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                from_id="Me",
+                to_id=recipient,
+                content=message,
+                rx_rssi="",
+                rx_snr="",
+                hop_limit="",
+                hop_start="",
+                want_ack=True,
+                channel_index=channel_index,
+            )
             self.send_message_event(m)
             self.message_textedit.clear()
 
     # def send_file(self):
-        
+
     #     file_path = filedialog.askopenfilename()
     #     if file_path:
     #         try:
@@ -298,8 +328,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     #         threading.Thread(target=self.send_file_in_chunks, args=(file_path, channel_index)).start()
 
     # def send_file_in_chunks(self, file_path, channel_index):
-    #     self._manager.set_timeout(self.timeout.get())  # Update timeout before sending
-        
+    # self._manager.set_timeout(self.timeout.get())  # Update timeout before
+    # sending
+
     #     def progress_callback(current_chunk, total_chunks):
     #         self.progress_bar['maximum'] = total_chunks
     #         self.progress_bar['value'] = current_chunk
@@ -326,8 +357,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         for i, node in enumerate(nodes.values()):
             if node.id == self._local_board_id:
                 continue
-            self.tr_dest_combobox.insertItem(i+1, node.id)
-            self.recipient_combobox.insertItem(i+1, node.id)
+            self.tr_dest_combobox.insertItem(i + 1, node.id)
+            self.recipient_combobox.insertItem(i + 1, node.id)
 
         rows: list[dict[str, any]] = []
         for node_id, node in nodes.items():
@@ -375,15 +406,31 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.mesh_table.clear()
         self.mesh_table.setRowCount(0)
         columns = self._get_meshtastic_message_fields()
-        columns = ["User", "ID", "AKA", "Role", "Hardware", "Latitude", "Longitude", "Battery", "Channel util.", "Tx air util.", "SNR", "Hops Away", "LastHeard", "Since", "Uptime"]
+        columns = [
+            "User",
+            "ID",
+            "AKA",
+            "Role",
+            "Hardware",
+            "Latitude",
+            "Longitude",
+            "Battery",
+            "Channel util.",
+            "Tx air util.",
+            "SNR",
+            "Hops Away",
+            "LastHeard",
+            "Since",
+            "Uptime"]
         self.mesh_table.setColumnCount(len(columns))
         self.mesh_table.setHorizontalHeaderLabels(columns)
         for row in rows:
             row_position = self.mesh_table.rowCount()
             self.mesh_table.insertRow(row_position)
             for i, elt in enumerate(columns):
-                self.mesh_table.setItem(row_position, i, QTableWidgetItem(str(row[elt])))
-                self.mesh_table.resizeColumnsToContents() 
+                self.mesh_table.setItem(
+                    row_position, i, QTableWidgetItem(str(row[elt])))
+                self.mesh_table.resizeColumnsToContents()
 
     def scan_mesh(self):
         self.scan_mesh_event()
@@ -393,14 +440,14 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         channels = config.get_channels()
         if not channels:
             return []
-        return [ channel.name for channel in channels ]
+        return [channel.name for channel in channels]
 
     def update_channels_table(self):
         config = self._manager.get_config()
         channels = config.get_channels()
         if not channels:
             return
-   
+
         for cb in ["channel_combobox", "tr_channel_combobox"]:
             getattr(self, cb).clear()
             for i, channel in enumerate(channels):
@@ -408,21 +455,30 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         rows: list[dict[str, any]] = []
         for channel in channels:
-            row = {"Index": channel.index, "Name": channel.name, "Role": channel.role, "PSK": channel.psk}
+            row = {
+                "Index": channel.index,
+                "Name": channel.name,
+                "Role": channel.role,
+                "PSK": channel.psk}
             rows.append(row)
 
         self.channels_table.clear()
         for i in range(self.channels_table.rowCount()):
             self.channels_table.removeRow(i)
         self.channels_table.setColumnCount(4)
-        self.channels_table.setHorizontalHeaderLabels(["Index", "Name", "Role", "PSK"])
+        self.channels_table.setHorizontalHeaderLabels(
+            ["Index", "Name", "Role", "PSK"])
 
         for row in rows:
             self.channels_table.insertRow(self.channels_table.rowCount())
             for i, elt in enumerate(row.values()):
-                self.channels_table.setItem(self.channels_table.rowCount()-1, i, QTableWidgetItem(str(elt)))
+                self.channels_table.setItem(
+                    self.channels_table.rowCount() - 1,
+                    i,
+                    QTableWidgetItem(
+                        str(elt)))
                 self.channels_table.resizeColumnsToContents()
-            
+
     def retrieve_channels(self):
         self.retrieve_channels_event()
 
@@ -442,14 +498,14 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.hardware_label.setText(str(cfg.hardware))
 
     # def set_psk(self):
-        
+
     #     psk_base64 = self.psk_base64_entry.get()
     #     try:
     #         index = int(self.channel_index_entry.get())
     #     except ValueError:
     #         self.set_status(MessageLevel.ERROR, f"Invalid channel index {index}.")
     #         return
-        
+
     #     try:
     #         psk_bytes = base64.b64decode(psk_base64)
     #         self._manager.set_psk(index, psk_bytes)
@@ -467,19 +523,19 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     #         self.set_status(MessageLevel.INFO, f"Channel '{name}' added successfully.")
     #     except Exception as e:
     #         self.set_status(MessageLevel.ERROR, f"Failed to add channel: {str(e)}")
-    
+
     def traceroute(self):
         dest_id = self.tr_dest_combobox.currentText()
         channel_name = self.tr_channel_combobox.currentText()
         maxhops = self.tr_maxhops_spinbox.value()
         channel_index = self._manager.get_channel_index_from_name(channel_name)
-        
+
         self.traceroute_event(
             dest_id=dest_id,
             maxhops=maxhops,
             channel_index=channel_index,
         )
-            
+
     # def open_tunnel_client(self):
     #     tunnel_client_window = tk.Toplevel(self.master)
     #     tunnel_client_window.title("Tunnel Client")
@@ -536,7 +592,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     #     # Open a new window with a browser
     #     browser_window = tk.Toplevel(self.master)
     #     browser_window.title("Browser")
-        
+
     #     # Create a webview window
     #     webview.create_window('Browser', 'https://www.google.com')
 
@@ -567,10 +623,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             row_position = self.messages_table.rowCount()
             self.messages_table.insertRow(row_position)
             for i, elt in enumerate(data):
-                self.messages_table.setItem(row_position, i, QTableWidgetItem(str(elt)))
+                self.messages_table.setItem(
+                    row_position, i, QTableWidgetItem(str(elt)))
                 self.messages_table.resizeColumnsToContents()
 
-    def update_received_data(self, message:str, message_type:str):
+    def update_received_data(self, message: str, message_type: str):
         self.output_textedit.setReadOnly(True)
         tmp = [
             self.output_textedit.toPlainText()
@@ -580,7 +637,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         nnow = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         tmp.append(f"[{nnow}] {message}")
         self.output_textedit.setText("".join(tmp))
-            
+
     def quit(self) -> None:
         self._manager.quit()
         self.master.quit()
