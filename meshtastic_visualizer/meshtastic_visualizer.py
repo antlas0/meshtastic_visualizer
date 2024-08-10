@@ -249,6 +249,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 strl.append(f"<b>Air Util. Tx:</b> {node.txairutil} %</br>")
             if node.rssi:
                 strl.append(f"<b>RSSI:</b> {node.rssi} dBm</br>")
+            if node.snr:
+                strl.append(f"<b>SNR:</b> {node.snr}</br>")
             if node.lat is not None and node.lon is not None:
                 popup_content = "".join(strl)
                 popup = folium.Popup(
