@@ -190,10 +190,13 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def connect_device(self):
         device_path = self.device_combobox.currentText()
-        self.set_status(MessageLevel.INFO, f"Connecting to {device_path}")
         if device_path:
+            self.set_status(MessageLevel.INFO, f"Connecting to {device_path}.")
             self._manager.set_meshtastic_device(device_path)
             self.connect_device_event()
+        else:
+            self.set_status(MessageLevel.ERROR,
+                            f"Cannot connect. Please specify a device path.")
 
     def disconnect_device(self):
         self.disconnect_device_event()
