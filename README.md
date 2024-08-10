@@ -39,6 +39,10 @@ $ meshtastic_visualizer
 ## Todo
 A lot ! Please fill an issue to add ideas or raise bugs.
 
+## Contributing
+Please open a Pull Request.
+Automatic lintering is done with `autopep8` in a `pre-commit` hook. You will need to ensure `requirements_dev.txt` are installed.
+
 ## Overview
 ![scshot](https://github.com/user-attachments/assets/1ed2c771-8909-40da-9226-44018fca8d5b)
 
