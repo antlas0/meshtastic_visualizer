@@ -1,0 +1,8 @@
+colorama==0.4.6
+folium==0.17.0
+meshtastic==2.3.14
+protobuf==5.27.3
+pubsub==0.1.2
+PyQt5==5.15.11
+pyserial==3.5
+PyQtWebEngine
