@@ -69,7 +69,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.disconnect_device_signal.connect(self._manager.disconnect_device)
         self.send_message_signal.connect(self._manager.send_text_message)
         self.retrieve_channels_signal.connect(self._manager.retrieve_channels)
-        self.scan_mesh_signal.connect(self._manager.retrieve_nodes)
+        self.scan_mesh_signal.connect(self.update_nodes_map)
+        self.scan_mesh_signal.connect(self.update_nodes_table)
         self.retrieve_local_node_config_signal.connect(
             self._manager.retrieve_local_node_configuration)
         self.traceroute_signal.connect(self._manager.sendTraceRoute)
@@ -235,11 +236,19 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             strl = []
             strl.append(f"<b>Name:</b> {node.long_name}</br>")
             strl.append(f"<b>id:</b> {node.id}</br>")
-            strl.append(f"<b>Hardware:</b> {node.hardware}</br>")
-            strl.append(f"<b>Battery Level:</b> {node.batterylevel} %</br>")
-            strl.append(f"<b>Role:</b> {node.role}</br>")
-            strl.append(f"<b>Hops Away:</b> {node.hopsaway}</br>")
-            strl.append(f"<b>Air Util. Tx:</b> {node.txairutil} %</br>")
+            if node.hardware:
+                strl.append(f"<b>Hardware:</b> {node.hardware}</br>")
+            if node.batterylevel:
+                strl.append(
+                    f"<b>Battery Level:</b> {node.batterylevel} %</br>")
+            if node.role:
+                strl.append(f"<b>Role:</b> {node.role}</br>")
+            if node.hopsaway:
+                strl.append(f"<b>Hops Away:</b> {node.hopsaway}</br>")
+            if node.txairutil:
+                strl.append(f"<b>Air Util. Tx:</b> {node.txairutil} %</br>")
+            if node.rssi:
+                strl.append(f"<b>RSSI:</b> {node.rssi} dBm</br>")
             if node.lat is not None and node.lon is not None:
                 popup_content = "".join(strl)
                 popup = folium.Popup(
@@ -394,6 +403,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 {
                     "Channel util.": node.chutil,
                     "Tx air util.": node.txairutil,
+                    "RSSI": node.rssi,
                 }
             )
 
@@ -401,8 +411,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 {
                     "SNR": node.snr,
                     "Hops Away": node.hopsaway,
-                    "LastHeard": node.lastseen,
-                    "Since": node.firstseen,
+                    "Last Seen": node.lastseen,
+                    "First Seen": node.firstseen,
                     "Uptime": node.uptime,
                 }
             )
@@ -413,7 +423,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         self.mesh_table.clear()
         self.mesh_table.setRowCount(0)
-        columns = self._get_meshtastic_message_fields()
         columns = [
             "User",
             "ID",
@@ -425,10 +434,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             "Battery",
             "Channel util.",
             "Tx air util.",
+            "RSSI",
             "SNR",
             "Hops Away",
-            "LastHeard",
-            "Since",
+            "Last Seen",
+            "First Seen",
             "Uptime"]
         self.mesh_table.setColumnCount(len(columns))
         self.mesh_table.setHorizontalHeaderLabels(columns)
