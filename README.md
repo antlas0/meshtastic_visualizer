@@ -36,6 +36,8 @@ $ python -m pip install .
 $ meshtastic_visualizer
 ```
 
+Note: If you rely on Wayland, you may experience Qt event not properly managed. To fall back on a `X11` session, provide the following environment variable when launching the application: `XDG_SESSION_TYPE=x11`.
+
 ## Todo
 A lot ! Please fill an issue to add ideas or raise bugs.
 
