@@ -230,17 +230,21 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._markers = []
         for node_id, node in nodes.items():
             strl = []
-            strl.append(f"Name: {node.long_name}")
-            strl.append(f"id: {node.id}")
-            strl.append(f"Hardware: {node.hardware}")
-            strl.append(f"Battery Level: {node.batterylevel}")
-            strl.append(f"Role: {node.role}")
+            strl.append(f"<b>Name:</b> {node.long_name}</br>")
+            strl.append(f"<b>id:</b> {node.id}</br>")
+            strl.append(f"<b>Hardware:</b> {node.hardware}</br>")
+            strl.append(f"<b>Battery Level:</b> {node.batterylevel} %</br>")
+            strl.append(f"<b>Role:</b> {node.role}</br>")
             if node.lat is not None and node.lon is not None:
+                popup_content = "\n".join(strl)
+                popup = folium.Popup(
+                    popup_content, max_width=300, min_width=250)
                 marker = folium.Marker(
                     location=[
                         node.lat,
                         node.lon],
-                    popup="\n".join(strl))
+                    popup=popup,
+                )
                 marker.add_to(self._map)
                 self._markers.append(marker)
         if self._markers:
