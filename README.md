@@ -40,5 +40,5 @@ $ meshtastic_visualizer
 A lot ! Please fill an issue to add ideas or raise bugs.
 
 ## Overview
-![scshot](https://github.com/user-attachments/assets/2bb9d46b-e001-4c19-9470-4a91dbeb7799)
+![scshot](https://github.com/user-attachments/assets/1ed2c771-8909-40da-9226-44018fca8d5b)
 
