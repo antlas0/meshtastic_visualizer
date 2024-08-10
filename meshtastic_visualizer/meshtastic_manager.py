@@ -301,7 +301,7 @@ class MeshtasticManager(QObject, threading.Thread):
                 self.notify_data(message, message_type="INFO")
                 self.store_received_packet(message)
 
-            # self.update_node_info(packet)
+            self.update_node_info(packet)
 
             if 'decoded' in packet:
                 decoded = packet['decoded']
@@ -598,20 +598,42 @@ class MeshtasticManager(QObject, threading.Thread):
 
     @run_in_thread
     def update_node_info(self, packet) -> None:
+
+        n = MeshtasticNode(
+            id=self._nodeNumToId(
+                packet["from"])
+        )
+
+        if packet["decoded"]["portnum"] == "POSITION_APP":
+            n.lat = packet["decoded"]["position"]["latitude"]
+            n.lon = packet["decoded"]["position"]["longitude"]
+            n.alt = packet["decoded"]["position"]["altitude"]
+
         if packet["decoded"]["portnum"] == "TELEMETRY_APP":
-            n = MeshtasticNode(
-                id=self._nodeNumToId(
-                    packet["from"]),
-                lastseen=datetime.datetime.fromtimestamp(
-                    packet["decoded"]["telemetry"]["time"]).strftime('%Y-%m-%d %H:%M:%S') if "lastHeard" in packet and packet["lastHeard"] is not None else None,
-                batterylevel=packet["decoded"]["telemetry"]["deviceMetrics"]["batteryLevel"],
-                txairutil=str(
-                    round(
-                        packet["decoded"]["telemetry"]["deviceMetrics"]["airUtilTx"],
-                        2)) if "deviceMetrics" in packet and "airUtilTx" in packet["deviceMetrics"] else None,
-            )
-            self.store_or_update_node(n)
-            self.notify_nodes()
+            n.batterylevel = packet["decoded"]["telemetry"]["deviceMetrics"]["batteryLevel"] if "deviceMetrics" in packet[
+                "decoded"]["telemetry"] and "batteryLevel" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
+            n.txairutil = str(
+                round(
+                    packet["decoded"]["telemetry"]["deviceMetrics"]["airUtilTx"],
+                    2)) if "deviceMetrics" in packet["decoded"]["telemetry"] and "airUtilTx" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
+            n.chutil = str(
+                round(
+                    packet["decoded"]["telemetry"]["deviceMetrics"]["channelUtilization"],
+                    2)) if "deviceMetrics" in packet["decoded"]["telemetry"] and "channelUtilization" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
+        # always refreshed
+        n.rssi = str(
+            round(
+                packet["rxRssi"],
+                2)) if "rxRssi" in packet else None
+        n.snr = str(
+            round(
+                packet["rxSnr"],
+                2)) if "rxSnr" in packet else None
+
+        n.lastseen = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        self.store_or_update_node(n)
+        # self.notify_nodes()
 
     @run_in_thread
     def retrieve_nodes(self, include_self: bool = True) -> list:
