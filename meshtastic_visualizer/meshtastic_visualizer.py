@@ -7,11 +7,10 @@ import io
 import folium
 from threading import Lock
 from datetime import datetime
-from typing import Optional, List, Dict
+from typing import List
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWebEngineWidgets import QWebEngineView
 from dataclasses import fields
 
 from .meshtastic_manager import MeshtasticManager

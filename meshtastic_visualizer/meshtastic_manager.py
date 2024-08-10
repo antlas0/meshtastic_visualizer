@@ -4,13 +4,12 @@ import os
 import time
 import json
 import time
-import copy
 import queue
 import base64
 import logging
 import datetime
 from pubsub import pub
-from colorama import Fore, Style, init
+from colorama import Fore, init
 from dataclasses import fields
 from typing import Union, Optional, Callable
 import google.protobuf.json_format
@@ -19,7 +18,7 @@ import threading
 import meshtastic
 import meshtastic.serial_interface
 from meshtastic import channel_pb2, portnums_pb2, mesh_pb2
-from PyQt5.QtCore import pyqtSignal, QObject, Qt
+from PyQt5.QtCore import pyqtSignal, QObject
 from dataclasses import fields
 
 
