@@ -238,6 +238,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             strl.append(f"<b>Hardware:</b> {node.hardware}</br>")
             strl.append(f"<b>Battery Level:</b> {node.batterylevel} %</br>")
             strl.append(f"<b>Role:</b> {node.role}</br>")
+            strl.append(f"<b>Hops Away:</b> {node.hopsaway}</br>")
             if node.lat is not None and node.lon is not None:
                 popup_content = "\n".join(strl)
                 popup = folium.Popup(
