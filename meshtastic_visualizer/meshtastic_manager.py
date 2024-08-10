@@ -286,7 +286,7 @@ class MeshtasticManager(QObject, threading.Thread):
                 self.notify_data(message, message_type="INFO")
                 self.store_received_packet(message)
 
-            self.update_node_info(packet)
+            # self.update_node_info(packet)
 
             if 'decoded' in packet:
                 decoded = packet['decoded']
