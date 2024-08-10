@@ -78,6 +78,7 @@ class MeshtasticNode:
     batterylevel: Optional[int] = None
     chutil: Optional[str] = None
     txairutil: Optional[str] = None
+    rssi: Optional[str] = None
     snr: Optional[str] = None
     hopsaway: Optional[str] = None
     firstseen: Optional[str] = None
