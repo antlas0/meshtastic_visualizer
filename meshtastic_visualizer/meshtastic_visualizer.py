@@ -12,7 +12,6 @@ from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import pyqtSignal
-from dataclasses import fields
 
 from .meshtastic_manager import MeshtasticManager
 from .resources import MessageLevel, \
