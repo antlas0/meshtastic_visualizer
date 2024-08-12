@@ -113,7 +113,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.notification_label.setText(message)
 
     def setup_ui(self) -> None:
-        self.refresh_button.clicked.connect(self.refresh)
         self.connect_button.clicked.connect(self.connect_device)
         self.disconnect_button.clicked.connect(self.disconnect_device)
         self.scan_button.clicked.connect(self.scan_mesh)
