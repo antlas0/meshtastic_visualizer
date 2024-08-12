@@ -258,174 +258,173 @@ class MeshtasticManager(QObject, threading.Thread):
 
     @run_in_thread
     def on_receive(self, packet, interface):
-        try:
-            self.notify_data("---------------", message_type="INFO")
-            if 'fromId' in packet:
-                message = f"From ID: {packet['fromId']}"
-                print(Fore.LIGHTBLACK_EX + message)
-                self.notify_data(message, message_type="INFO")
-                self.store_received_packet(message)
-            if 'toId' in packet:
-                message = f"To ID: {packet['toId']}"
-                print(Fore.LIGHTBLACK_EX + message)
-                self.notify_data(message, message_type="INFO")
-                self.store_received_packet(message)
-            if 'id' in packet:
-                message = f"Packet ID: {packet['id']}"
-                print(Fore.LIGHTBLACK_EX + message)
-                self.notify_data(message, message_type="INFO")
-                self.store_received_packet(message)
-            if "decoded" in packet and "portnum" in packet["decoded"]:
-                message = f"Packet type: {packet['decoded']['portnum'].lower()}"
-                print(Fore.LIGHTBLACK_EX + message)
-                self.notify_data(message, message_type="INFO")
-                self.store_received_packet(message)
-            if 'rxSnr' in packet:
-                message = f"Signal-to-Noise Ratio (SNR): {packet['rxSnr']}"
-                print(Fore.LIGHTBLACK_EX + message)
-                self.notify_data(message, message_type="SNR")
-                self.store_received_packet(message)
-            if 'rxRssi' in packet:
-                message = f"Received Signal Strength Indicator (RSSI): {packet['rxRssi']}"
-                print(Fore.BLUE + message)
-                self.notify_data(message, message_type="RSSI")
-                self.store_received_packet(message)
-            if 'hopLimit' in packet:
-                message = f"Hop Limit: {packet['hopLimit']}"
-                print(Fore.LIGHTBLACK_EX + message)
-                self.notify_data(message, message_type="INFO")
-                self.store_received_packet(message)
-            if 'encrypted' in packet:
-                message = f"Encrypted: {packet['encrypted']}"
-                print(Fore.LIGHTBLACK_EX + message)
-                self.notify_data(message, message_type="INFO")
-                self.store_received_packet(message)
+        self.notify_data("---------------", message_type="INFO")
+        if 'fromId' in packet:
+            message = f"From ID: {packet['fromId']}"
+            print(Fore.LIGHTBLACK_EX + message)
+            self.notify_data(message, message_type="INFO")
+            self.store_received_packet(message)
+        if 'toId' in packet:
+            message = f"To ID: {packet['toId']}"
+            print(Fore.LIGHTBLACK_EX + message)
+            self.notify_data(message, message_type="INFO")
+            self.store_received_packet(message)
+        if 'id' in packet:
+            message = f"Packet ID: {packet['id']}"
+            print(Fore.LIGHTBLACK_EX + message)
+            self.notify_data(message, message_type="INFO")
+            self.store_received_packet(message)
+        if "decoded" in packet and "portnum" in packet["decoded"]:
+            message = f"Packet type: {packet['decoded']['portnum'].lower()}"
+            print(Fore.LIGHTBLACK_EX + message)
+            self.notify_data(message, message_type="INFO")
+            self.store_received_packet(message)
+        if 'rxSnr' in packet:
+            message = f"Signal-to-Noise Ratio (SNR): {packet['rxSnr']}"
+            print(Fore.LIGHTBLACK_EX + message)
+            self.notify_data(message, message_type="SNR")
+            self.store_received_packet(message)
+        if 'rxRssi' in packet:
+            message = f"Received Signal Strength Indicator (RSSI): {packet['rxRssi']}"
+            print(Fore.BLUE + message)
+            self.notify_data(message, message_type="RSSI")
+            self.store_received_packet(message)
+        if 'hopLimit' in packet:
+            message = f"Hop Limit: {packet['hopLimit']}"
+            print(Fore.LIGHTBLACK_EX + message)
+            self.notify_data(message, message_type="INFO")
+            self.store_received_packet(message)
+        if 'encrypted' in packet:
+            message = f"Encrypted: {packet['encrypted']}"
+            print(Fore.LIGHTBLACK_EX + message)
+            self.notify_data(message, message_type="INFO")
+            self.store_received_packet(message)
 
-            self.update_node_info(packet)
+        self.update_node_info(packet)
 
-            if 'decoded' in packet:
-                decoded = packet['decoded']
-                if 'payload' in decoded and isinstance(
-                        decoded['payload'], bytes):
-                    try:
-                        data = decoded['payload']
-                        # Use 'fromId' if available, otherwise fallback to
-                        # 'from'
-                        sender_id = packet.get('fromId', packet['from'])
-                        if data.startswith(ANNOUNCE_IDENTIFIER):
-                            # Handle file announcement
-                            file_info = json.loads(
-                                data[len(ANNOUNCE_IDENTIFIER):].decode('utf-8'))
-                            file_name = file_info['name']
-                            file_size = file_info['size']
-                            total_chunks = file_info['total_chunks']
-                            self._data.expected_chunks[file_name] = total_chunks
-                            self._data.received_chunks[file_name] = [
-                                None] * total_chunks
-                            message = f"File announcement received: {file_name}, Size: {file_size} bytes, Total Chunks: {total_chunks}"
-                            print(Fore.BLUE + message)
-                            self.notify_data(
-                                message=message, message_type="INFO")
-                        elif data.startswith(FILE_IDENTIFIER):
-                            # Extract file name and file data
-                            parts = data[len(FILE_IDENTIFIER):].split(b':', 3)
-                            if len(parts) == 4:
-                                file_name = parts[0].decode('utf-8')
-                                chunk_index = int(parts[1])
-                                total_chunks = int(parts[2])
-                                chunk_data = parts[3]
-
-                                if file_name not in self._data.received_chunks:
-                                    self._data.received_chunks[file_name] = [
-                                        None] * total_chunks
-
-                                if self._data.received_chunks[file_name][chunk_index] is None:
-                                    self._data.received_chunks[file_name][chunk_index] = chunk_data
-                                    self.acknowledge_chunk(
-                                        file_name, chunk_index, sender_id)  # Pass sender ID
-
-                                    if all(
-                                            self._data.received_chunks[file_name]):
-                                        complete_data = b''.join(
-                                            self._data.received_chunks[file_name])
-                                        self.save_file(
-                                            file_name, complete_data)
-                        else:
-                            current_message = data.decode('utf-8').strip()
-                            if len(current_message) > 0:
-                                messages_list = self._data.get_messages()
-                                key = list(
-                                    filter(
-                                        lambda x: messages_list[x].mid == packet["id"],
-                                        messages_list.keys()))
-                                if len(key) == 0:
-                                    # message not found, create
-                                    m = MeshtasticMessage(
-                                        mid=packet["id"],
-                                        date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                        content=current_message,
-                                        rx_rssi=packet['rxRssi'],
-                                        rx_snr=packet['rxSnr'],
-                                        from_id=packet['fromId'],
-                                        to_id=packet['toId'],
-                                        hop_limit=packet['hopLimit'],
-                                        hop_start=packet['hopStart'],
-                                        want_ack=packet['wantAck'],
-                                        ack="",
-                                    )
-                                    print(
-                                        Fore.GREEN + f"Received message: {m}")
-                                    self._data.get_messages()[str(m.mid)] = m
-                                    self.notify_message()
-                                else:
-                                    key = key[0]
-                                    messages_list[key].date = datetime.datetime.now().strftime(
-                                        "%Y-%m-%d %H:%M:%S")
-                                    messages_list[key].rx_rssi = packet['rxRssi']
-                                    messages_list[key].rx_snr = packet['rxSnr']
-                                    messages_list[key].from_id = packet['fromId']
-                                    messages_list[key].to_id = packet['toId']
-                                    messages_list[key].hop_limit = packet['hopLimit']
-                                    messages_list[key].hop_start = packet['hopStart']
-                                    messages_list[key].want_ack = packet['wantAck']
-                                    messages_list[key].ack = ""
-                                    self.notify_message()
-
-                    except UnicodeDecodeError:
-                        print(
-                            Fore.LIGHTBLACK_EX +
-                            f"Received non-text payload: {decoded['payload']}")
+        if 'decoded' in packet:
+            decoded = packet['decoded']
+            if 'payload' in decoded and isinstance(
+                    decoded['payload'],
+                    bytes) and decoded["portnum"] == "TEXT_MESSAGE_APP":
+                try:
+                    data = decoded['payload']
+                    # Use 'fromId' if available, otherwise fallback to
+                    # 'from'
+                    sender_id = packet.get('fromId', packet['from'])
+                    if data.startswith(ANNOUNCE_IDENTIFIER):
+                        # Handle file announcement
+                        file_info = json.loads(
+                            data[len(ANNOUNCE_IDENTIFIER):].decode('utf-8'))
+                        file_name = file_info['name']
+                        file_size = file_info['size']
+                        total_chunks = file_info['total_chunks']
+                        self._data.expected_chunks[file_name] = total_chunks
+                        self._data.received_chunks[file_name] = [
+                            None] * total_chunks
+                        message = f"File announcement received: {file_name}, Size: {file_size} bytes, Total Chunks: {total_chunks}"
+                        print(Fore.BLUE + message)
                         self.notify_data(
-                            f"Received non-text payload: {decoded['payload']}",
-                            message_type="INFO")
-                        self.store_received_packet(
-                            f"Received non-text payload: {decoded['payload']}")
+                            message=message, message_type="INFO")
+                    elif data.startswith(FILE_IDENTIFIER):
+                        # Extract file name and file data
+                        parts = data[len(FILE_IDENTIFIER):].split(b':', 3)
+                        if len(parts) == 4:
+                            file_name = parts[0].decode('utf-8')
+                            chunk_index = int(parts[1])
+                            total_chunks = int(parts[2])
+                            chunk_data = parts[3]
 
-                else:
-                    print(Fore.LIGHTBLACK_EX +
-                          f"Received packet without text payload: {decoded}")
+                            if file_name not in self._data.received_chunks:
+                                self._data.received_chunks[file_name] = [
+                                    None] * total_chunks
+
+                            if self._data.received_chunks[file_name][chunk_index] is None:
+                                self._data.received_chunks[file_name][chunk_index] = chunk_data
+                                self.acknowledge_chunk(
+                                    file_name, chunk_index, sender_id)  # Pass sender ID
+
+                                if all(
+                                        self._data.received_chunks[file_name]):
+                                    complete_data = b''.join(
+                                        self._data.received_chunks[file_name])
+                                    self.save_file(
+                                        file_name, complete_data)
+                    else:
+                        current_message = data.decode('utf-8').strip()
+                        if len(current_message) > 0:
+                            messages_list = self._data.get_messages()
+                            key = list(
+                                filter(
+                                    lambda x: messages_list[x].mid == packet["id"],
+                                    messages_list.keys()))
+                            if len(key) == 0:
+                                # message not found, create
+                                m = MeshtasticMessage(
+                                    mid=packet["id"],
+                                    date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                    content=current_message,
+                                    rx_rssi=packet['rxRssi'],
+                                    rx_snr=packet['rxSnr'],
+                                    from_id=packet['fromId'],
+                                    to_id=packet['toId'],
+                                    hop_limit=packet['hopLimit'],
+                                    hop_start=packet['hopStart'],
+                                    want_ack=packet['wantAck'],
+                                    ack="",
+                                )
+                                print(
+                                    Fore.GREEN + f"Received message: {m}")
+                                self._data.get_messages()[str(m.mid)] = m
+                                self.notify_frontend(
+                                    MessageLevel.INFO, f"New message received from {packet['fromId']}")
+                                self.notify_message()
+                            else:
+                                key = key[0]
+                                messages_list[key].date = datetime.datetime.now().strftime(
+                                    "%Y-%m-%d %H:%M:%S")
+                                messages_list[key].rx_rssi = packet['rxRssi']
+                                messages_list[key].rx_snr = packet['rxSnr']
+                                messages_list[key].from_id = packet['fromId']
+                                messages_list[key].to_id = packet['toId']
+                                messages_list[key].hop_limit = packet['hopLimit']
+                                messages_list[key].hop_start = packet['hopStart']
+                                messages_list[key].want_ack = packet['wantAck']
+                                messages_list[key].ack = ""
+                                self.notify_frontend(
+                                    MessageLevel.INFO, f"Updating message info from {packet['fromId']}")
+                                self.notify_message()
+
+                except UnicodeDecodeError:
+                    print(
+                        Fore.LIGHTBLACK_EX +
+                        f"Received non-text payload: {decoded['payload']}")
                     self.notify_data(
-                        f"Received packet without text payload: {decoded}",
+                        f"Received non-text payload: {decoded['payload']}",
                         message_type="INFO")
                     self.store_received_packet(
-                        f"Received packet without text payload: {decoded}")
+                        f"Received non-text payload: {decoded['payload']}")
 
             else:
-                print(
-                    Fore.LIGHTBLACK_EX +
-                    f"Received packet without 'decoded' field: {packet}")
+                print(Fore.LIGHTBLACK_EX +
+                      f"Received packet without text payload: {decoded}")
                 self.notify_data(
-                    f"Received packet without 'decoded' field: {packet}",
+                    f"Received packet without text payload: {decoded}",
                     message_type="INFO")
                 self.store_received_packet(
-                    f"Received packet without 'decoded' field: {packet}")
+                    f"Received packet without text payload: {decoded}")
 
-            # Print additional details if available
+        else:
+            print(
+                Fore.LIGHTBLACK_EX +
+                f"Received packet without 'decoded' field: {packet}")
+            self.notify_data(
+                f"Received packet without 'decoded' field: {packet}",
+                message_type="INFO")
+            self.store_received_packet(
+                f"Received packet without 'decoded' field: {packet}")
 
-        except Exception as e:
-            error_message = f"Error processing received packet: {e}"
-            print(Fore.RED + error_message)
-            self.notify_data(error_message, message_type="ERROR")
+        # Print additional details if available
 
     @run_in_thread
     def acknowledge_chunk(self, file_name, chunk_index, sender_id):
@@ -605,9 +604,9 @@ class MeshtasticManager(QObject, threading.Thread):
         )
 
         if packet["decoded"]["portnum"] == "POSITION_APP":
-            n.lat = packet["decoded"]["position"]["latitude"]
-            n.lon = packet["decoded"]["position"]["longitude"]
-            n.alt = packet["decoded"]["position"]["altitude"]
+            n.lat = packet["decoded"]["position"]["latitude"] if "latitude" in packet["decoded"]["position"] else None
+            n.lon = packet["decoded"]["position"]["longitude"] if "longitude" in packet["decoded"]["position"] else None
+            n.alt = packet["decoded"]["position"]["altitude"] if "altitude" in packet["decoded"]["position"] else None
 
         if packet["decoded"]["portnum"] == "TELEMETRY_APP":
             n.batterylevel = packet["decoded"]["telemetry"]["deviceMetrics"]["batteryLevel"] if "deviceMetrics" in packet[
