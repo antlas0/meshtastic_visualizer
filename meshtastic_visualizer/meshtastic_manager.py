@@ -126,10 +126,10 @@ class MeshtasticManager(QObject, threading.Thread):
         nodes = self._data.get_nodes()
         if not str(node.id) in nodes.keys():
             nodes[str(node.id)] = node
-            firstseen = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            if node.firstseen:
-                node.firstseen = firstseen if firstseen < node.lastseen else node.lastseen
+            if node.lastseen:
+                node.firstseen = node.lastseen
             else:
+                node.firstseen = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 node.firstseen = node.lastseen
         else:
             # update
@@ -473,7 +473,8 @@ class MeshtasticManager(QObject, threading.Thread):
             self.on_ack(response, ack_event)
 
         message.ack = "❌"
-        print(Fore.LIGHTBLACK_EX + "Attempting to send message...")
+        if message.want_ack:
+            print(Fore.LIGHTBLACK_EX + "Sending message, waiting ACK...")
         sent_packet = self._config.interface.sendText(
             text=message.content,
             destinationId=message.to_id,
@@ -622,7 +623,15 @@ class MeshtasticManager(QObject, threading.Thread):
                 round(
                     packet["decoded"]["telemetry"]["deviceMetrics"]["channelUtilization"],
                     2)) if "deviceMetrics" in packet["decoded"]["telemetry"] and "channelUtilization" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
-        # always refreshed
+            n.uptime = packet["decoded"]["telemetry"]["deviceMetrics"]["uptimeSeconds"] if "deviceMetrics" in packet[
+                "decoded"]["telemetry"] and "uptimeSeconds" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
+
+        if packet["decoded"]["portnum"] == "NEIGHBORINFO_APP":
+            if "neighbors" in packet["decoded"]["neighborinfo"]:
+                n.neighbors = [
+                    self._nodeNumToId(
+                        x["nodeId"]) for x in packet["decoded"]["neighborinfo"]["neighbors"]]
+
         n.rssi = str(
             round(
                 packet["rxRssi"],

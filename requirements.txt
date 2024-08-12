@@ -6,3 +6,4 @@ pubsub==0.1.2
 PyQt5==5.15.11
 pyserial==3.5
 PyQtWebEngine
+humanize

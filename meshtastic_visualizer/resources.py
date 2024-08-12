@@ -80,6 +80,8 @@ class MeshtasticNode:
     txairutil: Optional[str] = None
     rssi: Optional[str] = None
     snr: Optional[str] = None
+    last_recipient_id: Optional[str] = None
+    neighbors: Optional[List[str]] = None
     hopsaway: Optional[str] = None
     firstseen: Optional[str] = None
     lastseen: Optional[str] = None

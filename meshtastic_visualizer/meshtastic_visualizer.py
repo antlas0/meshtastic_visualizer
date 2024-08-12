@@ -2,9 +2,11 @@
 
 
 import json
+import hashlib
 import os
 import io
 import folium
+import humanize
 from threading import Lock
 from datetime import datetime
 from typing import List
@@ -34,7 +36,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.show()
 
         self._markers: list = []
+        self._links: list = []
         self._map = None
+        self._markers_group = folium.FeatureGroup(name="Stations")
+        self._link_group = folium.FeatureGroup(name="Links")
 
         # Variables
         self.status_var: str = ""
@@ -216,21 +221,41 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def init_map(self):
         self._map = folium.Map(zoom_start=7)
-        self.update_map()
+        self.update_map_in_widget()
 
-    def update_map(self):
+    def update_map_in_widget(self):
         data = io.BytesIO()
         self._map.save(data, close_file=False)
         data.seek(0)
         self.nodes_map.setHtml(data.getvalue().decode())
 
     def update_nodes_map(self):
+        # we re-create from scratch every time
+        # using this method we od have easy access to the Dom anyway
+        def __link_color(node_id: str) -> str:
+            hash_object = hashlib.md5(node_id.encode())
+            color = '#' + hash_object.hexdigest()[:6]
+            return color
+
+        del self._map
+        self._map = None
+        self._map = folium.Map(zoom_start=7)
+
         # Add a new marker
         nodes = self._manager._data.get_nodes()
         if nodes is None:
             return
 
         self._markers = []
+        self._links = []
+
+        # in case of links traczing, pre-create a dict(node_id, [lat, lon])
+        nodes_coords = {
+            x.id: [
+                float(
+                    x.lat), float(
+                    x.lon)] for __, x in nodes.items() if x.lat is not None and x.lon is not None}
+
         for node_id, node in nodes.items():
             strl = []
             strl.append(f"<b>Name:</b> {node.long_name}</br>")
@@ -250,6 +275,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 strl.append(f"<b>RSSI:</b> {node.rssi} dBm</br>")
             if node.snr:
                 strl.append(f"<b>SNR:</b> {node.snr}</br>")
+            if node.uptime:
+                strl.append(
+                    f"<b>Uptime:</b> {humanize.precisedelta(node.uptime)}</br>")
             if node.lat is not None and node.lon is not None:
                 popup_content = "".join(strl)
                 popup = folium.Popup(
@@ -260,15 +288,36 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                         node.lon],
                     popup=popup,
                 )
-                marker.add_to(self._map)
+                marker.add_to(self._markers_group)
                 self._markers.append(marker)
+
+            if node.neighbors is not None:
+                for neighbor in node.neighbors:
+                    # we can trace a link
+                    if neighbor in nodes_coords.keys():
+                        link_coords = [
+                            nodes_coords[node.id],
+                            nodes_coords[neighbor],
+                        ]
+                    if link_coords[0][0] is not None \
+                            and link_coords[0][1] is not None \
+                            and link_coords[1][0] is not None\
+                            and link_coords[1][1] is not None:
+                        link = folium.PolyLine(
+                            link_coords, color=__link_color(node.id))
+                        link.add_to(self._link_group)
+                        self._links.append(link)
         if self._markers:
             markers_lat = [x.location[0] for x in self._markers]
             markers_lon = [x.location[1] for x in self._markers]
             self._map.fit_bounds([[min(markers_lat), min(markers_lon)], [
                                  max(markers_lat), max(markers_lon)]])
+            self._markers_group.add_to(self._map)
+        if self._links:
+            self._link_group.add_to(self._map)
+            folium.LayerControl().add_to(self._map)
 
-        self.update_map()
+        self.update_map_in_widget()
 
     # def on_friend_select(self, event):
     #     if not self.friends_listbox.curselection():
@@ -414,7 +463,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     "Hops Away": node.hopsaway,
                     "Last Seen": node.lastseen,
                     "First Seen": node.firstseen,
-                    "Uptime": node.uptime,
+                    "Uptime": humanize.precisedelta(node.uptime),
                 }
             )
 
@@ -511,8 +560,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.batterylevel_progressbar.setValue(cfg.batterylevel)
         self.batterylevel_progressbar.show()
         self.role_label.setText(f"{cfg.role}")
-        self.txairutil_label.setText(str(cfg.txairutil))
-        self.chutil_label.setText(str(cfg.chutil))
         self.id_label.setText(str(cfg.id))
         self.hardware_label.setText(str(cfg.hardware))
 
