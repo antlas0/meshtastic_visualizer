@@ -635,7 +635,7 @@ class MeshtasticManager(QObject, threading.Thread):
         n.lastseen = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         self.store_or_update_node(n)
-        # self.notify_nodes()
+        self.notify_frontend(MessageLevel.INFO, f"Updated node {n.id}.")
 
     @run_in_thread
     def retrieve_nodes(self, include_self: bool = True) -> list:
