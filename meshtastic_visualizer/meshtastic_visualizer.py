@@ -41,7 +41,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.device_path: str = ""
         self.active_channel: str = ""
         self.destination_id: str = ""
-        self._friends: list = []
+        self._friends: dict = {}
         self._local_board_id: str = ""
         self._action_buttons = []
         # Set up the UI elements
