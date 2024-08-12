@@ -144,6 +144,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             "ack",
             "from_id",
             "to_id",
+            "channel_index",
             "content",
             "rx_rssi",
             "rx_snr",
@@ -626,6 +627,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.messages_table.setColumnCount(len(columns))
         self.messages_table.setHorizontalHeaderLabels(columns)
 
+        channels = self._manager._config.get_channels()
         messages = self._manager._data.get_messages().values()
         for message in messages:
             data = []
@@ -637,6 +639,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                         data.append(self._friends[getattr(message, column)])
                     else:
                         data.append(getattr(message, column))
+                elif column == "channel_index":
+                    for ch in channels:
+                        if ch.index == message.channel_index:
+                            data.append(ch.name)
                 else:
                     data.append(getattr(message, column))
 
