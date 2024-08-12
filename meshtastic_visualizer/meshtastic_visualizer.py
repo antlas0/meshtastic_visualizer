@@ -169,21 +169,17 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if data.get_is_connected():
             self.connect_button.setEnabled(False)
             self.disconnect_button.setEnabled(True)
+            self.retransmission_spinbox.setEnabled(False)
+            self.timeout_spinbox.setEnabled(False)
             for button in self._action_buttons:
                 button.setEnabled(True)
         else:
             self.connect_button.setEnabled(True)
             self.disconnect_button.setEnabled(False)
+            self.retransmission_spinbox.setEnabled(True)
+            self.timeout_spinbox.setEnabled(True)
             for button in self._action_buttons:
                 button.setEnabled(False)
-
-        mapping = {
-            "timeout_linedit": config.get_timeout,
-            "retransmission_linedit": config.get_retransmission_limit,
-        }
-
-        for label, value in mapping.items():
-            getattr(self, label).setText(str(value()))
 
         self.update_local_node_config()
 
@@ -194,6 +190,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if device_path:
             self.set_status(MessageLevel.INFO, f"Connecting to {device_path}.")
             self._manager.set_meshtastic_device(device_path)
+            self._manager.set_timeout(self.timeout_spinbox.value())
+            self._manager.set_retransmission_limit(
+                self.retransmission_spinbox.value())
             self.connect_device_event()
         else:
             self.set_status(MessageLevel.ERROR,
@@ -483,20 +482,20 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             rows.append(row)
 
         self.channels_table.clear()
+        self.channels_table.setRowCount(0)
+        columns = ["Index", "Name", "Role", "PSK"]
         for i in range(self.channels_table.rowCount()):
             self.channels_table.removeRow(i)
-        self.channels_table.setColumnCount(4)
+        self.channels_table.setColumnCount(len(columns))
         self.channels_table.setHorizontalHeaderLabels(
-            ["Index", "Name", "Role", "PSK"])
+            columns)
 
         for row in rows:
-            self.channels_table.insertRow(self.channels_table.rowCount())
-            for i, elt in enumerate(row.values()):
+            row_position = self.channels_table.rowCount()
+            self.channels_table.insertRow(row_position)
+            for i, elt in enumerate(columns):
                 self.channels_table.setItem(
-                    self.channels_table.rowCount() - 1,
-                    i,
-                    QTableWidgetItem(
-                        str(elt)))
+                    row_position, i, QTableWidgetItem(str(row[elt])))
                 self.channels_table.resizeColumnsToContents()
 
     def retrieve_channels(self):

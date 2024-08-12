@@ -149,7 +149,7 @@ class MeshtasticManager(QObject, threading.Thread):
     @run_in_thread
     def connect_device(self) -> bool:
         if self._config.interface is not None:
-            return
+            return False
         try:
             self._config.interface = meshtastic.serial_interface.SerialInterface(
                 devPath=self._config.device_path)
@@ -174,10 +174,12 @@ class MeshtasticManager(QObject, threading.Thread):
     @run_in_thread
     def disconnect_device(self) -> bool:
         if self._config.interface is None:
-            return
+            return False
 
         try:
             self._config.interface.close()
+            del self._config.interface
+            self._config.interface = None
         except Exception as e:
             trace = f"Failed to disconnect from Meshtastic device: {str(e)}"
             self._data.set_last_status(trace)
