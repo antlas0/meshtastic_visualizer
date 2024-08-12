@@ -11,6 +11,7 @@ from threading import Lock
 from datetime import datetime
 from typing import List
 from PyQt5 import QtWidgets, uic
+from PyQt5.QtGui import QTextCursor
 from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import pyqtSignal
@@ -708,6 +709,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         nnow = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         tmp.append(f"[{nnow}] {message}")
         self.output_textedit.setText("".join(tmp))
+        cursor = QTextCursor(self.output_textedit.textCursor())
+        cursor.setPosition(len(self.output_textedit.toPlainText()))
+        self.output_textedit.setTextCursor(cursor)
 
     def quit(self) -> None:
         self._manager.quit()
