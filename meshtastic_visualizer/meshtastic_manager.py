@@ -29,7 +29,8 @@ from .resources import run_in_thread, \
     MeshtasticDataStore, \
     Channel, \
     MeshtasticNode, \
-    MeshtasticMessage
+    MeshtasticMessage, \
+    PacketInfoType
 
 # Initialize colorama
 init(autoreset=True)
@@ -65,6 +66,7 @@ class MeshtasticManager(QObject, threading.Thread):
         self._data.received_chunks = {}
         self._data.acknowledged_chunks = set()
         self._data.expected_chunks = {}
+        self._local_board_id: str = ""
         self._config.tunnel = None  # Initialize the tunnel attribute
         # Create an empty object to hold acknowledgment flags
         self._data.acknowledgment = type('', (), {})()
@@ -208,6 +210,8 @@ class MeshtasticManager(QObject, threading.Thread):
         if batlevel > 100:
             batlevel = 100
 
+        self._local_board_id = node["user"]["shortName"]
+
         self._config.local_node_config = MeshtasticNode(
             long_name=node["user"]["longName"],
             short_name=node["user"]["shortName"],
@@ -249,7 +253,7 @@ class MeshtasticManager(QObject, threading.Thread):
             messages_list[key].rx_rssi = response['rxRssi']
         if "rxSnr" in response:
             messages_list[key].rx_snr = response['rxSnr']
-        if "rxhopLimit" in response:
+        if "hopLimit" in response:
             messages_list[key].hop_limit = response['hopLimit']
         if "hopStart" in response:
             messages_list[key].hop_start = response['hopStart']
@@ -260,6 +264,11 @@ class MeshtasticManager(QObject, threading.Thread):
 
     @run_in_thread
     def on_receive(self, packet, interface):
+        if "decoded" not in packet:
+            return
+        if "portnum" not in packet["decoded"]:
+            return
+
         self.notify_data("---------------", message_type="INFO")
         if 'fromId' in packet:
             message = f"From ID: {packet['fromId']}"
@@ -276,7 +285,6 @@ class MeshtasticManager(QObject, threading.Thread):
             print(Fore.LIGHTBLACK_EX + message)
             self.notify_data(message, message_type="INFO")
             self.store_received_packet(message)
-        if "decoded" in packet and "portnum" in packet["decoded"]:
             message = f"Packet type: {packet['decoded']['portnum'].lower()}"
             print(Fore.LIGHTBLACK_EX + message)
             self.notify_data(message, message_type="INFO")
@@ -304,163 +312,71 @@ class MeshtasticManager(QObject, threading.Thread):
 
         self.update_node_info(packet)
 
-        if 'decoded' in packet:
-            decoded = packet['decoded']
-            if 'payload' in decoded and isinstance(
-                    decoded['payload'],
-                    bytes) and decoded["portnum"] == "TEXT_MESSAGE_APP":
-                try:
-                    data = decoded['payload']
-                    # Use 'fromId' if available, otherwise fallback to
-                    # 'from'
-                    sender_id = packet.get('fromId', packet['from'])
-                    if data.startswith(ANNOUNCE_IDENTIFIER):
-                        # Handle file announcement
-                        file_info = json.loads(
-                            data[len(ANNOUNCE_IDENTIFIER):].decode('utf-8'))
-                        file_name = file_info['name']
-                        file_size = file_info['size']
-                        total_chunks = file_info['total_chunks']
-                        self._data.expected_chunks[file_name] = total_chunks
-                        self._data.received_chunks[file_name] = [
-                            None] * total_chunks
-                        message = f"File announcement received: {file_name}, Size: {file_size} bytes, Total Chunks: {total_chunks}"
-                        print(Fore.BLUE + message)
-                        self.notify_data(
-                            message=message, message_type="INFO")
-                    elif data.startswith(FILE_IDENTIFIER):
-                        # Extract file name and file data
-                        parts = data[len(FILE_IDENTIFIER):].split(b':', 3)
-                        if len(parts) == 4:
-                            file_name = parts[0].decode('utf-8')
-                            chunk_index = int(parts[1])
-                            total_chunks = int(parts[2])
-                            chunk_data = parts[3]
-
-                            if file_name not in self._data.received_chunks:
-                                self._data.received_chunks[file_name] = [
-                                    None] * total_chunks
-
-                            if self._data.received_chunks[file_name][chunk_index] is None:
-                                self._data.received_chunks[file_name][chunk_index] = chunk_data
-                                self.acknowledge_chunk(
-                                    file_name, chunk_index, sender_id)  # Pass sender ID
-
-                                if all(
-                                        self._data.received_chunks[file_name]):
-                                    complete_data = b''.join(
-                                        self._data.received_chunks[file_name])
-                                    self.save_file(
-                                        file_name, complete_data)
-                    else:
-                        current_message = data.decode('utf-8').strip()
-                        if len(current_message) > 0:
-                            messages_list = self._data.get_messages()
-                            key = list(
-                                filter(
-                                    lambda x: messages_list[x].mid == packet["id"],
-                                    messages_list.keys()))
-                            if len(key) == 0:
-                                # message not found, create
-                                m = MeshtasticMessage(
-                                    mid=packet["id"],
-                                    date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                    content=current_message,
-                                    rx_rssi=packet['rxRssi'] if 'rxRssi' in packet else None,
-                                    rx_snr=packet['rxSnr'] if 'rxSnr' in packet else None,
-                                    from_id=packet['fromId'] if "fromId" in packet else None,
-                                    to_id=packet['toId'] if "toId" in packet else None,
-                                    channel_index=packet["channel"] if "channel" in packet else None,
-                                    hop_limit=packet['hopLimit'] if 'hopLimit' in packet else None,
-                                    hop_start=packet['hopStart'] if 'hopStart' in packet else None,
-                                    want_ack=packet['wantAck'] if 'wantAck' in packet else None,
-                                    ack="",
-                                )
-                                print(
-                                    Fore.GREEN + f"Received message: {m}")
-                                self._data.get_messages()[str(m.mid)] = m
-                                self.notify_frontend(
-                                    MessageLevel.INFO, f"New message received from {packet['fromId']}")
-                                self.notify_message()
-                            else:
-                                key = key[0]
-                                messages_list[key].date = datetime.datetime.now().strftime(
-                                    "%Y-%m-%d %H:%M:%S")
-                                messages_list[key].rx_rssi = packet['rxRssi']
-                                messages_list[key].rx_snr = packet['rxSnr']
-                                messages_list[key].from_id = packet['fromId']
-                                messages_list[key].to_id = packet['toId']
-                                messages_list[key].hop_limit = packet['hopLimit']
-                                messages_list[key].hop_start = packet['hopStart']
-                                messages_list[key].want_ack = packet['wantAck']
-                                messages_list[key].ack = ""
-                                self.notify_frontend(
-                                    MessageLevel.INFO, f"Updating message info from {packet['fromId']}")
-                                self.notify_message()
-
-                except UnicodeDecodeError:
-                    print(
-                        Fore.LIGHTBLACK_EX +
-                        f"Received non-text payload: {decoded['payload']}")
-                    self.notify_data(
-                        f"Received non-text payload: {decoded['payload']}",
-                        message_type="INFO")
-                    self.store_received_packet(
-                        f"Received non-text payload: {decoded['payload']}")
-
-            else:
-                print(Fore.LIGHTBLACK_EX +
-                      f"Received packet without text payload: {decoded}")
+        decoded = packet['decoded']
+        if 'payload' in decoded and isinstance(
+                decoded['payload'],
+                bytes) and decoded["portnum"] == PacketInfoType.PCK_TEXT_MESSAGE_APP.value:
+            data = decoded['payload']
+            try:
+                current_message = data.decode('utf-8').strip()
+            except UnicodeDecodeError:
+                print(
+                    Fore.LIGHTBLACK_EX +
+                    f"Received non-text payload: {decoded['payload']}")
                 self.notify_data(
-                    f"Received packet without text payload: {decoded}",
+                    f"Received non-text payload: {decoded['payload']}",
                     message_type="INFO")
                 self.store_received_packet(
-                    f"Received packet without text payload: {decoded}")
+                    f"Received non-text payload: {decoded['payload']}")
+                return
+            else:
+                if len(current_message) == 0:
+                    return
 
-        else:
-            print(
-                Fore.LIGHTBLACK_EX +
-                f"Received packet without 'decoded' field: {packet}")
-            self.notify_data(
-                f"Received packet without 'decoded' field: {packet}",
-                message_type="INFO")
-            self.store_received_packet(
-                f"Received packet without 'decoded' field: {packet}")
-
-        # Print additional details if available
-
-    @run_in_thread
-    def acknowledge_chunk(self, file_name, chunk_index, sender_id):
-        """Send an acknowledgment for a received chunk to the sender."""
-        ack_message = f"ACK:{file_name}:{chunk_index}"
-        self._config.interface.sendText(ack_message, sender_id)
-        print(
-            Fore.GREEN +
-            f"Acknowledgment sent for chunk {chunk_index} of {file_name} to {sender_id}")
-
-    @run_in_thread
-    def request_missing_chunks(self, file_name):
-        """Request missing chunks from the sender"""
-        missing_chunks = [i for i, chunk in enumerate(
-            self._data.received_chunks[file_name]) if chunk is None]
-        if missing_chunks:
-            request_message = f"REQ:{file_name}:{','.join(map(str, missing_chunks))}"
-            self._config.interface.sendText(
-                request_message, self._config.destination_id)
-            print(
-                Fore.MAGENTA +
-                f"Requesting missing chunks for {file_name}: {missing_chunks}")
-
-    @run_in_thread
-    def save_file(self, file_name, file_data):
-        try:
-            file_path = os.path.join('received_files', file_name)
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            with open(file_path, 'wb') as file:
-                file.write(file_data)
-            print(Fore.GREEN + f"File saved: {file_path}")
-        except Exception as e:
-            print(Fore.RED + f"Failed to save file: {str(e)}")
+                messages_list = self._data.get_messages()
+                key = list(
+                    filter(
+                        lambda x: messages_list[x].mid == packet["id"],
+                        messages_list.keys()))
+                if len(key) == 0:
+                    # message not found, create
+                    m = MeshtasticMessage(
+                        mid=packet["id"],
+                        date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        content=current_message,
+                        rx_rssi=packet['rxRssi'] if 'rxRssi' in packet else None,
+                        rx_snr=packet['rxSnr'] if 'rxSnr' in packet else None,
+                        from_id=packet['fromId'] if "fromId" in packet else None,
+                        to_id=packet['toId'] if "toId" in packet else None,
+                        channel_index=packet["channel"] if "channel" in packet else None,
+                        hop_limit=packet['hopLimit'] if 'hopLimit' in packet else None,
+                        hop_start=packet['hopStart'] if 'hopStart' in packet else None,
+                        want_ack=packet['wantAck'] if 'wantAck' in packet else None,
+                        ack="",
+                    )
+                    print(
+                        Fore.GREEN + f"Received message: {m}")
+                    self._data.get_messages()[str(m.mid)] = m
+                    self.notify_frontend(
+                        MessageLevel.INFO,
+                        f"New message received from {packet['fromId']}")
+                    self.notify_message()
+                else:
+                    key = key[0]
+                    messages_list[key].date = datetime.datetime.now().strftime(
+                        "%Y-%m-%d %H:%M:%S")
+                    messages_list[key].rx_rssi = packet['rxRssi']
+                    messages_list[key].rx_snr = packet['rxSnr']
+                    messages_list[key].from_id = packet['fromId']
+                    messages_list[key].to_id = packet['toId']
+                    messages_list[key].hop_limit = packet['hopLimit']
+                    messages_list[key].hop_start = packet['hopStart']
+                    messages_list[key].want_ack = packet['wantAck']
+                    messages_list[key].ack = ""
+                    self.notify_frontend(
+                        MessageLevel.INFO,
+                        f"Updating message info from {packet['fromId']}")
+                    self.notify_message()
 
     @run_in_thread
     def send_text_message(self, message: MeshtasticMessage):
@@ -495,110 +411,6 @@ class MeshtasticManager(QObject, threading.Thread):
             self._data.set_last_status(trace)
             self.notify_frontend(MessageLevel.ERROR, trace)
 
-    def announce_file(self, file_name, file_size, total_chunks):
-        """Announce the file details before sending chunks"""
-        file_info = {
-            "name": file_name,
-            "size": file_size,
-            "total_chunks": total_chunks
-        }
-        message = ANNOUNCE_IDENTIFIER + json.dumps(file_info).encode('utf-8')
-        self.send_data(message, 0)
-
-    @run_in_thread
-    def send_data_in_chunks(self,
-                            data,
-                            file_name,
-                            progress_callback: Optional[Callable[[int,
-                                                                  int],
-                                                                 None]] = None,
-                            channel_index=0):
-        if self._config.interface is None:
-            return
-
-        def callback(response, event):
-            self.on_ack(response, event)
-
-        total_chunks = (len(data) + CHUNK_SIZE - 1) // CHUNK_SIZE
-        self.announce_file(file_name, len(data), total_chunks)
-
-        for i in range(total_chunks):
-            start = i * CHUNK_SIZE
-            end = start + CHUNK_SIZE
-            chunk = data[start:end]
-            chunk_identifier = FILE_IDENTIFIER + \
-                f'{file_name}:{i}:{total_chunks}'.encode('utf-8') + b':'
-            chunk_data = chunk_identifier + chunk
-
-            retries = 0
-            while retries < self._config.get_retransmission_limit():
-                ack_event = threading.Event()  # Create an event object to wait for acknowledgment
-
-                print(
-                    Fore.LIGHTBLACK_EX +
-                    f"Sending chunk {i+1}/{total_chunks}, attempt {retries + 1}...")
-                sent_packet = self._config.interface.sendData(
-                    data=chunk_data,
-                    destinationId=self._config.get_destination_id(),
-                    wantAck=True,
-                    wantResponse=True,
-                    onResponse=lambda response: callback(response, ack_event),
-                    channelIndex=channel_index
-                )
-                print(
-                    Fore.LIGHTBLACK_EX +
-                    f"Chunk {i+1}/{total_chunks} sent with ID: {sent_packet.id}")
-                # Wait for acknowledgment or timeout after the set period
-                ack_event.wait(timeout=self._config.get_timeout())
-
-                if ack_event.is_set():
-                    self._data.acknowledged_chunks.add((file_name, i))
-                    if progress_callback:
-                        progress_callback(i + 1, total_chunks)
-                    break
-                else:
-                    print(
-                        Fore.MAGENTA +
-                        f"Acknowledgment not received for chunk {i+1}/{total_chunks} within timeout period.")
-                    retries += 1
-                    time.sleep(2)  # Add a small delay before retrying
-
-            if retries == self._config.get_retransmission_limit():
-                print(
-                    Fore.RED +
-                    f"Failed to send chunk {i+1}/{total_chunks} after {self._config.retransmission_limit} attempts. Aborting.")
-                return  # Abort if the maximum number of retransmissions is reached
-
-    # @run_in_thread
-    def send_data(self, data, channel_index):
-        if self._config.interface is None:
-            return
-
-        ack_event = threading.Event()  # Create an event object to wait for acknowledgment
-
-        def callback(response):
-            self.on_ack(response, ack_event)
-
-        try:
-            print(Fore.LIGHTBLACK_EX + "Attempting to send data...")
-            sent_packet = self._config.interface.sendData(
-                data=data,
-                destinationId=self._config.get_destination_id(),
-                wantAck=True,
-                wantResponse=True,
-                onResponse=callback,
-                channelIndex=channel_index
-            )
-            print(Fore.LIGHTBLACK_EX + f"Data sent with ID: {sent_packet.id}")
-            # Wait for acknowledgment or timeout after the set period
-            ack_event.wait(timeout=self._config.get_timeout())
-            if not ack_event.is_set():
-                print(
-                    Fore.MAGENTA +
-                    "Acknowledgment not received within timeout period.")
-        except Exception as e:
-            print(Fore.RED + f"Failed to send data: {str(e)}")
-
     @run_in_thread
     def update_node_info(self, packet) -> None:
 
@@ -607,12 +419,12 @@ class MeshtasticManager(QObject, threading.Thread):
                 packet["from"])
         )
 
-        if packet["decoded"]["portnum"] == "POSITION_APP":
+        if packet["decoded"]["portnum"] == PacketInfoType.PCK_POSITION_APP.value:
             n.lat = packet["decoded"]["position"]["latitude"] if "latitude" in packet["decoded"]["position"] else None
             n.lon = packet["decoded"]["position"]["longitude"] if "longitude" in packet["decoded"]["position"] else None
             n.alt = packet["decoded"]["position"]["altitude"] if "altitude" in packet["decoded"]["position"] else None
 
-        if packet["decoded"]["portnum"] == "TELEMETRY_APP":
+        if packet["decoded"]["portnum"] == PacketInfoType.PCK_TELEMETRY_APP.value:
             n.batterylevel = packet["decoded"]["telemetry"]["deviceMetrics"]["batteryLevel"] if "deviceMetrics" in packet[
                 "decoded"]["telemetry"] and "batteryLevel" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
             n.txairutil = str(
@@ -626,7 +438,7 @@ class MeshtasticManager(QObject, threading.Thread):
             n.uptime = packet["decoded"]["telemetry"]["deviceMetrics"]["uptimeSeconds"] if "deviceMetrics" in packet[
                 "decoded"]["telemetry"] and "uptimeSeconds" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
 
-        if packet["decoded"]["portnum"] == "NEIGHBORINFO_APP":
+        if packet["decoded"]["portnum"] == PacketInfoType.PCK_NEIGHBORINFO_APP.value:
             if "neighbors" in packet["decoded"]["neighborinfo"]:
                 n.neighbors = [
                     self._nodeNumToId(
@@ -724,61 +536,6 @@ class MeshtasticManager(QObject, threading.Thread):
             self._data.set_last_status(f"Channels retrieved.")
             self.notify_frontend(MessageLevel.INFO, "Channels retrieved.")
             self.notify_channels()
-
-    def set_psk(self, index, psk):
-        """Set the PSK for a given channel index."""
-        if self._config.interface is None:
-            return
-
-        try:
-            if index < len(self._config.interface.localNode.channels):
-                self._config.interface.localNode.channels[index].settings.psk = psk
-                self._config.interface.localNode.writeChannel(index)
-                trace = f"PSK for channel {index} set successfully."
-                self._data.set_last_status(trace)
-                self.notify_frontend(MessageLevel.INFO, trace)
-            else:
-                trace = f"Invalid channel index: {index}"
-                self._data.set_last_status(trace)
-                self.notify_frontend(MessageLevel.ERROR, trace)
-        except Exception as e:
-            trace = f"Failed to set PSK: {str(e)}"
-            self._data.set_last_status(trace)
-            self.notify_frontend(MessageLevel.ERROR, trace)
-
-    def add_channel(self, name):
-        if self._config.interface is None:
-            return
-
-        disabled_channel = self._config.interface.localNode.getDisabledChannel()
-        if not disabled_channel:
-            trace = "No available disabled channel to add a new one."
-            self._data.set_last_status(trace)
-            self.notify_frontend(MessageLevel.ERROR, trace)
-        try:
-            disabled_channel.role = channel_pb2.Channel.Role.SECONDARY
-            disabled_channel.settings.name = name
-            # Using the same PSK as primary for simplicity
-            disabled_channel.settings.psk = self._config.interface.localNode.channels[
-                0].settings.psk
-            self._config.interface.localNode.writeChannel(
-                disabled_channel.index)
-        except Exception as e:
-            trace = f"Failed to add channel: {str(e)}"
-            self._data.set_last_status(trace)
-            self.notify_frontend(MessageLevel.ERROR, trace)
-        else:
-            trace = f"Successfully added channel: {name}."
-            self._data.set_last_status(trace)
-            self.notify_frontend(MessageLevel.INFO, trace)
-
-    def get_device_ip(self):
-        """Get the device IP address"""
-        if not self._config.interface:
-            return None
-        node_num = self._config.interface.myInfo.my_node_num
-        ip_address = f"10.115.{(node_num >> 8) & 0xff}.{node_num & 0xff}"
-        return ip_address
 
     @run_in_thread
     def sendTraceRoute(self,

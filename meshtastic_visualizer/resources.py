@@ -17,7 +17,16 @@ class MessageLevel(enum.Enum):
     INFO = 1
     UNKNOWN = 0
 
-# used to prevent R/W on config and data stores
+
+class PacketInfoType(enum.Enum):
+    """
+    Meshtastic packet type
+    """
+    PCK_NEIGHBORINFO_APP = "NEIGHBORINFO_APP"
+    PCK_TELEMETRY_APP = "TELEMETRY_APP"
+    PCK_POSITION_APP = "POSITION_APP"
+    PCK_TEXT_MESSAGE_APP = "TEXT_MESSAGE_APP"
+    PCK_UNKNOWN = ""
 
 
 def create_getter(field_name):

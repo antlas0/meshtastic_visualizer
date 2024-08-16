@@ -153,7 +153,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             "content",
             "rx_rssi",
             "rx_snr",
-            "channel_index",
             "hop_start",
             "hop_limit",
             "want_ack"]
@@ -364,9 +363,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         recipient = self.recipient_combobox.currentText()
         channel_index = self._manager.get_channel_index_from_name(channel_name)
         # Update timeout before sending
-        self._manager.set_timeout(self.timeout_linedit.text())
-        self._manager.set_retransmission_limit(
-            self.retransmission_linedit.text())  # Update timeout before sending
         if channel_index != -1 and message:
             m = MeshtasticMessage(
                 mid=-1,
@@ -686,9 +682,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     else:
                         data.append(getattr(message, column))
                 elif column == "channel_index":
+                    name = "DM"
                     for ch in channels:
                         if ch.index == message.channel_index:
-                            data.append(ch.name)
+                            name = ch.name
+                    data.append(name)
+
                 else:
                     data.append(getattr(message, column))
 
