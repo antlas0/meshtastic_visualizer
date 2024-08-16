@@ -319,29 +319,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         self.update_map_in_widget()
 
-    # def on_friend_select(self, event):
-    #     if not self.friends_listbox.curselection():
-    #         return
-    #     selected_friend = self.friends_listbox.get(self.friends_listbox.curselection())
-    #     self.destination_id.set(selected_friend)
-    #     if self._manager:
-    #         self._manager.set_destination_id(selected_friend)
-    #     self.set_status(MessageLevel.INFO, f"Destination ID set to {selected_friend}")
-
-    # def add_friend(self):
-    #     new_friend = simpledialog.askstring("Add Friend", "Enter friend address:")
-    #     if new_friend:
-    #         self._friends.append(new_friend)
-    #         self.update_friends_list()
-    #         self.save_friends()
-
-    # def remove_friend(self):
-    #     selected_friend = self.friends_listbox.curselection()
-    #     if selected_friend:
-    #         self._friends.pop(selected_friend[0])
-    #         self.update_friends_list()
-    #         self.save_friends()
-
     def update_friends_list(self):
         self.friends_list.clear()
         for id, friend in self._friends.items():
@@ -379,36 +356,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             )
             self.send_message_event(m)
             self.message_textedit.clear()
-
-    # def send_file(self):
-
-    #     file_path = filedialog.askopenfilename()
-    #     if file_path:
-    #         try:
-    #             channel_index = int(self.file_channel_entry.get())
-    #         except ValueError:
-    #             self.set_status(MessageLevel.ERROR, "Invalid channel index")
-    #             return
-    #         threading.Thread(target=self.send_file_in_chunks, args=(file_path, channel_index)).start()
-
-    # def send_file_in_chunks(self, file_path, channel_index):
-    # self._manager.set_timeout(self.timeout.get())  # Update timeout before
-    # sending
-
-    #     def progress_callback(current_chunk, total_chunks):
-    #         self.progress_bar['maximum'] = total_chunks
-    #         self.progress_bar['value'] = current_chunk
-    #         self.master.update_idletasks()
-
-    #     try:
-    #         with open(file_path, 'rb') as file:
-    #             file_data = file.read()
-    #             file_name = os.path.basename(file_path)
-    #             self._manager.send_data_in_chunks(file_data, file_name, progress_callback, channel_index)
-    #             self.update_history(f"Me: Sent file {file_name}")
-
-    #     except Exception as e:
-    #         self.set_status(MessageLevel.ERROR, f"Failed to send file: {str(e)}")
 
     def update_nodes_table(self) -> None:
         nodes = self._manager.get_data().get_nodes()
@@ -560,33 +507,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.id_label.setText(str(cfg.id))
         self.hardware_label.setText(str(cfg.hardware))
 
-    # def set_psk(self):
-
-    #     psk_base64 = self.psk_base64_entry.get()
-    #     try:
-    #         index = int(self.channel_index_entry.get())
-    #     except ValueError:
-    #         self.set_status(MessageLevel.ERROR, f"Invalid channel index {index}.")
-    #         return
-
-    #     try:
-    #         psk_bytes = base64.b64decode(psk_base64)
-    #         self._manager.set_psk(index, psk_bytes)
-    #         self.set_status(MessageLevel.INFO, f"PSK for channel {index} set successfully.")
-    #     except Exception as e:
-    #         self.set_status(MessageLevel.ERROR, f"Failed to set PSK: {str(e)}")
-
-    # def add_channel(self):
-    #     name = self.new_channel_entry.get()
-    #     if not name:
-    #         self.set_status(MessageLevel.ERROR, "Channel name cannot be empty")
-    #         return
-    #     try:
-    #         self._manager.add_channel(name)
-    #         self.set_status(MessageLevel.INFO, f"Channel '{name}' added successfully.")
-    #     except Exception as e:
-    #         self.set_status(MessageLevel.ERROR, f"Failed to add channel: {str(e)}")
-
     def traceroute(self):
         dest_id = self.tr_dest_combobox.currentText()
         channel_name = self.tr_channel_combobox.currentText()
@@ -598,69 +518,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             maxhops=maxhops,
             channel_index=channel_index,
         )
-
-    # def open_tunnel_client(self):
-    #     tunnel_client_window = tk.Toplevel(self.master)
-    #     tunnel_client_window.title("Tunnel Client")
-
-    #     ip_address = self._manager.get_device_ip()
-    #     if ip_address:
-    #         message = f"Tunnel Client Setup\nDevice IP Address: {ip_address}"
-    #     else:
-    #         message = "Tunnel Client Setup\nDevice IP Address: Not available"
-
-    #     tk.Label(tunnel_client_window, text=message).pack(padx=5, pady=5)
-
-    #     tk.Label(tunnel_client_window, text="Destination IP:").pack(padx=10, pady=5)
-    #     dest_ip_entry = tk.Entry(tunnel_client_window)
-    #     dest_ip_entry.pack(padx=10, pady=5)
-
-    #     tk.Label(tunnel_client_window, text="Message:").pack(padx=10, pady=5)
-    #     message_entry = tk.Entry(tunnel_client_window)
-    #     message_entry.pack(padx=10, pady=5)
-
-    #     def send_packet():
-    #         dest_ip = dest_ip_entry.get()
-    #         message = message_entry.get()
-    #         if dest_ip and message:
-    #             self._manager.send_tunnel_packet(dest_ip, message)
-    #         else:
-    #             self.set_status(MessageLevel.ERROR, "Destination IP and message cannot be empty")
-
-    #     send_button = tk.Button(tunnel_client_window, text="Send Packet", command=send_packet)
-    #     send_button.pack(padx=5, pady=5)
-
-    #     def on_close_tunnel_client():
-    #         self._manager.close_tunnel()
-    #         tunnel_client_window.destroy()
-
-    #     tunnel_client_window.protocol("WM_DELETE_WINDOW", on_close_tunnel_client)
-
-    #     self._manager.start_tunnel_client()
-
-    # def open_tunnel_gateway(self):
-    #     tunnel_gateway_window = tk.Toplevel(self.master)
-    #     tunnel_gateway_window.title("Tunnel Gateway")
-
-    #     ip_address = self._manager.get_device_ip()
-    #     if ip_address:
-    #         message = f"Tunnel Gateway Setup\nDevice IP Address: {ip_address}"
-    #     else:
-    #         message = "Tunnel Gateway Setup\nDevice IP Address: Not available"
-
-    #     tk.Label(tunnel_gateway_window, text=message).pack(padx=5, pady=5)
-    #     self._manager.start_tunnel_gateway()
-
-    # def open_browser(self):
-    #     # Open a new window with a browser
-    #     browser_window = tk.Toplevel(self.master)
-    #     browser_window.title("Browser")
-
-    #     # Create a webview window
-    #     webview.create_window('Browser', 'https://www.google.com')
-
-    #     # Start the webview window
-    #     webview.start()
 
     def update_received_message(self) -> None:
         self.messages_table.clear()
