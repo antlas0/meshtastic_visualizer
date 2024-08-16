@@ -3,7 +3,7 @@ Python PyQt graphical interface to interface with a local node.
 
 Work based on original repository of "Meshtastic Chat Desktop"
 
-> Meshtastic Chat Desktop is a desktop application designed for Meshtastic device users who want to send and receive messages using their Meshtastic device via their desktop. The application supports Windows, Linux, and Raspberry Pi.
+> Meshtastic Chat Desktop is a desktop application designed for Meshtastic device users who want to send and receive messages using their Meshtastic device via their desktop.
 
 I forked the initial repo to work on the UI and backend interaction.  The objective is to provide a build on Linux to be able to graphically view a meshtastic node, without re-doing what the Python Meshtastic CLI does best.
 
