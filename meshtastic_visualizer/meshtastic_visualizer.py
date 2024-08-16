@@ -10,11 +10,11 @@ import humanize
 from threading import Lock
 from datetime import datetime
 from typing import List
-from PyQt5 import QtWidgets, uic
-from PyQt5.QtGui import QTextCursor
-from PyQt5.QtWidgets import QTableWidgetItem
-from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtCore import pyqtSignal
+from PyQt6 import QtWidgets, uic
+from PyQt6.QtGui import QTextCursor
+from PyQt6.QtWidgets import QTableWidgetItem
+from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtCore import pyqtSignal
 
 from .meshtastic_manager import MeshtasticManager
 from .resources import MessageLevel, \

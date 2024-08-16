@@ -18,7 +18,7 @@ import threading
 import meshtastic
 import meshtastic.serial_interface
 from meshtastic import channel_pb2, portnums_pb2, mesh_pb2
-from PyQt5.QtCore import pyqtSignal, QObject
+from PyQt6.QtCore import pyqtSignal, QObject
 from dataclasses import fields
 
 
