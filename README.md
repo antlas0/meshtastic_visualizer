@@ -47,7 +47,7 @@ Automatic lintering is done with `autopep8` in a `pre-commit` hook. You will nee
 
 ## Overview
 ![device_tab](https://github.com/user-attachments/assets/bbcb0be0-c3a0-443e-9237-24b4936ffd7b)
-![node_tab](https://github.com/user-attachments/assets/bfae8a7c-7c18-439a-821a-898631f449b2)
+![node_tab](https://github.com/user-attachments/assets/ca66273d-6d88-4355-8ef8-1489d16ebdd3)
 ![message_tab](https://github.com/user-attachments/assets/aa5dde74-786d-4746-8b8f-a9c11f6c368b)
 
 
