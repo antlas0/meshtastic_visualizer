@@ -9,7 +9,7 @@ I forked the initial repo to work on the UI and backend interaction.  The object
 
 ## Features
 I disabled working features from the original repo to focus on a basic working tool, and to better understand Meshtastic inner behavior.
-Main framework used is PyQt5.
+Main framework used is PyQt6.
 
 At the moment, what works :
 * Display configuration of local node
