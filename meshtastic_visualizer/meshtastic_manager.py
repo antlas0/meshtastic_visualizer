@@ -210,7 +210,7 @@ class MeshtasticManager(QObject, threading.Thread):
         if batlevel > 100:
             batlevel = 100
 
-        self._local_board_id = node["user"]["shortName"]
+        self._local_board_id = node["user"]["id"]
 
         self._config.local_node_config = MeshtasticNode(
             long_name=node["user"]["longName"],
@@ -456,6 +456,13 @@ class MeshtasticManager(QObject, threading.Thread):
         n.lastseen = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         self.store_or_update_node(n)
+        if n.id == self._local_board_id:
+            self._config.local_node_config.batterylevel = n.batterylevel if n.batterylevel is not None else self._config.local_node_config.batterylevel
+            self._config.local_node_config.chutil = n.chutil if n.chutil is not None else self._config.local_node_config.chutil
+            self._config.local_node_config.txairutil = n.txairutil if n.txairutil is not None else self._config.local_node_config.txairutil
+            self._config.local_node_config.role = n.role if n.role is not None else self._config.local_node_config.role
+            self._config.local_node_config.rssi = n.rssi if n.rssi is not None else self._config.local_node_config.rssi
+
         self.notify_frontend(MessageLevel.INFO, f"Updated node {n.id}.")
 
     @run_in_thread
