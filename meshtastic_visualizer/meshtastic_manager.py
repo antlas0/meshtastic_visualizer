@@ -109,6 +109,15 @@ class MeshtasticManager(QObject, threading.Thread):
             return -1
         return channel[0].index
 
+    def get_recipient_id_from_long_name(self, long_name: str) -> int:
+        nodes = self._data.get_nodes().values()
+        if nodes is None:
+            return ""
+        node = list(filter(lambda x: x.long_name == long_name, nodes))
+        if len(node) != 1:
+            return ""
+        return node[0].id
+
     def store_received_packet(self, packet: str) -> None:
         packets = self._data.get_received_packets()
         packets.append(packet)
@@ -278,7 +287,7 @@ class MeshtasticManager(QObject, threading.Thread):
                     )
 
                 # Got ack, find message to update the properties
-                trace = f"Acknowledgment received from {packet['fromId']}"
+                trace = f"Acknowledgment received from {packet['fromId']} for packet id {packet['decoded']['requestId']}"
                 print(trace)
                 self.notify_data(trace, "INFO")
                 messages_list = self._data.get_messages()
@@ -441,14 +450,16 @@ class MeshtasticManager(QObject, threading.Thread):
             onResponse=lambda x:x,
             onResponseAckPermitted=True,
         )
-        trace = f"Message sent with ID: {sent_packet.id}"
+        trace = f"Message sent with ID: {sent_packet.id}."
+        self.notify_frontend(MessageLevel.INFO, trace)
+        trace = f"Message sent with ID: {sent_packet.id} with details {sent_packet}"
+        self.notify_data(trace, "INFO")
         print(Fore.LIGHTBLACK_EX + f"{trace}")
         if message.want_ack:
             print(Fore.LIGHTBLACK_EX + "Waiting ack")
 
         message.mid = sent_packet.id
         self._data.get_messages()[str(message.mid)] = message
-        self.notify_frontend(MessageLevel.INFO, trace)
         self.notify_message()
 
     @run_in_thread

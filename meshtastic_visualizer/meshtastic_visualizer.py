@@ -82,8 +82,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self._manager.retrieve_local_node_configuration)
         self.traceroute_signal.connect(self._manager.sendTraceRoute)
         self.export_chat_button.pressed.connect(self._manager.export_chat)
-        # Load friends/addresses from JSON file
-        self.load_friends()
 
     def connect_device_event(self):
         self.connect_device_signal.emit()
@@ -332,25 +330,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         self.update_map_in_widget()
 
-    def update_friends_list(self):
-        self.friends_list.clear()
-        for id, friend in self._friends.items():
-            self.friends_list.addItem(f"{id}: {friend}")
-
-    def save_friends(self):
-        with open("friends.json", "w") as file:
-            json.dump(self._friends, file)
-
-    def load_friends(self):
-        if os.path.exists("friends.json"):
-            with open("friends.json", "r") as file:
-                self._friends = json.load(file)
-            self.update_friends_list()
-
     def send_message(self):
+
         message = self.message_textedit.toPlainText()
         channel_name = self.channel_combobox.currentText()
-        recipient = self.recipient_combobox.currentText()
+        recipient = self._manager.get_recipient_id_from_long_name(self.recipient_combobox.currentText())
         channel_index = self._manager.get_channel_index_from_name(channel_name)
         # Update timeout before sending
         if channel_index != -1 and message:
@@ -377,12 +361,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         self.recipient_combobox.clear()
         self.tr_dest_combobox.clear()
-        self.recipient_combobox.insertItem(0, "^all")
+        self.recipient_combobox.insertItem(0, self._friends.get("^all", "^all"))
         for i, node in enumerate(nodes.values()):
             if node.id == self._local_board_id:
                 continue
-            self.tr_dest_combobox.insertItem(i + 1, node.id)
-            self.recipient_combobox.insertItem(i + 1, node.id)
+            self.tr_dest_combobox.insertItem(i + 1, node.long_name)
+            self.recipient_combobox.insertItem(i + 1, node.long_name)
 
         rows: list[dict[str, any]] = []
         for node_id, node in nodes.items():

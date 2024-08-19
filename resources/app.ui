@@ -535,36 +535,13 @@
        <string>To</string>
       </property>
      </widget>
-     <widget class="QGroupBox" name="groupBox_6">
-      <property name="geometry">
-       <rect>
-        <x>610</x>
-        <y>20</y>
-        <width>291</width>
-        <height>151</height>
-       </rect>
-      </property>
-      <property name="title">
-       <string>Friends List</string>
-      </property>
-      <widget class="QListWidget" name="friends_list">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>30</y>
-         <width>271</width>
-         <height>111</height>
-        </rect>
-       </property>
-      </widget>
-     </widget>
      <widget class="QTableWidget" name="messages_table">
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>180</y>
+        <y>40</y>
         <width>891</width>
-        <height>381</height>
+        <height>521</height>
        </rect>
       </property>
      </widget>
@@ -572,7 +549,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>140</y>
+        <y>10</y>
         <width>89</width>
         <height>25</height>
        </rect>
