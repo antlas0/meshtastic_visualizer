@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import os
-import time
 import json
 import time
 import queue
@@ -10,7 +9,7 @@ import logging
 import datetime
 from pubsub import pub
 from colorama import Fore, init
-from dataclasses import fields
+from dataclasses import fields, asdict
 from typing import Union, Optional, Callable
 import google.protobuf.json_format
 from typing import List, Optional
@@ -20,7 +19,6 @@ import meshtastic.serial_interface
 from meshtastic import channel_pb2, portnums_pb2, mesh_pb2
 from PyQt6.QtCore import pyqtSignal, QObject
 from dataclasses import fields
-
 
 from .devices import list_serial_ports
 from .resources import run_in_thread, \
@@ -159,10 +157,10 @@ class MeshtasticManager(QObject, threading.Thread):
             trace = f"Successfully connected to Meshtastic device {self._config.device_path}"
             self._data.set_last_status(trace)
             self._data.set_is_connected(True)
-            self.notify_frontend(MessageLevel.INFO, trace)
             self.retrieve_channels()
             self.retrieve_nodes()
             self.retrieve_local_node_configuration()
+            self.notify_frontend(MessageLevel.INFO, trace)
             return True
 
     @run_in_thread
@@ -232,75 +230,80 @@ class MeshtasticManager(QObject, threading.Thread):
             return
 
         self.notify_data("---------------", message_type="INFO")
+        print(Fore.LIGHTBLACK_EX + "---------------")
         if 'fromId' in packet:
             message = f"From ID: {packet['fromId']}"
             print(Fore.LIGHTBLACK_EX + message)
             self.notify_data(message, message_type="INFO")
-            self.store_received_packet(message)
         if 'toId' in packet:
             message = f"To ID: {packet['toId']}"
             print(Fore.LIGHTBLACK_EX + message)
             self.notify_data(message, message_type="INFO")
-            self.store_received_packet(message)
         if 'id' in packet:
             message = f"Packet ID: {packet['id']}"
             print(Fore.LIGHTBLACK_EX + message)
             self.notify_data(message, message_type="INFO")
-            self.store_received_packet(message)
             message = f"Packet type: {packet['decoded']['portnum'].lower()}"
             print(Fore.LIGHTBLACK_EX + message)
             self.notify_data(message, message_type="INFO")
-            self.store_received_packet(message)
         if 'rxSnr' in packet:
-            message = f"Signal-to-Noise Ratio (SNR): {packet['rxSnr']}"
+            message = f"SNR: {packet['rxSnr']}"
             print(Fore.LIGHTBLACK_EX + message)
             self.notify_data(message, message_type="SNR")
-            self.store_received_packet(message)
         if 'rxRssi' in packet:
-            message = f"Received Signal Strength Indicator (RSSI): {packet['rxRssi']}"
-            print(Fore.BLUE + message)
+            message = f"RSSI: {packet['rxRssi']}"
+            print(Fore.LIGHTBLACK_EX + message)
             self.notify_data(message, message_type="RSSI")
-            self.store_received_packet(message)
         if 'hopLimit' in packet:
             message = f"Hop Limit: {packet['hopLimit']}"
             print(Fore.LIGHTBLACK_EX + message)
             self.notify_data(message, message_type="INFO")
-            self.store_received_packet(message)
         if 'encrypted' in packet:
             message = f"Encrypted: {packet['encrypted']}"
             print(Fore.LIGHTBLACK_EX + message)
             self.notify_data(message, message_type="INFO")
-            self.store_received_packet(message)
 
-        self.update_node_info(packet)
+        if packet["decoded"]["portnum"] == PacketInfoType.PCK_NODEINFO_APP.value:
+            self.update_node_info(packet)
 
         if packet["decoded"]["portnum"] == PacketInfoType.PCK_ROUTING_APP.value:
-            # Got ack, find message to update the properties
-            print(Fore.GREEN + f"Acknowledgment received from {packet['fromId']}")
-            self.notify_data(f"Acknowledgment received from {packet['fromId']}", "INFO")
-            messages_list = self._data.get_messages()
-            key = list(
-                filter(
-                    lambda x: messages_list[x].mid == packet["decoded"]["requestId"],
-                    messages_list.keys()))
-            if len(key) == 0:
-                return
-            key = key[0]
+            if packet["decoded"]["routing"]["errorReason"] != "NONE":
+                print(
+                    f'Received a NAK, error reason: {packet["decoded"]["routing"]["errorReason"]}'
+                )
+            else:
+                if str(packet["fromId"]) == str(self._local_board_id):
+                    print(
+                        f"Received an implicit ACK. Packet will likely arrive, but cannot be guaranteed."
+                    )
 
-            messages_list[key].date = datetime.datetime.now().strftime(
-                "%Y-%m-%d %H:%M:%S")
-            if "rxRssi" in packet:
-                messages_list[key].rx_rssi = packet['rxRssi']
-            if "rxSnr" in packet:
-                messages_list[key].rx_snr = packet['rxSnr']
-            if "hopLimit" in packet:
-                messages_list[key].hop_limit = packet['hopLimit']
-            if "hopStart" in packet:
-                messages_list[key].hop_start = packet['hopStart']
-            if "wantAck" in packet:
-                messages_list[key].want_ack = packet['wantAck']
-            messages_list[key].ack = "✅"
-            self.notify_message()
+                # Got ack, find message to update the properties
+                trace = f"Acknowledgment received from {packet['fromId']}"
+                print(trace)
+                self.notify_data(trace, "INFO")
+                messages_list = self._data.get_messages()
+                key = list(
+                    filter(
+                        lambda x: messages_list[x].mid == packet["decoded"]["requestId"],
+                        messages_list.keys()))
+                if len(key) == 0:
+                    return
+                key = key[0]
+
+                messages_list[key].date = datetime.datetime.now().strftime(
+                    "%Y-%m-%d %H:%M:%S")
+                if "rxRssi" in packet:
+                    messages_list[key].rx_rssi = packet['rxRssi']
+                if "rxSnr" in packet:
+                    messages_list[key].rx_snr = packet['rxSnr']
+                if "hopLimit" in packet:
+                    messages_list[key].hop_limit = packet['hopLimit']
+                if "hopStart" in packet:
+                    messages_list[key].hop_start = packet['hopStart']
+                if "wantAck" in packet:
+                    messages_list[key].want_ack = packet['wantAck']
+                messages_list[key].ack = "✅"
+                self.notify_message()
 
         if packet["decoded"]["portnum"] == PacketInfoType.PCK_TRACEROUTE_APP.value:
             self.notify_frontend(MessageLevel.INFO, f"Traceoute completed.")
@@ -383,24 +386,65 @@ class MeshtasticManager(QObject, threading.Thread):
                     self.notify_message()
 
     @run_in_thread
+    def onMessageAckNack(self, packet, ack_event) -> None:
+        if packet["decoded"]["portnum"] == PacketInfoType.PCK_ROUTING_APP.value:
+            ack_event.set()
+            if packet["decoded"]["routing"]["errorReason"] != "NONE":
+                print(
+                    f'Received a NAK, error reason: {packet["decoded"]["routing"]["errorReason"]}'
+                )
+            else:
+                if str(packet["fromId"]) == str(self._local_board_id):
+                    print(
+                        f"Received an implicit ACK. Packet will likely arrive, but cannot be guaranteed."
+                    )
+
+                # Got ack, find message to update the properties
+                self.notify_data(f"Acknowledgment received from {packet['fromId']}", "INFO")
+                messages_list = self._data.get_messages()
+                key = list(
+                    filter(
+                        lambda x: messages_list[x].mid == packet["decoded"]["requestId"],
+                        messages_list.keys()))
+                if len(key) == 0:
+                    return
+                key = key[0]
+
+                messages_list[key].date = datetime.datetime.now().strftime(
+                    "%Y-%m-%d %H:%M:%S")
+                if "rxRssi" in packet:
+                    messages_list[key].rx_rssi = packet['rxRssi']
+                if "rxSnr" in packet:
+                    messages_list[key].rx_snr = packet['rxSnr']
+                if "hopLimit" in packet:
+                    messages_list[key].hop_limit = packet['hopLimit']
+                if "hopStart" in packet:
+                    messages_list[key].hop_start = packet['hopStart']
+                if "wantAck" in packet:
+                    messages_list[key].want_ack = packet['wantAck']
+                messages_list[key].ack = "✅"
+                self.notify_message()
+
+    @run_in_thread
     def send_text_message(self, message: MeshtasticMessage):
         if self._config.interface is None:
             return
 
-        ack_event = threading.Event()  # Create an event object to wait for acknowledgment
-
         message.ack = "❌"
-        if message.want_ack:
-            print(Fore.LIGHTBLACK_EX + "Sending message")
-        sent_packet = self._config.interface.sendText(
-            text=message.content,
+        sent_packet = self._config.interface.sendData(
+            data=message.content.encode("utf8"),
             destinationId=message.to_id,
+            portNum=portnums_pb2.PortNum.TEXT_MESSAGE_APP,
             wantAck=message.want_ack,
             wantResponse=True,
             channelIndex=message.channel_index,
+            onResponse=lambda x:x,
+            onResponseAckPermitted=True,
         )
         trace = f"Message sent with ID: {sent_packet.id}"
         print(Fore.LIGHTBLACK_EX + f"{trace}")
+        if message.want_ack:
+            print(Fore.LIGHTBLACK_EX + "Waiting ack")
 
         message.mid = sent_packet.id
         self._data.get_messages()[str(message.mid)] = message
@@ -539,6 +583,17 @@ class MeshtasticManager(QObject, threading.Thread):
             self._data.set_last_status(f"Channels retrieved.")
             self.notify_frontend(MessageLevel.INFO, "Channels retrieved.")
             self.notify_channels()
+
+    @run_in_thread
+    def export_chat(self) -> None:
+        messages = [ asdict(x) for x in self._data.get_messages().values() ]
+        data_json = json.dumps(messages, indent=4)
+        nnow = datetime.datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
+        fpath = f"messages_{nnow}.json"
+        with open(fpath, "w") as json_file:
+            json_file.write(data_json)
+            trace = f"Exported chat to file: {fpath}"
+            self.notify_frontend(MessageLevel.INFO, trace)
 
     @run_in_thread
     def sendTraceRoute(self,

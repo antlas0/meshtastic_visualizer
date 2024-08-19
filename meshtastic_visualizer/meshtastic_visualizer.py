@@ -81,6 +81,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.retrieve_local_node_config_signal.connect(
             self._manager.retrieve_local_node_configuration)
         self.traceroute_signal.connect(self._manager.sendTraceRoute)
+        self.export_chat_button.pressed.connect(self._manager.export_chat)
         # Load friends/addresses from JSON file
         self.load_friends()
 
@@ -126,6 +127,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.send_button.clicked.connect(self.send_message)
         self.traceroute_button.clicked.connect(self.traceroute)
         self.message_textedit.textChanged.connect(self.update_text_message_length)
+        self.remaining_chars_label.setText(f"{TEXT_MESSAGE_MAX_CHARS}/{TEXT_MESSAGE_MAX_CHARS}")
         self.init_map()
 
         self.messages_table.setColumnCount(
@@ -192,7 +194,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         device_path = self.device_combobox.currentText()
         if device_path:
             self.set_status(MessageLevel.INFO, f"Connecting to {device_path}.")
-            self._manager.set_meshtastic_device(device_path)
             self.connect_device_event()
         else:
             self.set_status(MessageLevel.ERROR,
@@ -210,12 +211,26 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 device = "Me"
             elif hop in self._friends:
                 device = self._friends[hop]
-
             row_position = self.traceroute_table.rowCount()
             self.traceroute_table.insertRow(row_position)
             self.traceroute_table.setItem(
-                self.traceroute_table.rowCount() - 1, 0, QTableWidgetItem(device))
+                row_position, 0, QTableWidgetItem(device))
             self.traceroute_table.resizeColumnsToContents()
+
+    def update_text_message_length(self):
+        current_text = self.message_textedit.toPlainText()
+
+        if len(current_text) > TEXT_MESSAGE_MAX_CHARS:
+            self.message_textedit.blockSignals(True) 
+            self.message_textedit.setPlainText(current_text[:TEXT_MESSAGE_MAX_CHARS])
+            cursor = self.message_textedit.textCursor()
+            cursor.setPosition(TEXT_MESSAGE_MAX_CHARS)
+            self.message_textedit.setTextCursor(cursor)
+            self.message_textedit.blockSignals(False)
+
+        remaining_chars = TEXT_MESSAGE_MAX_CHARS - len(self.message_textedit.toPlainText())
+        self.remaining_chars_label.setText(f"{remaining_chars}/{TEXT_MESSAGE_MAX_CHARS}")
+
 
     def init_map(self):
         self._map = folium.Map(zoom_start=7)
@@ -337,6 +352,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         channel_name = self.channel_combobox.currentText()
         recipient = self.recipient_combobox.currentText()
         channel_index = self._manager.get_channel_index_from_name(channel_name)
+        # Update timeout before sending
         if channel_index != -1 and message:
             m = MeshtasticMessage(
                 mid=-1,
@@ -437,8 +453,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             row_position = self.mesh_table.rowCount()
             self.mesh_table.insertRow(row_position)
             for i, elt in enumerate(columns):
+                data = str(row[elt])
+                if data == "None": data = "" 
                 self.mesh_table.setItem(
-                    row_position, i, QTableWidgetItem(str(row[elt])))
+                    row_position, i, QTableWidgetItem(data))
                 self.mesh_table.resizeColumnsToContents()
 
     def scan_mesh(self):
@@ -490,24 +508,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def retrieve_channels(self):
         self.retrieve_channels_event()
-
-
-    def update_text_message_length(self):
-        current_text = self.message_textedit.toPlainText()
-
-        # Check if the text length exceeds the limit
-        if len(current_text) > TEXT_MESSAGE_MAX_CHARS:
-            # Block further input by truncating the text
-            self.message_textedit.blockSignals(True)  # Temporarily block signals to avoid recursion
-            self.message_textedit.setPlainText(current_text[:TEXT_MESSAGE_MAX_CHARS])
-            cursor = self.message_textedit.textCursor()
-            cursor.setPosition(TEXT_MESSAGE_MAX_CHARS)
-            self.message_textedit.setTextCursor(cursor)
-            self.message_textedit.blockSignals(False)  # Re-enable signals
-
-        # Update the remaining character count
-        remaining_chars = TEXT_MESSAGE_MAX_CHARS - len(self.message_textedit.toPlainText())
-        self.remaining_chars_label.setText(f"{remaining_chars}/{TEXT_MESSAGE_MAX_CHARS}")
 
     def update_local_node_config(self):
         cfg = self._manager.get_config().local_node_config
