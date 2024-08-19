@@ -209,6 +209,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.disconnect_device_event()
 
     def update_traceroute(self, route: list) -> None:
+        self.traceroute_table.clear()
+        self.traceroute_table.setRowCount(0)
         for hop in route:
             device = hop
             if hop == self._local_board_id:
@@ -216,7 +218,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             elif hop in self._friends:
                 device = self._friends[hop]
 
-            self.traceroute_table.insertRow(self.traceroute_table.rowCount())
+            row_position = self.traceroute_table.rowCount()
+            self.traceroute_table.insertRow(row_position)
             self.traceroute_table.setItem(
                 self.traceroute_table.rowCount() - 1, 0, QTableWidgetItem(device))
             self.traceroute_table.resizeColumnsToContents()

@@ -233,37 +233,7 @@ class MeshtasticManager(QObject, threading.Thread):
             "Local node configuration retrieved.")
 
     @run_in_thread
-    def on_ack(self, response, event):
-        print(Fore.GREEN + "Acknowledgment received!")
-        event.set()  # Signal that acknowledgment has been received
-        self.store_received_packet("Acknowledgment received!")
-        self.notify_data("Acknowledgment received!", "INFO")
-        messages_list = self._data.get_messages()
-        key = list(
-            filter(
-                lambda x: messages_list[x].mid == response["decoded"]["requestId"],
-                messages_list.keys()))
-        if len(key) == 0:
-            return
-        key = key[0]
-
-        messages_list[key].date = datetime.datetime.now().strftime(
-            "%Y-%m-%d %H:%M:%S")
-        if "rxRssi" in response:
-            messages_list[key].rx_rssi = response['rxRssi']
-        if "rxSnr" in response:
-            messages_list[key].rx_snr = response['rxSnr']
-        if "hopLimit" in response:
-            messages_list[key].hop_limit = response['hopLimit']
-        if "hopStart" in response:
-            messages_list[key].hop_start = response['hopStart']
-        if "wantAck" in response:
-            messages_list[key].want_ack = response['wantAck']
-        messages_list[key].ack = "✅"
-        self.notify_message()
-
-    @run_in_thread
-    def on_receive(self, packet, interface):
+    def on_receive(self, packet:dict, interface:Optional[meshtastic.serial_interface.SerialInterface]=None):
         if "decoded" not in packet:
             return
         if "portnum" not in packet["decoded"]:
@@ -311,6 +281,48 @@ class MeshtasticManager(QObject, threading.Thread):
             self.store_received_packet(message)
 
         self.update_node_info(packet)
+
+        if packet["decoded"]["portnum"] == PacketInfoType.PCK_ROUTING_APP.value:
+            # Got ack, find message to update the properties
+            print(Fore.GREEN + f"Acknowledgment received from {packet['fromId']}")
+            self.notify_data(f"Acknowledgment received from {packet['fromId']}", "INFO")
+            messages_list = self._data.get_messages()
+            key = list(
+                filter(
+                    lambda x: messages_list[x].mid == packet["decoded"]["requestId"],
+                    messages_list.keys()))
+            if len(key) == 0:
+                return
+            key = key[0]
+
+            messages_list[key].date = datetime.datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S")
+            if "rxRssi" in packet:
+                messages_list[key].rx_rssi = packet['rxRssi']
+            if "rxSnr" in packet:
+                messages_list[key].rx_snr = packet['rxSnr']
+            if "hopLimit" in packet:
+                messages_list[key].hop_limit = packet['hopLimit']
+            if "hopStart" in packet:
+                messages_list[key].hop_start = packet['hopStart']
+            if "wantAck" in packet:
+                messages_list[key].want_ack = packet['wantAck']
+            messages_list[key].ack = "✅"
+            self.notify_message()
+
+        if packet["decoded"]["portnum"] == PacketInfoType.PCK_TRACEROUTE_APP.value:
+            self.notify_frontend(MessageLevel.INFO, f"Traceoute completed.")
+            routeDiscovery = mesh_pb2.RouteDiscovery()
+            routeDiscovery.ParseFromString(packet["decoded"]["payload"])
+            asDict = google.protobuf.json_format.MessageToDict(routeDiscovery)
+
+            route: list = [self._nodeNumToId(packet["to"])]
+            if "route" in asDict:
+                for nodeNum in asDict["route"]:
+                    route.append(self._nodeNumToId(nodeNum))
+            route.append(self._nodeNumToId(packet["from"]))
+            self._data.acknowledgment.receivedTraceRoute = True
+            self.notify_traceroute(route)
 
         decoded = packet['decoded']
         if 'payload' in decoded and isinstance(
@@ -385,21 +397,19 @@ class MeshtasticManager(QObject, threading.Thread):
 
         ack_event = threading.Event()  # Create an event object to wait for acknowledgment
 
-        def callback(response):
-            self.on_ack(response, ack_event)
-
         message.ack = "❌"
         if message.want_ack:
-            print(Fore.LIGHTBLACK_EX + "Sending message, waiting ACK...")
+            print(Fore.LIGHTBLACK_EX + "Sending message")
         sent_packet = self._config.interface.sendText(
             text=message.content,
             destinationId=message.to_id,
             wantAck=message.want_ack,
             wantResponse=True,
-            onResponse=callback,
             channelIndex=message.channel_index,
         )
         trace = f"Message sent with ID: {sent_packet.id}"
+        print(Fore.LIGHTBLACK_EX + f"{trace}")
+
         message.mid = sent_packet.id
         self._data.get_messages()[str(message.mid)] = message
         self.notify_frontend(MessageLevel.INFO, trace)
@@ -560,45 +570,11 @@ class MeshtasticManager(QObject, threading.Thread):
             destinationId=dest,
             portNum=portnums_pb2.PortNum.TRACEROUTE_APP,
             wantResponse=True,
-            onResponse=self.onResponseTraceRoute,
             channelIndex=channelIndex,
         )
-        # extend timeout based on number of nodes, limit by configured hopLimit
-        waitFactor = min(len(self._config.interface.nodes) -
-                         1 if self._config.interface.nodes else 0, hopLimit)
         self.notify_frontend(
             MessageLevel.INFO,
             f"Traceoute started to {dest}.")
-        self.waitForTraceRoute(waitFactor)
-
-    def onResponseTraceRoute(self, p: dict):
-        """on response for trace route"""
-        self.notify_frontend(MessageLevel.INFO, f"Traceoute completed.")
-        routeDiscovery = mesh_pb2.RouteDiscovery()
-        routeDiscovery.ParseFromString(p["decoded"]["payload"])
-        asDict = google.protobuf.json_format.MessageToDict(routeDiscovery)
-
-        route: list = [self._nodeNumToId(p["to"])]
-        if "route" in asDict:
-            for nodeNum in asDict["route"]:
-                route.append(self._nodeNumToId(nodeNum))
-        route.append(self._nodeNumToId(p["from"]))
-        self._data.acknowledgment.receivedTraceRoute = True
-        self.notify_traceroute(route)
-
-    def waitForTraceRoute(self, waitFactor):
-        """Wait for trace route response"""
-        timeout = self._config.get_timeout() + waitFactor * 5
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            if self._data.acknowledgment.receivedTraceRoute:
-                return True
-            time.sleep(0.5)
-        print(
-            Fore.MAGENTA +
-            "Trace route response not received within timeout period.")
-        self.notify_frontend(MessageLevel.ERROR, f"Traceoute not completed.")
-        return False
 
     def _nodeNumToId(self, nodeNum):
         """Convert node number to node ID"""
