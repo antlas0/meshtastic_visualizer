@@ -8,6 +8,8 @@ from typing import List, Optional, Any, Dict
 from threading import Lock
 
 
+TEXT_MESSAGE_MAX_CHARS = 237
+
 class MessageLevel(enum.Enum):
     """
     Message criticality level

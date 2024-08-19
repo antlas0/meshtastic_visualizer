@@ -18,7 +18,8 @@ from PyQt6.QtCore import pyqtSignal
 
 from .meshtastic_manager import MeshtasticManager
 from .resources import MessageLevel, \
-    MeshtasticMessage
+    MeshtasticMessage, \
+    TEXT_MESSAGE_MAX_CHARS
 
 
 class MeshtasticQtApp(QtWidgets.QMainWindow):
@@ -124,6 +125,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.scan_button.clicked.connect(self.scan_mesh)
         self.send_button.clicked.connect(self.send_message)
         self.traceroute_button.clicked.connect(self.traceroute)
+        self.message_textedit.textChanged.connect(self.update_text_message_length)
         self.init_map()
 
         self.messages_table.setColumnCount(
@@ -493,6 +495,24 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def retrieve_channels(self):
         self.retrieve_channels_event()
+
+
+    def update_text_message_length(self):
+        current_text = self.message_textedit.toPlainText()
+
+        # Check if the text length exceeds the limit
+        if len(current_text) > TEXT_MESSAGE_MAX_CHARS:
+            # Block further input by truncating the text
+            self.message_textedit.blockSignals(True)  # Temporarily block signals to avoid recursion
+            self.message_textedit.setPlainText(current_text[:TEXT_MESSAGE_MAX_CHARS])
+            cursor = self.message_textedit.textCursor()
+            cursor.setPosition(TEXT_MESSAGE_MAX_CHARS)
+            self.message_textedit.setTextCursor(cursor)
+            self.message_textedit.blockSignals(False)  # Re-enable signals
+
+        # Update the remaining character count
+        remaining_chars = TEXT_MESSAGE_MAX_CHARS - len(self.message_textedit.toPlainText())
+        self.remaining_chars_label.setText(f"{remaining_chars}/{TEXT_MESSAGE_MAX_CHARS}")
 
     def update_local_node_config(self):
         cfg = self._manager.get_config().local_node_config
