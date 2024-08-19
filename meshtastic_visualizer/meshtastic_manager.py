@@ -60,8 +60,6 @@ class MeshtasticManager(QObject, threading.Thread):
         self._data = MeshtasticDataStore()
         self._config.device_path = dev_path
         self._config.destination_id = BROADCAST_ADDR
-        self._config.timeout = 15  # default
-        self._config.retransmission_limit = 3  # default
         self._config.interface = None
         self._data.received_chunks = {}
         self._data.acknowledged_chunks = set()
@@ -103,12 +101,6 @@ class MeshtasticManager(QObject, threading.Thread):
 
     def set_meshtastic_device(self, device: str) -> None:
         self._config.device_path = device
-
-    def set_retransmission_limit(self, limit: int) -> None:
-        self._config.retransmission_limit = limit
-
-    def get_retransmission_limit(self) -> int:
-        return self._config.retransmission_limit
 
     def get_channel_index_from_name(self, name: str) -> int:
         channels = self._config.get_channels()
@@ -414,12 +406,6 @@ class MeshtasticManager(QObject, threading.Thread):
         self._data.get_messages()[str(message.mid)] = message
         self.notify_frontend(MessageLevel.INFO, trace)
         self.notify_message()
-        # Wait for acknowledgment or timeout after the set period
-        ack_event.wait(timeout=self._config.get_timeout())
-        if not ack_event.is_set():
-            trace = "Acknowledgment not received within timeout period."
-            self._data.set_last_status(trace)
-            self.notify_frontend(MessageLevel.ERROR, trace)
 
     @run_in_thread
     def update_node_info(self, packet) -> None:
@@ -585,12 +571,6 @@ class MeshtasticManager(QObject, threading.Thread):
             if node["num"] == nodeNum:
                 return node["user"]["id"]
         return f"!{nodeNum:08x}"
-
-    def set_timeout(self, timeout) -> None:
-        self._config.timeout = int(timeout)
-
-    def get_timeout(self) -> int:
-        return self._config.timeout
 
     def enqueue_task(self, task, *args, **kwargs):
         self.task_queue.put((task, args, kwargs))

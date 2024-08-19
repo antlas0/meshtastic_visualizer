@@ -176,15 +176,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if data.get_is_connected():
             self.connect_button.setEnabled(False)
             self.disconnect_button.setEnabled(True)
-            self.retransmission_spinbox.setEnabled(False)
-            self.timeout_spinbox.setEnabled(False)
             for button in self._action_buttons:
                 button.setEnabled(True)
         else:
             self.connect_button.setEnabled(True)
             self.disconnect_button.setEnabled(False)
-            self.retransmission_spinbox.setEnabled(True)
-            self.timeout_spinbox.setEnabled(True)
             for button in self._action_buttons:
                 button.setEnabled(False)
 
@@ -197,9 +193,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if device_path:
             self.set_status(MessageLevel.INFO, f"Connecting to {device_path}.")
             self._manager.set_meshtastic_device(device_path)
-            self._manager.set_timeout(self.timeout_spinbox.value())
-            self._manager.set_retransmission_limit(
-                self.retransmission_spinbox.value())
             self.connect_device_event()
         else:
             self.set_status(MessageLevel.ERROR,
@@ -344,7 +337,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         channel_name = self.channel_combobox.currentText()
         recipient = self.recipient_combobox.currentText()
         channel_index = self._manager.get_channel_index_from_name(channel_name)
-        # Update timeout before sending
         if channel_index != -1 and message:
             m = MeshtasticMessage(
                 mid=-1,
