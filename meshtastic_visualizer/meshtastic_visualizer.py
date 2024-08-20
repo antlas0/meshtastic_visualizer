@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
 
-import json
 import hashlib
-import os
 import io
 import folium
 import humanize
@@ -23,12 +21,11 @@ from .resources import MessageLevel, \
 
 
 class MeshtasticQtApp(QtWidgets.QMainWindow):
-    connect_device_signal = pyqtSignal()
+    connect_device_signal = pyqtSignal(bool)
     disconnect_device_signal = pyqtSignal()
     scan_mesh_signal = pyqtSignal()
     send_message_signal = pyqtSignal(MeshtasticMessage)
     retrieve_channels_signal = pyqtSignal()
-    retrieve_local_node_config_signal = pyqtSignal()
     traceroute_signal = pyqtSignal(str, int, int)
 
     def __init__(self):
@@ -78,13 +75,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.retrieve_channels_signal.connect(self._manager.retrieve_channels)
         self.scan_mesh_signal.connect(self.update_nodes_map)
         self.scan_mesh_signal.connect(self.update_nodes_table)
-        self.retrieve_local_node_config_signal.connect(
-            self._manager.retrieve_local_node_configuration)
-        self.traceroute_signal.connect(self._manager.sendTraceRoute)
+        self.traceroute_signal.connect(self._manager.send_traceroute)
         self.export_chat_button.pressed.connect(self._manager.export_chat)
+        self.export_radio_button.pressed.connect(self.export_radio)
 
-    def connect_device_event(self):
-        self.connect_device_signal.emit()
+    def connect_device_event(self, resetDB:bool):
+        self.connect_device_signal.emit(resetDB)
 
     def disconnect_device_event(self):
         self.disconnect_device_signal.emit()
@@ -98,18 +94,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def traceroute_event(self, dest_id: str, maxhops: int, channel_index: int):
         self.traceroute_signal.emit(dest_id, maxhops, channel_index)
 
-    def retrieve_local_node_config_event(self):
-        self.retrieve_local_node_config_signal.emit()
-
     def send_message_event(self, message: MeshtasticMessage):
         self.send_message_signal.emit(message)
-
-    def update_status(
-            self,
-            status: MessageLevel = MessageLevel.UNKNOWN) -> None:
-        data = self._manager.get_data()
-        last_status = data.get_last_status()
-        self.set_status(status, last_status)
 
     def set_status(self, loglevel: MessageLevel, message: str) -> None:
         if loglevel.value == MessageLevel.ERROR.value:
@@ -141,6 +127,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.scan_button,
             self.traceroute_button,
             self.send_button,
+            self.export_chat_button,
+            self.export_radio_button,
         ]
         for button in self._action_buttons:
             button.setEnabled(False)
@@ -192,23 +180,24 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         device_path = self.device_combobox.currentText()
         if device_path:
             self.set_status(MessageLevel.INFO, f"Connecting to {device_path}.")
-            self.connect_device_event()
+            self.connect_device_event(self.reset_nodedb_checkbox.isChecked())
         else:
             self.set_status(MessageLevel.ERROR,
                             f"Cannot connect. Please specify a device path.")
 
-    def disconnect_device(self):
+    def disconnect_device(self) -> None:
+        for i, device in enumerate(self._manager.get_meshtastic_devices()):
+            self.device_combobox.clear()
+            self.device_combobox.insertItem(i, device)
         self.disconnect_device_event()
 
     def update_traceroute(self, route: list) -> None:
         self.traceroute_table.clear()
         self.traceroute_table.setRowCount(0)
         for hop in route:
-            device = hop
+            device = self._manager.get_long_name_from_id(hop)
             if hop == self._local_board_id:
                 device = "Me"
-            elif hop in self._friends:
-                device = self._friends[hop]
             row_position = self.traceroute_table.rowCount()
             self.traceroute_table.insertRow(row_position)
             self.traceroute_table.setItem(
@@ -253,7 +242,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._map = folium.Map(zoom_start=7)
 
         # Add a new marker
-        nodes = self._manager._data.get_nodes()
+        nodes = self._manager.get_nodes()
         if nodes is None:
             return
 
@@ -262,52 +251,62 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         # in case of links traczing, pre-create a dict(node_id, [lat, lon])
         nodes_coords = {
-            x.id: [
+            x["user"]["id"]: [
                 float(
-                    x.lat), float(
-                    x.lon)] for __, x in nodes.items() if x.lat is not None and x.lon is not None}
+                    x["position"]["latitude"]), float(
+                    x["position"]["longitude"])] for __, x in nodes.items() if "position" in x and "latitude" in x["position"] and "longitude" in x["position"]}
 
-        for node_id, node in nodes.items():
+        for __, node in nodes.items():
             strl = []
-            strl.append(f"<b>Name:</b> {node.long_name}</br>")
-            strl.append(f"<b>id:</b> {node.id}</br>")
-            if node.hardware:
-                strl.append(f"<b>Hardware:</b> {node.hardware}</br>")
-            if node.batterylevel:
+            strl.append(f"<b>Name:</b> {node['user']['longName']}</br>")
+            strl.append(f"<b>id:</b> {node['user']['id']}</br>")
+            if 'hwModel' in node["user"]:
+                strl.append(f"<b>Hardware:</b> {node['user']['hwModel']}</br>")
+
+            if "deviceMetrics" in node:
+                if 'batteryLevel' in node["deviceMetrics"]:
+                    strl.append(    
+                        f"<b>Battery Level:</b> {node['deviceMetrics']['batteryLevel']} %</br>")
+                if 'airUtilTx' in node["deviceMetrics"]:
+                    strl.append(f"<b>Air Util. Tx:</b> {round(node['deviceMetrics']['airUtilTx'], 2)} %</br>")
+                if 'channelUtilization' in node["deviceMetrics"]:
+                    strl.append(f"<b>Channel utilization:</b> {round(node['deviceMetrics']['channelUtilization'], 2)} %</br>")
+                if 'uptimeSeconds'in node["deviceMetrics"]:
+                    strl.append(
+                        f"<b>Uptime:</b> {humanize.precisedelta(node['deviceMetrics']['uptimeSeconds'])}</br>")
+
+            if 'rssi' in node:
+                strl.append(f"<b>RSSI:</b> {node['rssi']} dBm</br>")
+            if 'snr' in node:
+                strl.append(f"<b>SNR:</b> {node['snr']}</br>")
+            if 'lastHeard'in node and node["lastHeard"] is not None:
                 strl.append(
-                    f"<b>Battery Level:</b> {node.batterylevel} %</br>")
-            if node.role:
-                strl.append(f"<b>Role:</b> {node.role}</br>")
-            if node.hopsaway:
-                strl.append(f"<b>Hops Away:</b> {node.hopsaway}</br>")
-            if node.txairutil:
-                strl.append(f"<b>Air Util. Tx:</b> {node.txairutil} %</br>")
-            if node.rssi:
-                strl.append(f"<b>RSSI:</b> {node.rssi} dBm</br>")
-            if node.snr:
-                strl.append(f"<b>SNR:</b> {node.snr}</br>")
-            if node.uptime:
-                strl.append(
-                    f"<b>Uptime:</b> {humanize.precisedelta(node.uptime)}</br>")
-            if node.lat is not None and node.lon is not None:
+                    f"<b>Last Heard:</b> {humanize.naturaldelta(datetime.fromtimestamp(node['lastHeard']))}</br>")
+
+            if "position" in node is not None and "position" in node is not None and "latitude" in node["position"] and "longitude" in node["position"]:
                 popup_content = "".join(strl)
                 popup = folium.Popup(
                     popup_content, max_width=300, min_width=250)
+                color = "blue"
+                if node["user"]["id"] == self._local_board_id:
+                    color = "orange"
+
                 marker = folium.Marker(
                     location=[
-                        node.lat,
-                        node.lon],
+                        node["position"]["latitude"],
+                        node["position"]["longitude"],],
                     popup=popup,
+                    icon=folium.Icon(color=color),
                 )
                 marker.add_to(self._markers_group)
                 self._markers.append(marker)
-
-            if node.neighbors is not None:
-                for neighbor in node.neighbors:
+            neighbors = self._manager.get_neighbors()
+            if neighbors and node["user"]["id"] in neighbors.keys():
+                for neighbor in neighbors[node["user"]["id"]]:
                     # we can trace a link
                     if neighbor in nodes_coords.keys():
                         link_coords = [
-                            nodes_coords[node.id],
+                            nodes_coords[node["user"]["id"]],
                             nodes_coords[neighbor],
                         ]
                     if link_coords[0][0] is not None \
@@ -315,7 +314,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                             and link_coords[1][0] is not None\
                             and link_coords[1][1] is not None:
                         link = folium.PolyLine(
-                            link_coords, color=__link_color(node.id))
+                            link_coords, color=__link_color(node["user"]["id"]))
                         link.add_to(self._link_group)
                         self._links.append(link)
         if self._markers:
@@ -334,7 +333,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         message = self.message_textedit.toPlainText()
         channel_name = self.channel_combobox.currentText()
-        recipient = self._manager.get_recipient_id_from_long_name(self.recipient_combobox.currentText())
+        recipient = self._manager.get_id_from_long_name(self.recipient_combobox.currentText())
         channel_index = self._manager.get_channel_index_from_name(channel_name)
         # Update timeout before sending
         if channel_index != -1 and message:
@@ -355,62 +354,63 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.message_textedit.clear()
 
     def update_nodes_table(self) -> None:
-        nodes = self._manager.get_data().get_nodes()
-        if nodes is None:
+        nodes = self._manager.get_nodes()
+        if not nodes:
             return
 
         self.recipient_combobox.clear()
         self.tr_dest_combobox.clear()
-        self.recipient_combobox.insertItem(0, self._friends.get("^all", "^all"))
+        self.recipient_combobox.insertItem(0, "All")
         for i, node in enumerate(nodes.values()):
-            if node.id == self._local_board_id:
+            if node["user"]["id"] == self._local_board_id:
                 continue
-            self.tr_dest_combobox.insertItem(i + 1, node.long_name)
-            self.recipient_combobox.insertItem(i + 1, node.long_name)
+            self.tr_dest_combobox.insertItem(i + 1, node["user"]["longName"])
+            self.recipient_combobox.insertItem(i + 1, node["user"]["longName"])
 
         rows: list[dict[str, any]] = []
-        for node_id, node in nodes.items():
+        for __, node in nodes.items():
+            user = node["user"] if "user" in node else {}
+            device_metrics = node["deviceMetrics"] if "deviceMetrics" in node else {}
+            position = node["position"] if "position" in node else {}
+
             row = {"User": "", "ID": ""}
 
             row.update(
                 {
-                    "User": node.long_name,
-                    "AKA": node.short_name,
-                    "ID": node.id,
-                    "Role": node.role,
-                    "Hardware": node.hardware,
+                    "User": user.get("longName", ""),
+                    "AKA": user.get("shortName", ""),
+                    "ID": user.get("id", ""),
+                    "Hardware": user.get("hwModel", ""),
                 }
             )
             row.update(
                 {
-                    "Latitude": node.lat,
-                    "Longitude": node.lon,
-                    "Altitude": node.alt,
+                    "Latitude": position.get("latitude", None),
+                    "Longitude": position.get("longitude", None),
                 }
             )
 
-            row.update({"Battery": node.batterylevel})
+            row.update({"Battery": device_metrics.get("batteryLevel", "")})
             row.update(
                 {
-                    "Channel util.": node.chutil,
-                    "Tx air util.": node.txairutil,
-                    "RSSI": node.rssi,
+                    "Channel util. (%)": round(device_metrics["channelUtilization"],2) if "channelUtilization" in device_metrics else "" ,
+                    "Tx air util. (%)": round(device_metrics["airUtilTx"],2) if "airUtilTx" in device_metrics else "" ,
+                    "RSSI": node["rssi"] if "rssi" in node else "",
                 }
             )
 
             row.update(
                 {
-                    "SNR": node.snr,
-                    "Hops Away": node.hopsaway,
-                    "Last Seen": node.lastseen,
-                    "First Seen": node.firstseen,
-                    "Uptime": humanize.precisedelta(node.uptime),
+                    "SNR": node.get("snr", ""),
+                    "Hops Away": node.get("hopsaway", ""),
+                    "Last Seen": humanize.naturaltime(datetime.fromtimestamp(node["lastHeard"])) if "lastHeard" in node and node["lastHeard"] is not None else "",
+                    "Uptime": humanize.precisedelta(device_metrics["uptimeSeconds"]) if "uptimeSeconds" in device_metrics else "",
                 }
             )
 
             rows.append(row)
 
-        rows.sort(key=lambda r: r.get("LastHeard") or "0000", reverse=True)
+        rows.sort(key=lambda r: r.get("LastHeard", "") or "0000", reverse=True)
 
         self.mesh_table.clear()
         self.mesh_table.setRowCount(0)
@@ -418,18 +418,16 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             "User",
             "ID",
             "AKA",
-            "Role",
             "Hardware",
             "Latitude",
             "Longitude",
             "Battery",
-            "Channel util.",
-            "Tx air util.",
+            "Channel util. (%)",
+            "Tx air util. (%)",
             "RSSI",
             "SNR",
             "Hops Away",
             "Last Seen",
-            "First Seen",
             "Uptime"]
         self.mesh_table.setColumnCount(len(columns))
         self.mesh_table.setHorizontalHeaderLabels(columns)
@@ -494,20 +492,19 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.retrieve_channels_event()
 
     def update_local_node_config(self):
-        cfg = self._manager.get_config().local_node_config
-        if cfg is None:
-            return
-
-        self._local_board_id = cfg.id
-        self.devicename_label.setText(cfg.long_name)
-        self.batterylevel_progressbar.setValue(cfg.batterylevel)
-        self.batterylevel_progressbar.show()
-        self.role_label.setText(f"{cfg.role}")
-        self.id_label.setText(str(cfg.id))
-        self.hardware_label.setText(str(cfg.hardware))
+        self._local_board_id = self._manager._local_board_id
+        if self._local_board_id:
+            node = self._manager.get_node_from_id(self._local_board_id)
+            if node is not None:
+                self.devicename_label.setText(node["user"]["longName"])
+                self.batterylevel_progressbar.setValue(node["deviceMetrics"]["batteryLevel"])
+                self.batterylevel_progressbar.show()
+                self.id_label.setText(str(node["user"]["id"]))
+                # self.air_util_tx_label.setText(str(round(node["deviceMetrics"]["airUtilTx"], 2)))
+                self.hardware_label.setText(str(node["user"]["hwModel"]))
 
     def traceroute(self):
-        dest_id = self.tr_dest_combobox.currentText()
+        dest_id = self._manager.get_id_from_long_name(self.tr_dest_combobox.currentText())
         channel_name = self.tr_channel_combobox.currentText()
         maxhops = self.tr_maxhops_spinbox.value()
         channel_index = self._manager.get_channel_index_from_name(channel_name)
@@ -567,6 +564,14 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         cursor = QTextCursor(self.output_textedit.textCursor())
         cursor.setPosition(len(self.output_textedit.toPlainText()))
         self.output_textedit.setTextCursor(cursor)
+
+    def export_radio(self) -> None:
+        nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
+        fpath = f"radio_{nnow}.log"
+        with open(fpath, "w") as text_file:
+            text_file.write(self.output_textedit.toPlainText())
+            trace = f"Exported radio to file: {fpath}"
+            self.set_status(MessageLevel.INFO, trace)
 
     def quit(self) -> None:
         self._manager.quit()

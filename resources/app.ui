@@ -65,9 +65,9 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>90</y>
+        <y>140</y>
         <width>461</width>
-        <height>331</height>
+        <height>281</height>
        </rect>
       </property>
       <property name="title">
@@ -79,7 +79,7 @@
          <x>10</x>
          <y>30</y>
          <width>441</width>
-         <height>291</height>
+         <height>241</height>
         </rect>
        </property>
       </widget>
@@ -100,10 +100,23 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>30</y>
+         <y>70</y>
          <width>391</width>
-         <height>571</height>
+         <height>531</height>
         </rect>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="export_radio_button">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>30</y>
+         <width>89</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Export</string>
        </property>
       </widget>
      </widget>
@@ -113,7 +126,7 @@
         <x>20</x>
         <y>10</y>
         <width>391</width>
-        <height>71</height>
+        <height>91</height>
        </rect>
       </property>
       <property name="title">
@@ -153,6 +166,19 @@
        </property>
        <property name="text">
         <string>Disconnect</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="reset_nodedb_checkbox">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>60</y>
+         <width>121</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Reset NodeDB</string>
        </property>
       </widget>
      </widget>

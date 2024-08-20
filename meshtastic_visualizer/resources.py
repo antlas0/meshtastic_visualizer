@@ -42,8 +42,6 @@ def create_getter(field_name):
     getter.__name__ = f"get_{field_name}"
     return getter
 
-# Function to create a setter method
-
 
 def create_setter(field_name):
     def setter(self, value):
@@ -81,40 +79,6 @@ class MeshtasticMessage:
 
 
 @dataclass
-class MeshtasticNode:
-    long_name: Optional[str] = None
-    short_name: Optional[str] = None
-    id: Optional[str] = None
-    role: Optional[str] = None
-    hardware: Optional[str] = None
-    lat: Optional[str] = None
-    lon: Optional[str] = None
-    alt: Optional[str] = None
-    batterylevel: Optional[int] = None
-    chutil: Optional[str] = None
-    txairutil: Optional[str] = None
-    rssi: Optional[str] = None
-    snr: Optional[str] = None
-    last_recipient_id: Optional[str] = None
-    neighbors: Optional[List[str]] = None
-    hopsaway: Optional[str] = None
-    firstseen: Optional[str] = None
-    lastseen: Optional[str] = None
-    uptime: Optional[int] = None
-
-    def __post_init__(self):
-        self._lock = Lock()
-        for f in fields(self):
-            field_name = f.name
-            if field_name.startswith('_'):
-                continue
-            getter = create_getter(field_name)
-            setattr(self.__class__, getter.__name__, getter)
-            setter = create_setter(field_name)
-            setattr(self.__class__, setter.__name__, setter)
-
-
-@dataclass
 class Channel:
     index: Optional[int] = None
     name: Optional[str] = None
@@ -142,7 +106,6 @@ class MeshtasticConfigStore:
     interface: Optional[meshtastic.serial_interface.SerialInterface] = None
     tunnel: Optional[Any] = None
     channels: Optional[List[Channel]] = None
-    local_node_config: Optional[MeshtasticNode] = None
 
     def __post_init__(self):
         self._lock = Lock()
@@ -162,11 +125,8 @@ class MeshtasticDataStore:
     received_chunks: Optional[dict] = None
     expected_chunks: Optional[dict] = None
     acknowledged_chunks: Optional[set] = None
-    acknowledgment: Optional[Any] = None
     last_status: Optional[str] = None
     is_connected: bool = False
-    nodes: Dict[str, MeshtasticNode] = field(
-        default_factory=dict)  # Dict[node_id, Node object]
     messages: Dict[str, MeshtasticMessage] = field(
         default_factory=dict)  # Dict[message_id, Message object]
 

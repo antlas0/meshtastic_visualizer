@@ -2,7 +2,7 @@
 
 import os
 import json
-import time
+import copy
 import queue
 import base64
 import logging
@@ -10,7 +10,7 @@ import datetime
 from pubsub import pub
 from colorama import Fore, init
 from dataclasses import fields, asdict
-from typing import Union, Optional, Callable
+from typing import Union, Optional, Dict
 import google.protobuf.json_format
 from typing import List, Optional
 import threading
@@ -26,7 +26,6 @@ from .resources import run_in_thread, \
     MeshtasticConfigStore, \
     MeshtasticDataStore, \
     Channel, \
-    MeshtasticNode, \
     MeshtasticMessage, \
     PacketInfoType
 
@@ -63,6 +62,7 @@ class MeshtasticManager(QObject, threading.Thread):
         self._data.acknowledged_chunks = set()
         self._data.expected_chunks = {}
         self._local_board_id: str = ""
+        self._neighbors:Dict[str, List[str]]={} # {id node1: [id node2, id node3],...}
         self._config.tunnel = None  # Initialize the tunnel attribute
         # Create an empty object to hold acknowledgment flags
         self._data.acknowledgment = type('', (), {})()
@@ -109,46 +109,40 @@ class MeshtasticManager(QObject, threading.Thread):
             return -1
         return channel[0].index
 
-    def get_recipient_id_from_long_name(self, long_name: str) -> int:
-        nodes = self._data.get_nodes().values()
-        if nodes is None:
+    def get_nodes(self) -> Dict:
+        if self._config is not None:
+            self._config.interface.waitForConfig()
+
+        return copy.deepcopy(self._config.interface.nodes)
+
+    def get_neighbors(self) -> Dict:
+        return copy.deepcopy(self._neighbors)
+
+    def get_id_from_long_name(self, long_name: str) -> int:
+        nodes = self.get_nodes()
+        if not nodes:
             return ""
-        node = list(filter(lambda x: x.long_name == long_name, nodes))
+        if long_name == "Me":
+            return self._local_board_id
+        if long_name == "All":
+            return "^all"
+
+        node = list(filter(lambda x: x["user"]["longName"] == long_name, nodes.values()))
         if len(node) != 1:
             return ""
-        return node[0].id
+        return node[0]["user"]["id"]
 
-    def store_received_packet(self, packet: str) -> None:
-        packets = self._data.get_received_packets()
-        packets.append(packet)
-        self._data.set_received_packets(packets)
-
-    def store_or_update_node(self, node: MeshtasticNode) -> None:
-        nodes = self._data.get_nodes()
-        if not str(node.id) in nodes.keys():
-            nodes[str(node.id)] = node
-            if node.lastseen:
-                node.firstseen = node.lastseen
-            else:
-                node.firstseen = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                node.firstseen = node.lastseen
-        else:
-            # update
-            def __get_nodes_fields():
-                return [field for field in fields(
-                    MeshtasticNode) if not field.name.startswith('_')]
-
-            tmp = nodes[str(node.id)].firstseen
-            node.firstseen = tmp
-            for f in __get_nodes_fields():
-                if getattr(nodes[str(node.id)],
-                           f.name) != getattr(node, f.name):
-                    if getattr(node, f.name) is not None:
-                        setattr(nodes[str(node.id)], f.name,
-                                getattr(node, f.name))
+    def get_long_name_from_id(self, id: str) -> int:
+        nodes = self.get_nodes()
+        if not nodes:
+            return ""
+        node = list(filter(lambda x: x["user"]["id"] == id, nodes.values()))
+        if len(node) != 1:
+            return ""
+        return node[0]["user"].get("longName",node[0]["user"]["id"])
 
     @run_in_thread
-    def connect_device(self) -> bool:
+    def connect_device(self, resetDB:bool=False) -> bool:
         if self._config.interface is not None:
             return False
         try:
@@ -156,7 +150,6 @@ class MeshtasticManager(QObject, threading.Thread):
                 devPath=self._config.device_path)
         except Exception as e:
             trace = f"Failed to connect to Meshtastic device {self._config.device_path}: {str(e)}"
-            self._data.set_last_status(trace)
             self._data.set_is_connected(False)
             self.notify_frontend(MessageLevel.ERROR, trace)
             return False
@@ -164,11 +157,13 @@ class MeshtasticManager(QObject, threading.Thread):
             # Subscribe to received message events
             pub.subscribe(self.on_receive, "meshtastic.receive")
             trace = f"Successfully connected to Meshtastic device {self._config.device_path}"
-            self._data.set_last_status(trace)
             self._data.set_is_connected(True)
             self.retrieve_channels()
+
+            node = self._config.interface.getMyNodeInfo()
+            self._local_board_id = node["user"]["id"]
+            if resetDB: self.reset_local_node_db()
             self.retrieve_nodes()
-            self.retrieve_local_node_configuration()
             self.notify_frontend(MessageLevel.INFO, trace)
             return True
 
@@ -183,12 +178,10 @@ class MeshtasticManager(QObject, threading.Thread):
             self._config.interface = None
         except Exception as e:
             trace = f"Failed to disconnect from Meshtastic device: {str(e)}"
-            self._data.set_last_status(trace)
             self.notify_frontend(MessageLevel.ERROR, trace)
             return False
         else:
             trace = f"Meshtastic device disconnected."
-            self._data.set_last_status(trace)
             self._data.set_is_connected(False)
             self.notify_frontend(MessageLevel.INFO, trace)
             return True
@@ -200,33 +193,11 @@ class MeshtasticManager(QObject, threading.Thread):
         return self._config.destination_id
 
     @run_in_thread
-    def retrieve_local_node_configuration(self) -> None:
+    def reset_local_node_db(self) -> None:
         if self._config.interface is None:
             return
+        node = self._config.interface.getNode(self._local_board_id, False).resetNodeDb()
 
-        node = self._config.interface.getMyNodeInfo()
-        batlevel = node["deviceMetrics"]["batteryLevel"] if "deviceMetrics" in node else 0
-        if batlevel > 100:
-            batlevel = 100
-
-        self._local_board_id = node["user"]["id"]
-
-        self._config.local_node_config = MeshtasticNode(
-            long_name=node["user"]["longName"],
-            short_name=node["user"]["shortName"],
-            hardware=node["user"]["hwModel"],
-            role=node["user"]["role"] if "role" in node["user"] else None,
-            lat=str(node["position"]["latitude"]) if "position" in node and "latitude" in node["position"] else None,
-            lon=str(node["position"]["longitude"] if "position" in node and "longitude" in node["position"] else None),
-            lastseen=datetime.datetime.fromtimestamp(node["lastHeard"]).strftime('%Y-%m-%d %H:%M:%S') if "lastHeard" in node and node["lastHeard"] is not None else None,
-            id=node["user"]["id"],
-            batterylevel=batlevel,
-            hopsaway=str(node["hopsAway"]) if "hopsAway" in node else None,
-            snr=str(round(node["snr"], 2)) if "snr" in node else None,
-            txairutil=str(round(node["deviceMetrics"]["airUtilTx"], 2)) if "deviceMetrics" in node and "airUtilTx" in node["deviceMetrics"] else None,
-            chutil=str(round(node["deviceMetrics"]["channelUtilization"], 2)) if "deviceMetrics" in node and "channelUtilization" in node["deviceMetrics"] else None,
-            uptime=node["deviceMetrics"]["uptimeSeconds"] if "deviceMetrics" in node and "uptimeSeconds" in node["deviceMetrics"] else None,
-        )
         self.notify_frontend(
             MessageLevel.INFO,
             "Local node configuration retrieved.")
@@ -273,7 +244,10 @@ class MeshtasticManager(QObject, threading.Thread):
             self.notify_data(message, message_type="INFO")
 
         if packet["decoded"]["portnum"] == PacketInfoType.PCK_NODEINFO_APP.value:
-            self.update_node_info(packet)
+            pass
+
+        if packet["decoded"]["portnum"] == PacketInfoType.PCK_POSITION_APP.value:
+            pass
 
         if packet["decoded"]["portnum"] == PacketInfoType.PCK_ROUTING_APP.value:
             ack_status = packet["decoded"]["routing"]["errorReason"] == "NONE"
@@ -314,17 +288,23 @@ class MeshtasticManager(QObject, threading.Thread):
                 messages_list[key].ack = "✅"
                 self.notify_message()
 
+        if packet["decoded"]["portnum"] == PacketInfoType.PCK_NEIGHBORINFO_APP.value:
+            if "neighbors" in packet["decoded"]["neighborinfo"]:
+                self._neighbors[packet["fromId"]] = [
+                    self._node_id_from_num(
+                        x["nodeId"]) for x in packet["decoded"]["neighborinfo"]["neighbors"]]
+
         if packet["decoded"]["portnum"] == PacketInfoType.PCK_TRACEROUTE_APP.value:
             self.notify_frontend(MessageLevel.INFO, f"Traceoute completed.")
             routeDiscovery = mesh_pb2.RouteDiscovery()
             routeDiscovery.ParseFromString(packet["decoded"]["payload"])
             asDict = google.protobuf.json_format.MessageToDict(routeDiscovery)
 
-            route: list = [self._nodeNumToId(packet["to"])]
+            route: list = [self._node_id_from_num(packet["to"])]
             if "route" in asDict:
                 for nodeNum in asDict["route"]:
-                    route.append(self._nodeNumToId(nodeNum))
-            route.append(self._nodeNumToId(packet["from"]))
+                    route.append(self._node_id_from_num(nodeNum))
+            route.append(self._node_id_from_num(packet["from"]))
             self._data.acknowledgment.receivedTraceRoute = True
             self.notify_traceroute(route)
 
@@ -362,7 +342,7 @@ class MeshtasticManager(QObject, threading.Thread):
                         content=current_message,
                         rx_rssi=packet['rxRssi'] if 'rxRssi' in packet else None,
                         rx_snr=packet['rxSnr'] if 'rxSnr' in packet else None,
-                        from_id=packet['fromId'] if "fromId" in packet else None,
+                        from_id=self._node_id_from_num(packet['from']) if "from" in packet else None,
                         to_id=packet['toId'] if "toId" in packet else None,
                         channel_index=packet["channel"] if "channel" in packet else None,
                         hop_limit=packet['hopLimit'] if 'hopLimit' in packet else None,
@@ -393,6 +373,10 @@ class MeshtasticManager(QObject, threading.Thread):
                         MessageLevel.INFO,
                         f"Updating message info from {packet['fromId']}")
                     self.notify_message()
+        if "payload" in packet["decoded"]:
+            packet["decoded"].pop("payload")
+        self.notify_data(str(packet["decoded"]), "INFO")
+
     @run_in_thread
     def send_text_message(self, message: MeshtasticMessage):
         if self._config.interface is None:
@@ -408,9 +392,10 @@ class MeshtasticManager(QObject, threading.Thread):
             channelIndex=message.channel_index,
             onResponseAckPermitted=False,
         )
-        trace = f"Message sent with ID: {sent_packet.id}."
+        self.notify_data("---------------", "INFO")
+        trace = f"Message sent to {message.to_id}."
         self.notify_frontend(MessageLevel.INFO, trace)
-        trace = f"Message sent with ID: {sent_packet.id} with details {sent_packet}"
+        trace = f"Message sent with ID: {message.to_id} with details {sent_packet}"
         self.notify_data(trace, "INFO")
         print(Fore.LIGHTBLACK_EX + f"{trace}")
         if message.want_ack:
@@ -420,109 +405,12 @@ class MeshtasticManager(QObject, threading.Thread):
         self._data.get_messages()[str(message.mid)] = message
         self.notify_message()
 
-    @run_in_thread
-    def update_node_info(self, packet) -> None:
-
-        n = MeshtasticNode(
-            id=self._nodeNumToId(
-                packet["from"])
-        )
-
-        if packet["decoded"]["portnum"] == PacketInfoType.PCK_POSITION_APP.value:
-            n.lat = packet["decoded"]["position"]["latitude"] if "latitude" in packet["decoded"]["position"] else None
-            n.lon = packet["decoded"]["position"]["longitude"] if "longitude" in packet["decoded"]["position"] else None
-            n.alt = packet["decoded"]["position"]["altitude"] if "altitude" in packet["decoded"]["position"] else None
-
-        if packet["decoded"]["portnum"] == PacketInfoType.PCK_TELEMETRY_APP.value:
-            n.batterylevel = packet["decoded"]["telemetry"]["deviceMetrics"]["batteryLevel"] if "deviceMetrics" in packet[
-                "decoded"]["telemetry"] and "batteryLevel" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
-            n.txairutil = str(
-                round(
-                    packet["decoded"]["telemetry"]["deviceMetrics"]["airUtilTx"],
-                    2)) if "deviceMetrics" in packet["decoded"]["telemetry"] and "airUtilTx" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
-            n.chutil = str(
-                round(
-                    packet["decoded"]["telemetry"]["deviceMetrics"]["channelUtilization"],
-                    2)) if "deviceMetrics" in packet["decoded"]["telemetry"] and "channelUtilization" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
-            n.uptime = packet["decoded"]["telemetry"]["deviceMetrics"]["uptimeSeconds"] if "deviceMetrics" in packet[
-                "decoded"]["telemetry"] and "uptimeSeconds" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
-
-        if packet["decoded"]["portnum"] == PacketInfoType.PCK_NEIGHBORINFO_APP.value:
-            if "neighbors" in packet["decoded"]["neighborinfo"]:
-                n.neighbors = [
-                    self._nodeNumToId(
-                        x["nodeId"]) for x in packet["decoded"]["neighborinfo"]["neighbors"]]
-
-        n.rssi = str(
-            round(
-                packet["rxRssi"],
-                2)) if "rxRssi" in packet else None
-        n.snr = str(
-            round(
-                packet["rxSnr"],
-                2)) if "rxSnr" in packet else None
-
-        n.lastseen = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-        self.store_or_update_node(n)
-        if n.id == self._local_board_id:
-            self._config.local_node_config.batterylevel = n.batterylevel if n.batterylevel is not None else self._config.local_node_config.batterylevel
-            self._config.local_node_config.chutil = n.chutil if n.chutil is not None else self._config.local_node_config.chutil
-            self._config.local_node_config.txairutil = n.txairutil if n.txairutil is not None else self._config.local_node_config.txairutil
-            self._config.local_node_config.role = n.role if n.role is not None else self._config.local_node_config.role
-            self._config.local_node_config.rssi = n.rssi if n.rssi is not None else self._config.local_node_config.rssi
-
-        self.notify_frontend(MessageLevel.INFO, f"Updated node {n.id}.")
 
     @run_in_thread
-    def retrieve_nodes(self, include_self: bool = True) -> list:
+    def retrieve_nodes(self, include_self: bool = True):
         """Return a list of nodes in the mesh"""
-        if self._config.interface is None:
-            return []
-
-        if self._config.interface.nodesByNum:
-            logging.debug(
-                f"self._config.interface.nodes:{self._config.interface.nodes}")
-            for node in self._config.interface.nodesByNum.values():
-                if not include_self and node["num"] == self._config.interface.localNode.nodeNum:
-                    continue
-
-                batlevel = node["deviceMetrics"]["batteryLevel"] if "deviceMetrics" in node else 0
-                if batlevel > 100:
-                    batlevel = 100
-                n = MeshtasticNode(
-                    long_name=node["user"]["longName"],
-                    short_name=node["user"]["shortName"],
-                    hardware=node["user"]["hwModel"],
-                    role=node["user"]["role"] if "role" in node["user"] else None,
-                    lat=str(
-                        node["position"]["latitude"]) if "position" in node and "latitude" in node["position"] else None,
-                    lon=str(
-                        node["position"]["longitude"] if "position" in node and "longitude" in node["position"] else None),
-                    lastseen=datetime.datetime.fromtimestamp(
-                        node["lastHeard"]).strftime('%Y-%m-%d %H:%M:%S') if "lastHeard" in node and node["lastHeard"] is not None else None,
-                    id=node["user"]["id"],
-                    batterylevel=batlevel,
-                    hopsaway=str(
-                        node["hopsAway"]) if "hopsAway" in node else None,
-                    snr=str(
-                        round(
-                            node["snr"],
-                            2)) if "snr" in node else None,
-                    txairutil=str(
-                        round(
-                            node["deviceMetrics"]["airUtilTx"],
-                            2)) if "deviceMetrics" in node and "airUtilTx" in node["deviceMetrics"] else None,
-                    chutil=str(
-                        round(
-                            node["deviceMetrics"]["channelUtilization"],
-                            2)) if "deviceMetrics" in node and "channelUtilization" in node["deviceMetrics"] else None,
-                    uptime=node["deviceMetrics"]["uptimeSeconds"] if "deviceMetrics" in node and "uptimeSeconds" in node["deviceMetrics"] else None,
-                )
-
-                self.store_or_update_node(n)
-            self.notify_frontend(MessageLevel.INFO, "Updated nodes list.")
-            self.notify_nodes()
+        self.notify_frontend(MessageLevel.INFO, "Updated nodes list.")
+        self.notify_nodes()
 
     @run_in_thread
     def retrieve_channels(self) -> list:
@@ -545,11 +433,9 @@ class MeshtasticManager(QObject, threading.Thread):
                     )
         except Exception as e:
             trace = f"Failed to get channels: {str(e)}"
-            self._data.set_last_status(trace)
             self.notify_frontend(MessageLevel.ERROR, trace)
             self.notify_channels()
         else:
-            self._data.set_last_status(f"Channels retrieved.")
             self.notify_frontend(MessageLevel.INFO, "Channels retrieved.")
             self.notify_channels()
 
@@ -565,7 +451,7 @@ class MeshtasticManager(QObject, threading.Thread):
             self.notify_frontend(MessageLevel.INFO, trace)
 
     @run_in_thread
-    def sendTraceRoute(self,
+    def send_traceroute(self,
                        dest: Union[int,
                                    str],
                        hopLimit: int,
@@ -586,7 +472,15 @@ class MeshtasticManager(QObject, threading.Thread):
             MessageLevel.INFO,
             f"Traceoute started to {dest}.")
 
-    def _nodeNumToId(self, nodeNum):
+    def get_node_from_id(self, node_id:str) -> Optional[meshtastic.Node]:
+        if self._config.interface is None:
+            return
+        nodes = list(filter(lambda x:x["user"]["id"] == node_id, self._config.interface.nodes.values()))
+        if len(nodes) != 1:
+            return None
+        return nodes[0]
+
+    def _node_id_from_num(self, nodeNum):
         """Convert node number to node ID"""
         if self._config.interface is None:
             return ""
