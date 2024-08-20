@@ -309,14 +309,14 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                             nodes_coords[node["user"]["id"]],
                             nodes_coords[neighbor],
                         ]
-                    if link_coords[0][0] is not None \
-                            and link_coords[0][1] is not None \
-                            and link_coords[1][0] is not None\
-                            and link_coords[1][1] is not None:
-                        link = folium.PolyLine(
-                            link_coords, color=__link_color(node["user"]["id"]))
-                        link.add_to(self._link_group)
-                        self._links.append(link)
+                        if link_coords[0][0] is not None \
+                                and link_coords[0][1] is not None \
+                                and link_coords[1][0] is not None\
+                                and link_coords[1][1] is not None:
+                            link = folium.PolyLine(
+                                link_coords, color=__link_color(node["user"]["id"]))
+                            link.add_to(self._link_group)
+                            self._links.append(link)
         if self._markers:
             markers_lat = [x.location[0] for x in self._markers]
             markers_lon = [x.location[1] for x in self._markers]
