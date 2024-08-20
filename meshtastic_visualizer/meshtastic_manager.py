@@ -506,6 +506,7 @@ class MeshtasticManager(QObject, threading.Thread):
             round(
                 packet["rxSnr"],
                 2)) if "rxSnr" in packet else None
+        n.hopsaway=str(packet["hopsAway"]) if "hopsAway" in packet else None
 
         n.lastseen = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
