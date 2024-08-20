@@ -12,13 +12,15 @@ I disabled working features from the original repo to focus on a basic working t
 Main framework used is PyQt6.
 
 At the moment, what works :
-* Display configuration of local node
+* Display configuration of local and remote node
 * Display Channels configuration
 * Display radio output
 * Print mesh information
 * Perform traceroute
 * Display map of nodes
 * Send message with acknowledgment
+* Export messages
+* Export radio output logs
 
 To run :
 ```bash
