@@ -276,6 +276,10 @@ class MeshtasticManager(QObject, threading.Thread):
             self.update_node_info(packet)
 
         if packet["decoded"]["portnum"] == PacketInfoType.PCK_ROUTING_APP.value:
+            ack_status = packet["decoded"]["routing"]["errorReason"] == "NONE"
+            trace = f"Ack packet from {packet['fromId']} for packet id {packet['decoded']['requestId']}: {ack_status}"
+            print(trace)
+            self.notify_data(trace, "INFO")
             if packet["decoded"]["routing"]["errorReason"] != "NONE":
                 print(
                     f'Received a NAK, error reason: {packet["decoded"]["routing"]["errorReason"]}'
@@ -286,10 +290,6 @@ class MeshtasticManager(QObject, threading.Thread):
                         f"Received an implicit ACK. Packet will likely arrive, but cannot be guaranteed."
                     )
 
-                # Got ack, find message to update the properties
-                trace = f"Acknowledgment received from {packet['fromId']} for packet id {packet['decoded']['requestId']}"
-                print(trace)
-                self.notify_data(trace, "INFO")
                 messages_list = self._data.get_messages()
                 key = list(
                     filter(
@@ -393,47 +393,6 @@ class MeshtasticManager(QObject, threading.Thread):
                         MessageLevel.INFO,
                         f"Updating message info from {packet['fromId']}")
                     self.notify_message()
-
-    @run_in_thread
-    def onMessageAckNack(self, packet, ack_event) -> None:
-        if packet["decoded"]["portnum"] == PacketInfoType.PCK_ROUTING_APP.value:
-            ack_event.set()
-            if packet["decoded"]["routing"]["errorReason"] != "NONE":
-                print(
-                    f'Received a NAK, error reason: {packet["decoded"]["routing"]["errorReason"]}'
-                )
-            else:
-                if str(packet["fromId"]) == str(self._local_board_id):
-                    print(
-                        f"Received an implicit ACK. Packet will likely arrive, but cannot be guaranteed."
-                    )
-
-                # Got ack, find message to update the properties
-                self.notify_data(f"Acknowledgment received from {packet['fromId']}", "INFO")
-                messages_list = self._data.get_messages()
-                key = list(
-                    filter(
-                        lambda x: messages_list[x].mid == packet["decoded"]["requestId"],
-                        messages_list.keys()))
-                if len(key) == 0:
-                    return
-                key = key[0]
-
-                messages_list[key].date = datetime.datetime.now().strftime(
-                    "%Y-%m-%d %H:%M:%S")
-                if "rxRssi" in packet:
-                    messages_list[key].rx_rssi = packet['rxRssi']
-                if "rxSnr" in packet:
-                    messages_list[key].rx_snr = packet['rxSnr']
-                if "hopLimit" in packet:
-                    messages_list[key].hop_limit = packet['hopLimit']
-                if "hopStart" in packet:
-                    messages_list[key].hop_start = packet['hopStart']
-                if "wantAck" in packet:
-                    messages_list[key].want_ack = packet['wantAck']
-                messages_list[key].ack = "✅"
-                self.notify_message()
-
     @run_in_thread
     def send_text_message(self, message: MeshtasticMessage):
         if self._config.interface is None:
@@ -447,8 +406,7 @@ class MeshtasticManager(QObject, threading.Thread):
             wantAck=message.want_ack,
             wantResponse=True,
             channelIndex=message.channel_index,
-            onResponse=lambda x:x,
-            onResponseAckPermitted=True,
+            onResponseAckPermitted=False,
         )
         trace = f"Message sent with ID: {sent_packet.id}."
         self.notify_frontend(MessageLevel.INFO, trace)
