@@ -145,11 +145,11 @@ class MeshtasticManager(QObject, threading.Thread):
         if not nodes:
             self._store_lock.release()
             return ""
-        node = list(filter(lambda x: x["user"]["id"] == id, nodes.values()))
+        node = list(filter(lambda x: x.id == id, nodes.values()))
         if len(node) != 1:
             self._store_lock.release()
             return ""
-        res = node[0]["user"].get("longName", node[0]["user"]["id"])
+        res = node[0].long_name if node[0].long_name else node[0].id
         self._store_lock.release()
         return res
 
@@ -162,19 +162,17 @@ class MeshtasticManager(QObject, threading.Thread):
                 node.firstseen = node.lastseen
             else:
                 node.firstseen = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                node.firstseen = node.lastseen
+
         else:
             # update
             def __get_nodes_fields():
                 return [field for field in fields(
                     MeshtasticNode) if not field.name.startswith('_')]
 
-            tmp = nodes[str(node.id)].firstseen
-            node.firstseen = tmp
             for f in __get_nodes_fields():
                 if getattr(nodes[str(node.id)],
                            f.name) != getattr(node, f.name):
-                    if getattr(node, f.name) is not None:
+                    if getattr(node, f.name) is not None and getattr(node, f.name):
                         setattr(nodes[str(node.id)], f.name,
                                 getattr(node, f.name))
         self._store_lock.release()

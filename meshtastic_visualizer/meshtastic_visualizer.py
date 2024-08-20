@@ -334,7 +334,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
 
     def send_message(self):
-
         message = self.message_textedit.toPlainText()
         channel_name = self.channel_combobox.currentText()
         recipient = self._manager.get_id_from_long_name(self.recipient_combobox.currentText())
