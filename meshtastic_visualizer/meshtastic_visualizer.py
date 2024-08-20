@@ -26,6 +26,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     scan_mesh_signal = pyqtSignal()
     send_message_signal = pyqtSignal(MeshtasticMessage)
     retrieve_channels_signal = pyqtSignal()
+    retrieve_local_node_config_signal = pyqtSignal()
     traceroute_signal = pyqtSignal(str, int, int)
 
     def __init__(self):
@@ -75,6 +76,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.retrieve_channels_signal.connect(self._manager.retrieve_channels)
         self.scan_mesh_signal.connect(self.update_nodes_map)
         self.scan_mesh_signal.connect(self.update_nodes_table)
+        self.retrieve_local_node_config_signal.connect(
+            self._manager.load_local_node_configuration)
         self.traceroute_signal.connect(self._manager.send_traceroute)
         self.export_chat_button.pressed.connect(self._manager.export_chat)
         self.export_radio_button.pressed.connect(self.export_radio)
@@ -93,6 +96,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def traceroute_event(self, dest_id: str, maxhops: int, channel_index: int):
         self.traceroute_signal.emit(dest_id, maxhops, channel_index)
+
+    def retrieve_local_node_config_event(self):
+        self.retrieve_local_node_config_signal.emit()
 
     def send_message_event(self, message: MeshtasticMessage):
         self.send_message_signal.emit(message)
@@ -242,7 +248,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._map = folium.Map(zoom_start=7)
 
         # Add a new marker
-        nodes = self._manager.get_nodes()
+        self._manager.acquire_store_lock()
+        nodes = self._manager.get_data().get_nodes()
         if nodes is None:
             return
 
@@ -251,72 +258,67 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         # in case of links traczing, pre-create a dict(node_id, [lat, lon])
         nodes_coords = {
-            x["user"]["id"]: [
+            x.id: [
                 float(
-                    x["position"]["latitude"]), float(
-                    x["position"]["longitude"])] for __, x in nodes.items() if "position" in x and "latitude" in x["position"] and "longitude" in x["position"]}
+                    x.lat), float(
+                    x.lon)] for __, x in nodes.items() if x.lat is not None and x.lon is not None}
 
-        for __, node in nodes.items():
+        for node_id, node in nodes.items():
             strl = []
-            strl.append(f"<b>Name:</b> {node['user']['longName']}</br>")
-            strl.append(f"<b>id:</b> {node['user']['id']}</br>")
-            if 'hwModel' in node["user"]:
-                strl.append(f"<b>Hardware:</b> {node['user']['hwModel']}</br>")
-
-            if "deviceMetrics" in node:
-                if 'batteryLevel' in node["deviceMetrics"]:
-                    strl.append(    
-                        f"<b>Battery Level:</b> {node['deviceMetrics']['batteryLevel']} %</br>")
-                if 'airUtilTx' in node["deviceMetrics"]:
-                    strl.append(f"<b>Air Util. Tx:</b> {round(node['deviceMetrics']['airUtilTx'], 2)} %</br>")
-                if 'channelUtilization' in node["deviceMetrics"]:
-                    strl.append(f"<b>Channel utilization:</b> {round(node['deviceMetrics']['channelUtilization'], 2)} %</br>")
-                if 'uptimeSeconds'in node["deviceMetrics"]:
-                    strl.append(
-                        f"<b>Uptime:</b> {humanize.precisedelta(node['deviceMetrics']['uptimeSeconds'])}</br>")
-
-            if 'rssi' in node:
-                strl.append(f"<b>RSSI:</b> {node['rssi']} dBm</br>")
-            if 'snr' in node:
-                strl.append(f"<b>SNR:</b> {node['snr']}</br>")
-            if 'lastHeard'in node and node["lastHeard"] is not None:
+            strl.append(f"<b>Name:</b> {node.long_name}</br>")
+            strl.append(f"<b>id:</b> {node.id}</br>")
+            if node.hardware:
+                strl.append(f"<b>Hardware:</b> {node.hardware}</br>")
+            if node.batterylevel:
                 strl.append(
-                    f"<b>Last Heard:</b> {humanize.naturaldelta(datetime.fromtimestamp(node['lastHeard']))}</br>")
-
-            if "position" in node is not None and "position" in node is not None and "latitude" in node["position"] and "longitude" in node["position"]:
+                    f"<b>Battery Level:</b> {node.batterylevel} %</br>")
+            if node.role:
+                strl.append(f"<b>Role:</b> {node.role}</br>")
+            if node.hopsaway:
+                strl.append(f"<b>Hops Away:</b> {node.hopsaway}</br>")
+            if node.txairutil:
+                strl.append(f"<b>Air Util. Tx:</b> {node.txairutil} %</br>")
+            if node.rssi:
+                strl.append(f"<b>RSSI:</b> {node.rssi} dBm</br>")
+            if node.snr:
+                strl.append(f"<b>SNR:</b> {node.snr}</br>")
+            if node.uptime:
+                strl.append(
+                    f"<b>Uptime:</b> {humanize.precisedelta(node.uptime)}</br>")
+            if node.lat is not None and node.lon is not None:
                 popup_content = "".join(strl)
                 popup = folium.Popup(
                     popup_content, max_width=300, min_width=250)
                 color = "blue"
-                if node["user"]["id"] == self._local_board_id:
+                if node.id == self._local_board_id:
                     color = "orange"
 
                 marker = folium.Marker(
                     location=[
-                        node["position"]["latitude"],
-                        node["position"]["longitude"],],
+                        node.lat,
+                        node.lon],
                     popup=popup,
                     icon=folium.Icon(color=color),
                 )
                 marker.add_to(self._markers_group)
                 self._markers.append(marker)
-            neighbors = self._manager.get_neighbors()
-            if neighbors and node["user"]["id"] in neighbors.keys():
-                for neighbor in neighbors[node["user"]["id"]]:
+
+            if node.neighbors is not None:
+                for neighbor in node.neighbors:
                     # we can trace a link
                     if neighbor in nodes_coords.keys():
                         link_coords = [
-                            nodes_coords[node["user"]["id"]],
+                            nodes_coords[node.id],
                             nodes_coords[neighbor],
                         ]
-                        if link_coords[0][0] is not None \
-                                and link_coords[0][1] is not None \
-                                and link_coords[1][0] is not None\
-                                and link_coords[1][1] is not None:
-                            link = folium.PolyLine(
-                                link_coords, color=__link_color(node["user"]["id"]))
-                            link.add_to(self._link_group)
-                            self._links.append(link)
+                    if link_coords[0][0] is not None \
+                            and link_coords[0][1] is not None \
+                            and link_coords[1][0] is not None\
+                            and link_coords[1][1] is not None:
+                        link = folium.PolyLine(
+                            link_coords, color=__link_color(node.id))
+                        link.add_to(self._link_group)
+                        self._links.append(link)
         if self._markers:
             markers_lat = [x.location[0] for x in self._markers]
             markers_lon = [x.location[1] for x in self._markers]
@@ -328,6 +330,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             folium.LayerControl().add_to(self._map)
 
         self.update_map_in_widget()
+        self._manager.release_store_lock()
+
 
     def send_message(self):
 
@@ -354,63 +358,63 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.message_textedit.clear()
 
     def update_nodes_table(self) -> None:
-        nodes = self._manager.get_nodes()
-        if not nodes:
+        self._manager.acquire_store_lock()
+        nodes = self._manager.get_data().get_nodes()
+        if nodes is None:
             return
 
         self.recipient_combobox.clear()
         self.tr_dest_combobox.clear()
         self.recipient_combobox.insertItem(0, "All")
         for i, node in enumerate(nodes.values()):
-            if node["user"]["id"] == self._local_board_id:
+            if node.id == self._local_board_id:
                 continue
-            self.tr_dest_combobox.insertItem(i + 1, node["user"]["longName"])
-            self.recipient_combobox.insertItem(i + 1, node["user"]["longName"])
+            self.tr_dest_combobox.insertItem(i + 1, node.long_name if node.long_name else node.id)
+            self.recipient_combobox.insertItem(i + 1, node.long_name if node.long_name else node.id)
 
         rows: list[dict[str, any]] = []
-        for __, node in nodes.items():
-            user = node["user"] if "user" in node else {}
-            device_metrics = node["deviceMetrics"] if "deviceMetrics" in node else {}
-            position = node["position"] if "position" in node else {}
-
+        for node_id, node in nodes.items():
             row = {"User": "", "ID": ""}
 
             row.update(
                 {
-                    "User": user.get("longName", ""),
-                    "AKA": user.get("shortName", ""),
-                    "ID": user.get("id", ""),
-                    "Hardware": user.get("hwModel", ""),
+                    "User": node.long_name,
+                    "AKA": node.short_name,
+                    "ID": node.id,
+                    "Role": node.role,
+                    "Hardware": node.hardware,
                 }
             )
             row.update(
                 {
-                    "Latitude": position.get("latitude", None),
-                    "Longitude": position.get("longitude", None),
-                }
-            )
-
-            row.update({"Battery": device_metrics.get("batteryLevel", "")})
-            row.update(
-                {
-                    "Channel util. (%)": round(device_metrics["channelUtilization"],2) if "channelUtilization" in device_metrics else "" ,
-                    "Tx air util. (%)": round(device_metrics["airUtilTx"],2) if "airUtilTx" in device_metrics else "" ,
-                    "RSSI": node["rssi"] if "rssi" in node else "",
+                    "Latitude": node.lat,
+                    "Longitude": node.lon,
+                    "Altitude": node.alt,
                 }
             )
 
+            row.update({"Battery": node.batterylevel})
             row.update(
                 {
-                    "SNR": node.get("snr", ""),
-                    "Hops Away": node.get("hopsaway", ""),
-                    "Last Seen": humanize.naturaltime(datetime.fromtimestamp(node["lastHeard"])) if "lastHeard" in node and node["lastHeard"] is not None else "",
-                    "Uptime": humanize.precisedelta(device_metrics["uptimeSeconds"]) if "uptimeSeconds" in device_metrics else "",
+                    "Channel util.": node.chutil,
+                    "Tx air util.": node.txairutil,
+                    "RSSI": node.rssi,
+                }
+            )
+
+            row.update(
+                {
+                    "SNR": node.snr,
+                    "Hops Away": node.hopsaway,
+                    "Last Seen": node.lastseen,
+                    "First Seen": node.firstseen,
+                    "Uptime": humanize.precisedelta(node.uptime),
                 }
             )
 
             rows.append(row)
 
-        rows.sort(key=lambda r: r.get("LastHeard", "") or "0000", reverse=True)
+        rows.sort(key=lambda r: r.get("LastHeard") or "0000", reverse=True)
 
         self.mesh_table.clear()
         self.mesh_table.setRowCount(0)
@@ -418,16 +422,18 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             "User",
             "ID",
             "AKA",
+            "Role",
             "Hardware",
             "Latitude",
             "Longitude",
             "Battery",
-            "Channel util. (%)",
-            "Tx air util. (%)",
+            "Channel util.",
+            "Tx air util.",
             "RSSI",
             "SNR",
             "Hops Away",
             "Last Seen",
+            "First Seen",
             "Uptime"]
         self.mesh_table.setColumnCount(len(columns))
         self.mesh_table.setHorizontalHeaderLabels(columns)
@@ -440,6 +446,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 self.mesh_table.setItem(
                     row_position, i, QTableWidgetItem(data))
                 self.mesh_table.resizeColumnsToContents()
+        self._manager.release_store_lock()
 
     def scan_mesh(self):
         self.scan_mesh_event()
@@ -492,16 +499,17 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.retrieve_channels_event()
 
     def update_local_node_config(self):
-        self._local_board_id = self._manager._local_board_id
-        if self._local_board_id:
-            node = self._manager.get_node_from_id(self._local_board_id)
-            if node is not None:
-                self.devicename_label.setText(node["user"]["longName"])
-                self.batterylevel_progressbar.setValue(node["deviceMetrics"]["batteryLevel"])
-                self.batterylevel_progressbar.show()
-                self.id_label.setText(str(node["user"]["id"]))
-                # self.air_util_tx_label.setText(str(round(node["deviceMetrics"]["airUtilTx"], 2)))
-                self.hardware_label.setText(str(node["user"]["hwModel"]))
+        cfg = self._manager.get_config().get_local_node_config()
+        if cfg is None:
+            return
+
+        self._local_board_id = cfg.get_id()
+        self.devicename_label.setText(cfg.get_long_name())
+        self.batterylevel_progressbar.setValue(cfg.get_batterylevel())
+        self.batterylevel_progressbar.show()
+        self.role_label.setText(f"{cfg.get_role()}")
+        self.id_label.setText(str(cfg.get_id()))
+        self.hardware_label.setText(str(cfg.get_hardware()))
 
     def traceroute(self):
         dest_id = self._manager.get_id_from_long_name(self.tr_dest_combobox.currentText())
@@ -523,7 +531,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.messages_table.setHorizontalHeaderLabels(columns)
 
         channels = self._manager._config.get_channels()
-        messages = self._manager._data.get_messages().values()
+        messages = self._manager.get_data().get_messages().values()
         for message in messages:
             data = []
             for column in columns:
