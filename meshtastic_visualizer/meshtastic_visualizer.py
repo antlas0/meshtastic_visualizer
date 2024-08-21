@@ -386,7 +386,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             none_indexes = [
                 i for i, v in enumerate(
                     metric[metric_name]) if v is None]
-            for i in none_indexes:
+            for i in reversed(none_indexes):
                 metric["timestamp"].pop(i)
                 metric[metric_name].pop(i)
 
