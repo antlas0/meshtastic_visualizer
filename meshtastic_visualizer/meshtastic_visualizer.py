@@ -82,7 +82,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.export_chat_button.pressed.connect(self._manager.export_chat)
         self.export_radio_button.pressed.connect(self.export_radio)
 
-    def connect_device_event(self, resetDB:bool):
+    def connect_device_event(self, resetDB: bool):
         self.connect_device_signal.emit(resetDB)
 
     def disconnect_device_event(self):
@@ -116,8 +116,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.scan_button.clicked.connect(self.scan_mesh)
         self.send_button.clicked.connect(self.send_message)
         self.traceroute_button.clicked.connect(self.traceroute)
-        self.message_textedit.textChanged.connect(self.update_text_message_length)
-        self.remaining_chars_label.setText(f"{TEXT_MESSAGE_MAX_CHARS}/{TEXT_MESSAGE_MAX_CHARS}")
+        self.message_textedit.textChanged.connect(
+            self.update_text_message_length)
+        self.remaining_chars_label.setText(
+            f"{TEXT_MESSAGE_MAX_CHARS}/{TEXT_MESSAGE_MAX_CHARS}")
         self.init_map()
 
         self.messages_table.setColumnCount(
@@ -166,7 +168,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if message is not None:
             self.set_status(status, message)
 
-        if data.get_is_connected():
+        if data.is_connected():
             self.connect_button.setEnabled(False)
             self.disconnect_button.setEnabled(True)
             for button in self._action_buttons:
@@ -184,6 +186,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def connect_device(self):
         device_path = self.device_combobox.currentText()
         if device_path:
+            self._manager.set_meshtastic_device(device_path)
             self.set_status(MessageLevel.INFO, f"Connecting to {device_path}.")
             self.connect_device_event(self.reset_nodedb_checkbox.isChecked())
         else:
@@ -200,7 +203,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.traceroute_table.clear()
         self.traceroute_table.setRowCount(0)
         for hop in route:
-            device = self._manager.get_long_name_from_id(hop)
+            device = self._manager.get_data_store().get_long_name_from_id(hop)
             if hop == self._local_board_id:
                 device = "Me"
             row_position = self.traceroute_table.rowCount()
@@ -213,16 +216,18 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         current_text = self.message_textedit.toPlainText()
 
         if len(current_text) > TEXT_MESSAGE_MAX_CHARS:
-            self.message_textedit.blockSignals(True) 
-            self.message_textedit.setPlainText(current_text[:TEXT_MESSAGE_MAX_CHARS])
+            self.message_textedit.blockSignals(True)
+            self.message_textedit.setPlainText(
+                current_text[:TEXT_MESSAGE_MAX_CHARS])
             cursor = self.message_textedit.textCursor()
             cursor.setPosition(TEXT_MESSAGE_MAX_CHARS)
             self.message_textedit.setTextCursor(cursor)
             self.message_textedit.blockSignals(False)
 
-        remaining_chars = TEXT_MESSAGE_MAX_CHARS - len(self.message_textedit.toPlainText())
-        self.remaining_chars_label.setText(f"{remaining_chars}/{TEXT_MESSAGE_MAX_CHARS}")
-
+        remaining_chars = TEXT_MESSAGE_MAX_CHARS - \
+            len(self.message_textedit.toPlainText())
+        self.remaining_chars_label.setText(
+            f"{remaining_chars}/{TEXT_MESSAGE_MAX_CHARS}")
 
     def init_map(self):
         self._map = folium.Map(zoom_start=7)
@@ -247,7 +252,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._map = folium.Map(zoom_start=7)
 
         # Add a new marker
-        self._manager.acquire_store_lock()
         nodes = self._manager.get_data_store().get_nodes()
         if nodes is None:
             return
@@ -329,14 +333,14 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             folium.LayerControl().add_to(self._map)
 
         self.update_map_in_widget()
-        self._manager.release_store_lock()
-
 
     def send_message(self):
         message = self.message_textedit.toPlainText()
         channel_name = self.channel_combobox.currentText()
-        recipient = self._manager.get_id_from_long_name(self.recipient_combobox.currentText())
-        channel_index = self._manager.get_channel_index_from_name(channel_name)
+        recipient = self._manager.get_data_store().get_id_from_long_name(
+            self.recipient_combobox.currentText())
+        channel_index = self._manager.get_data_store(
+        ).get_channel_index_from_name(channel_name)
         # Update timeout before sending
         if channel_index != -1 and message:
             m = MeshtasticMessage(
@@ -356,7 +360,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.message_textedit.clear()
 
     def update_nodes_table(self) -> None:
-        self._manager.acquire_store_lock()
         nodes = self._manager.get_data_store().get_nodes()
         if nodes is None:
             return
@@ -367,8 +370,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         for i, node in enumerate(nodes.values()):
             if node.id == self._local_board_id:
                 continue
-            self.tr_dest_combobox.insertItem(i + 1, node.long_name if node.long_name else node.id)
-            self.recipient_combobox.insertItem(i + 1, node.long_name if node.long_name else node.id)
+            self.tr_dest_combobox.insertItem(
+                i + 1, node.long_name if node.long_name else node.id)
+            self.recipient_combobox.insertItem(
+                i + 1, node.long_name if node.long_name else node.id)
 
         rows: list[dict[str, any]] = []
         for node_id, node in nodes.items():
@@ -440,11 +445,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.mesh_table.insertRow(row_position)
             for i, elt in enumerate(columns):
                 data = str(row[elt])
-                if data == "None": data = "" 
+                if data == "None":
+                    data = ""
                 self.mesh_table.setItem(
                     row_position, i, QTableWidgetItem(data))
                 self.mesh_table.resizeColumnsToContents()
-        self._manager.release_store_lock()
 
     def scan_mesh(self):
         self.scan_mesh_event()
@@ -501,19 +506,21 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if cfg is None:
             return
 
-        self._local_board_id = cfg.get_id()
-        self.devicename_label.setText(cfg.get_long_name())
-        self.batterylevel_progressbar.setValue(cfg.get_batterylevel())
+        self._local_board_id = cfg.id
+        self.devicename_label.setText(cfg.long_name)
+        self.batterylevel_progressbar.setValue(cfg.batterylevel)
         self.batterylevel_progressbar.show()
-        self.role_label.setText(f"{cfg.get_role()}")
-        self.id_label.setText(str(cfg.get_id()))
-        self.hardware_label.setText(str(cfg.get_hardware()))
+        self.role_label.setText(f"{cfg.role}")
+        self.id_label.setText(str(cfg.id))
+        self.hardware_label.setText(str(cfg.hardware))
 
     def traceroute(self):
-        dest_id = self._manager.get_id_from_long_name(self.tr_dest_combobox.currentText())
+        dest_id = self._manager.get_data_store().get_id_from_long_name(
+            self.tr_dest_combobox.currentText())
         channel_name = self.tr_channel_combobox.currentText()
         maxhops = self.tr_maxhops_spinbox.value()
-        channel_index = self._manager.get_channel_index_from_name(channel_name)
+        channel_index = self._manager.get_data_store(
+        ).get_channel_index_from_name(channel_name)
 
         self.traceroute_event(
             dest_id=dest_id,

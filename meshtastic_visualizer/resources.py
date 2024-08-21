@@ -2,6 +2,7 @@
 
 import enum
 import meshtastic
+import copy
 import datetime
 from dataclasses import dataclass, fields, field
 from typing import List, Optional, Any, Dict
@@ -9,6 +10,7 @@ from threading import Lock
 
 
 TEXT_MESSAGE_MAX_CHARS = 237
+
 
 class MessageLevel(enum.Enum):
     """
@@ -68,9 +70,9 @@ def run_in_thread(method):
 class MeshtasticMessage:
     mid: int
     date: datetime.datetime
-    content: str
     from_id: str
     to_id: str
+    content: Optional[str] = None
     rx_snr: Optional[float] = None
     hop_limit: Optional[int] = None
     want_ack: Optional[bool] = None
@@ -101,17 +103,7 @@ class MeshtasticNode:
     firstseen: Optional[str] = None
     lastseen: Optional[str] = None
     uptime: Optional[int] = None
-
-    def __post_init__(self):
-        self._lock = Lock()
-        for f in fields(self):
-            field_name = f.name
-            if field_name.startswith('_'):
-                continue
-            getter = create_getter(field_name)
-            setattr(self.__class__, getter.__name__, getter)
-            setter = create_setter(field_name)
-            setattr(self.__class__, setter.__name__, setter)
+    is_local: bool = False
 
 
 @dataclass
@@ -121,36 +113,177 @@ class Channel:
     role: Optional[str] = None
     psk: Optional[str] = None
 
-    def __post_init__(self):
-        self._lock = Lock()
-        for f in fields(self):
-            field_name = f.name
-            if field_name.startswith('_'):
-                continue
-            getter = create_getter(field_name)
-            setattr(self.__class__, getter.__name__, getter)
-            setter = create_setter(field_name)
-            setattr(self.__class__, setter.__name__, setter)
-
 
 @dataclass
 class MeshtasticDataStore:
     device_path: Optional[str] = None
     channels: Optional[List[Channel]] = None
     local_node_config: Optional[MeshtasticNode] = None
-    is_connected: bool = False
+    connected: bool = False
     nodes: Dict[str, MeshtasticNode] = field(
         default_factory=dict)  # Dict[node_id, Node object]
     messages: Dict[str, MeshtasticMessage] = field(
         default_factory=dict)  # Dict[message_id, Message object]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._lock = Lock()
-        for f in fields(self):
-            field_name = f.name
-            if field_name.startswith('_'):
-                continue
-            getter = create_getter(field_name)
-            setattr(self.__class__, getter.__name__, getter)
-            setter = create_setter(field_name)
-            setattr(self.__class__, setter.__name__, setter)
+
+    def is_connected(self) -> bool:
+        return self.connected
+
+    def get_local_node_config(self) -> MeshtasticNode:
+        self._lock.acquire()
+        res = copy.deepcopy(self.local_node_config)
+        self._lock.release()
+        return res
+
+    def set_local_node_config(self, config: MeshtasticNode) -> None:
+        self._lock.acquire()
+        self.local_node_config = config
+        self._lock.release()
+
+    def set_local_node_config_field(self, field: str, value: Any) -> None:
+        self._lock.acquire()
+        setattr(self.local_node_config, field, value)
+        self._lock.release()
+
+    def get_messages(self) -> Dict[str, MeshtasticMessage]:
+        self._lock.acquire()
+        res = copy.deepcopy(self.messages)
+        self._lock.release()
+        return res
+
+    def get_channels(self) -> Optional[List[Channel]]:
+        self._lock.acquire()
+        res = copy.deepcopy(self.channels)
+        self._lock.release()
+        return res
+
+    def set_message(self, message: MeshtasticMessage) -> None:
+        self._lock.acquire()
+        self.messages[str(message.mid)] = message
+        self._lock.release()
+
+    def get_nodes(self) -> None:
+        self._lock.acquire()
+        res = copy.deepcopy(self.nodes)
+        self._lock.release()
+        return res
+
+    def set_device_path(self, path: str) -> None:
+        self._lock.acquire()
+        self.device_path = path
+        self._lock.release()
+
+    def get_channel_index_from_name(self, name: str) -> int:
+        self._lock.acquire()
+        res: int = ""
+        if self.channels is None:
+            res = -1
+        else:
+            channel = list(filter(lambda x: x.name == name, self.channels))
+            if len(channel) != 1:
+                res = -1
+            else:
+                res = channel[0].index
+        self._lock.release()
+        return res
+
+    def get_id_from_long_name(self, long_name: str) -> str:
+        self._lock.acquire()
+        res: str = ""
+        nodes = self.nodes.values()
+        if nodes is None:
+            res = ""
+        elif long_name == "Me":
+            node = list(filter(lambda x: x.is_local, nodes))
+            if len(node) != 1:
+                res = ""
+            else:
+                res = node[0].id
+        elif long_name == "All":
+            res = "^all"
+        else:
+            node = list(filter(lambda x: x.long_name == long_name, nodes))
+            if len(node) != 1:
+                res = ""
+            else:
+                res = node[0].id
+        self._lock.release()
+        return res
+
+    def get_long_name_from_id(self, id: str) -> str:
+        self._lock.acquire()
+        res: str = ""
+        nodes = self.nodes.values()
+        if not nodes:
+            res = ""
+        node = list(filter(lambda x: x.id == id, nodes))
+        if len(node) != 1:
+            res = ""
+        else:
+            res = node[0].long_name if node[0].long_name else node[0].id
+        self._lock.release()
+        return res
+
+    def get_node_from_id(self, node_id: str) -> Optional[MeshtasticNode]:
+        self._lock.acquire()
+        res = None
+        nodes = list(
+            filter(
+                lambda x: x["user"]["id"] == node_id,
+                self.nodes.values()))
+        if len(nodes) != 1:
+            res = None
+        else:
+            res = nodes[0]
+        self._lock.release()
+        return res
+
+    def store_or_update_node(self, node: MeshtasticNode) -> None:
+        self._lock.acquire()
+        if not str(node.id) in self.nodes.keys():
+            self.nodes[str(node.id)] = node
+            if node.lastseen:
+                node.firstseen = node.lastseen
+            else:
+                node.firstseen = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            # update
+            def __get_nodes_fields():
+                return [field for field in fields(
+                    MeshtasticNode) if not field.name.startswith('_')]
+
+            for f in __get_nodes_fields():
+                if getattr(self.nodes[str(node.id)],
+                           f.name) != getattr(node, f.name):
+                    if getattr(
+                            node,
+                            f.name) is not None and getattr(
+                            node,
+                            f.name):
+                        setattr(self.nodes[str(node.id)], f.name,
+                                getattr(node, f.name))
+        self._lock.release()
+
+    def store_or_update_messages(self, message: MeshtasticMessage) -> None:
+        self._lock.acquire()
+        key = list(
+            filter(
+                lambda x: self.messages[x].mid == message.mid,
+                self.messages.keys()))
+        if len(key) == 0:
+            self.messages[message.mid] = message
+        else:
+            key = key[0]
+            self.messages[key].date = datetime.datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S")
+            self.messages[key].rx_rssi = message.rx_rssi
+            self.messages[key].rx_snr = message.rx_snr
+            self.messages[key].from_id = message.from_id
+            self.messages[key].to_id = message.to_id
+            self.messages[key].hop_limit = message.hop_limit
+            self.messages[key].hop_start = message.hop_start
+            self.messages[key].want_ack = message.want_ack
+            self.messages[key].ack = message.ack
+        self._lock.release()
