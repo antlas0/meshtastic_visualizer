@@ -134,30 +134,10 @@ class Channel:
 
 
 @dataclass
-class MeshtasticConfigStore:
+class MeshtasticDataStore:
     device_path: Optional[str] = None
-    destination_id: Optional[str] = None
-    timeout: Optional[int] = None
-    retransmission_limit: Optional[str] = None
-    interface: Optional[meshtastic.serial_interface.SerialInterface] = None
-    tunnel: Optional[Any] = None
     channels: Optional[List[Channel]] = None
     local_node_config: Optional[MeshtasticNode] = None
-
-    def __post_init__(self):
-        self._lock = Lock()
-        for f in fields(self):
-            field_name = f.name
-            if field_name.startswith('_'):
-                continue
-            getter = create_getter(field_name)
-            setattr(self.__class__, getter.__name__, getter)
-            setter = create_setter(field_name)
-            setattr(self.__class__, setter.__name__, setter)
-
-
-@dataclass
-class MeshtasticDataStore:
     is_connected: bool = False
     nodes: Dict[str, MeshtasticNode] = field(
         default_factory=dict)  # Dict[node_id, Node object]

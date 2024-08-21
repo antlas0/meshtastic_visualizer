@@ -162,8 +162,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         """
         self._lock.acquire()
 
-        config = self._manager.get_config()
-        data = self._manager.get_data()
+        data = self._manager.get_data_store()
         if message is not None:
             self.set_status(status, message)
 
@@ -249,7 +248,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         # Add a new marker
         self._manager.acquire_store_lock()
-        nodes = self._manager.get_data().get_nodes()
+        nodes = self._manager.get_data_store().get_nodes()
         if nodes is None:
             return
 
@@ -358,7 +357,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def update_nodes_table(self) -> None:
         self._manager.acquire_store_lock()
-        nodes = self._manager.get_data().get_nodes()
+        nodes = self._manager.get_data_store().get_nodes()
         if nodes is None:
             return
 
@@ -451,14 +450,14 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.scan_mesh_event()
 
     def get_channel_names(self) -> List[str]:
-        config = self._manager.get_config()
+        config = self._manager.get_data_store()
         channels = config.get_channels()
         if not channels:
             return []
         return [channel.name for channel in channels]
 
     def update_channels_table(self):
-        config = self._manager.get_config()
+        config = self._manager.get_data_store()
         channels = config.get_channels()
         if not channels:
             return
@@ -498,7 +497,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.retrieve_channels_event()
 
     def update_local_node_config(self):
-        cfg = self._manager.get_config().get_local_node_config()
+        cfg = self._manager.get_data_store().get_local_node_config()
         if cfg is None:
             return
 
@@ -529,8 +528,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.messages_table.setColumnCount(len(columns))
         self.messages_table.setHorizontalHeaderLabels(columns)
 
-        channels = self._manager._config.get_channels()
-        messages = self._manager.get_data().get_messages().values()
+        channels = self._manager.get_data_store().get_channels()
+        messages = self._manager.get_data_store().get_messages().values()
         for message in messages:
             data = []
             for column in columns:

@@ -24,7 +24,6 @@ from dataclasses import fields
 from .devices import list_serial_ports
 from .resources import run_in_thread, \
     MessageLevel, \
-    MeshtasticConfigStore, \
     MeshtasticDataStore, \
     Channel, \
     MeshtasticNode, \
@@ -55,23 +54,15 @@ class MeshtasticManager(QObject, threading.Thread):
 
     def __init__(self, dev_path=None):
         super().__init__()
-        self._config = MeshtasticConfigStore()
         self._data = MeshtasticDataStore()
-        self._config.device_path = dev_path
-        self._config.destination_id = BROADCAST_ADDR
-        self._config.interface = None
-        self._data.received_chunks = {}
-        self._data.acknowledged_chunks = set()
-        self._data.expected_chunks = {}
+        self._data.device_path = dev_path
+        self._data.destination_id = BROADCAST_ADDR
+        self._interface = None
         self._local_board_id: str = ""
-        self._config.tunnel = None  # Initialize the tunnel attribute
-        # Create an empty object to hold acknowledgment flags
-        self._data.acknowledgment = type('', (), {})()
-        self._data.acknowledgment.receivedTraceRoute = False
         self.task_queue = queue.Queue()
         self.daemon = True
         self._store_lock = Lock()
-
+        self._interface: Optional[meshtastic.serial_interface.SerialInterface] = None
 
     def notify_frontend(self, level: MessageLevel, text: str):
         self.notify_frontend_signal.emit(level, text)
@@ -91,10 +82,7 @@ class MeshtasticManager(QObject, threading.Thread):
     def notify_traceroute(self, route: list):
         self.notify_traceroute_signal.emit(route)
 
-    def get_config(self) -> MeshtasticConfigStore:
-        return self._config
-
-    def get_data(self) -> MeshtasticDataStore:
+    def get_data_store(self) -> MeshtasticDataStore:
         return self._data
 
     def acquire_store_lock(self) -> None:
@@ -107,10 +95,10 @@ class MeshtasticManager(QObject, threading.Thread):
         return list_serial_ports()
 
     def set_meshtastic_device(self, device: str) -> None:
-        self._config.device_path = device
+        self._data.device_path = device
 
     def get_channel_index_from_name(self, name: str) -> int:
-        channels = self._config.get_channels()
+        channels = self._data.get_channels()
         if channels is None:
             return -1
         channel = list(filter(lambda x: x.name == name, channels))
@@ -179,24 +167,24 @@ class MeshtasticManager(QObject, threading.Thread):
 
     @run_in_thread
     def connect_device(self, resetDB:bool=False) -> bool:
-        if self._config.interface is not None:
+        if self._interface is not None:
             return False
         try:
-            self._config.interface = meshtastic.serial_interface.SerialInterface(
-                devPath=self._config.device_path)
+            self._interface = meshtastic.serial_interface.SerialInterface(
+                devPath=self._data.device_path)
         except Exception as e:
-            trace = f"Failed to connect to Meshtastic device {self._config.device_path}: {str(e)}"
+            trace = f"Failed to connect to Meshtastic device {self._data.device_path}: {str(e)}"
             self._data.set_is_connected(False)
             self.notify_frontend(MessageLevel.ERROR, trace)
             return False
         else:
             # Subscribe to received message events
             pub.subscribe(self.on_receive, "meshtastic.receive")
-            trace = f"Successfully connected to Meshtastic device {self._config.device_path}"
+            trace = f"Successfully connected to Meshtastic device {self._data.device_path}"
             self._data.set_is_connected(True)
             self.retrieve_channels()
 
-            node = self._config.interface.getMyNodeInfo()
+            node = self._interface.getMyNodeInfo()
             self._local_board_id = node["user"]["id"]
             if resetDB: self.reset_local_node_db()
             self.load_local_nodedb()
@@ -206,13 +194,13 @@ class MeshtasticManager(QObject, threading.Thread):
 
     @run_in_thread
     def disconnect_device(self) -> bool:
-        if self._config.interface is None:
+        if self._interface is None:
             return False
 
         try:
-            self._config.interface.close()
-            del self._config.interface
-            self._config.interface = None
+            self._interface.close()
+            del self._interface
+            self._interface = None
         except Exception as e:
             trace = f"Failed to disconnect from Meshtastic device: {str(e)}"
             self.notify_frontend(MessageLevel.ERROR, trace)
@@ -224,16 +212,16 @@ class MeshtasticManager(QObject, threading.Thread):
             return True
 
     def set_destination_id(self, destination_id) -> None:
-        self._config.destination_id = destination_id
+        self._data.destination_id = destination_id
 
     def get_destination_id(self) -> str:
-        return self._config.destination_id
+        return self._data.destination_id
 
     @run_in_thread
     def reset_local_node_db(self) -> None:
-        if self._config.interface is None:
+        if self._interface is None:
             return
-        node = self._config.interface.getNode(self._local_board_id, False).resetNodeDb()
+        node = self._interface.getNode(self._local_board_id, False).resetNodeDb()
 
         self.notify_frontend(
             MessageLevel.INFO,
@@ -241,10 +229,10 @@ class MeshtasticManager(QObject, threading.Thread):
 
     @run_in_thread
     def load_local_node_configuration(self) -> None:
-        if self._config.interface is None:
+        if self._interface is None:
             return
 
-        node = self._config.interface.getMyNodeInfo()
+        node = self._interface.getMyNodeInfo()
         batlevel = node["deviceMetrics"]["batteryLevel"] if "deviceMetrics" in node else 0
         if batlevel > 100:
             batlevel = 100
@@ -268,7 +256,7 @@ class MeshtasticManager(QObject, threading.Thread):
 
         self._local_board_id = node["user"]["id"]
 
-        self._config.set_local_node_config(n)
+        self._data.set_local_node_config(n)
 
         self.notify_frontend(
             MessageLevel.INFO,
@@ -367,7 +355,6 @@ class MeshtasticManager(QObject, threading.Thread):
                 for nodeNum in asDict["route"]:
                     route.append(self._node_id_from_num(nodeNum))
             route.append(self._node_id_from_num(packet["from"]))
-            self._data.acknowledgment.receivedTraceRoute = True
             self.notify_traceroute(route)
 
         decoded = packet['decoded']
@@ -439,11 +426,11 @@ class MeshtasticManager(QObject, threading.Thread):
 
     @run_in_thread
     def send_text_message(self, message: MeshtasticMessage):
-        if self._config.interface is None:
+        if self._interface is None:
             return
 
         message.ack = "❌"
-        sent_packet = self._config.interface.sendData(
+        sent_packet = self._interface.sendData(
             data=message.content.encode("utf8"),
             destinationId=message.to_id,
             portNum=portnums_pb2.PortNum.TEXT_MESSAGE_APP,
@@ -512,7 +499,7 @@ class MeshtasticManager(QObject, threading.Thread):
 
         self.store_or_update_node(n)
         if n.id == self._local_board_id:
-            local_node_config = self._config.local_node_config
+            local_node_config = self._data.local_node_config
             local_node_config.set_batterylevel(n.batterylevel if n.batterylevel is not None else local_node_config.batterylevel)
             local_node_config.set_chutil(n.chutil if n.chutil is not None else local_node_config.chutil)
             local_node_config.set_txairutil(n.txairutil if n.txairutil is not None else local_node_config.txairutil)
@@ -524,14 +511,14 @@ class MeshtasticManager(QObject, threading.Thread):
     @run_in_thread
     def load_local_nodedb(self, include_self: bool = True) -> list:
         """Return a list of nodes in the mesh"""
-        if self._config.interface is None:
+        if self._interface is None:
             return []
 
-        if self._config.interface.nodesByNum:
+        if self._interface.nodesByNum:
             logging.debug(
-                f"self._config.interface.nodes:{self._config.interface.nodes}")
-            for node in self._config.interface.nodesByNum.values():
-                if not include_self and node["num"] == self._config.interface.localNode.nodeNum:
+                f"self._interface.nodes:{self._interface.nodes}")
+            for node in self._interface.nodesByNum.values():
+                if not include_self and node["num"] == self._interface.localNode.nodeNum:
                     continue
 
                 batlevel = node["deviceMetrics"]["batteryLevel"] if "deviceMetrics" in node else 0
@@ -575,14 +562,14 @@ class MeshtasticManager(QObject, threading.Thread):
     @run_in_thread
     def retrieve_channels(self) -> list:
         """Get the current channel settings from the node."""
-        if self._config.interface is None:
+        if self._interface is None:
             return []
 
-        self._config.channels = []
+        self._data.channels = []
         try:
-            for channel in self._config.interface.localNode.channels:
+            for channel in self._interface.localNode.channels:
                 if channel.role != channel_pb2.Channel.Role.DISABLED:
-                    self._config.channels.append(
+                    self._data.channels.append(
                         Channel(
                             index=channel.index,
                             role=channel_pb2.Channel.Role.Name(channel.role),
@@ -617,11 +604,11 @@ class MeshtasticManager(QObject, threading.Thread):
                        hopLimit: int,
                        channelIndex: int = 0):
         """Send the trace route"""
-        if self._config.interface is None:
+        if self._interface is None:
             return
 
         r = mesh_pb2.RouteDiscovery()
-        self._config.interface.sendData(
+        self._interface.sendData(
             r.SerializeToString(),
             destinationId=dest,
             portNum=portnums_pb2.PortNum.TRACEROUTE_APP,
@@ -633,19 +620,19 @@ class MeshtasticManager(QObject, threading.Thread):
             f"Traceoute started to {dest}.")
 
     def get_node_from_id(self, node_id:str) -> Optional[meshtastic.Node]:
-        if self._config.interface is None:
+        if self._interface is None:
             return
-        nodes = list(filter(lambda x:x["user"]["id"] == node_id, self._config.interface.nodes.values()))
+        nodes = list(filter(lambda x:x["user"]["id"] == node_id, self._interface.nodes.values()))
         if len(nodes) != 1:
             return None
         return nodes[0]
 
     def _node_id_from_num(self, nodeNum):
         """Convert node number to node ID"""
-        if self._config.interface is None:
+        if self._interface is None:
             return ""
 
-        for node in self._config.interface.nodesByNum.values():
+        for node in self._interface.nodesByNum.values():
             if node["num"] == nodeNum:
                 return node["user"]["id"]
         return f"!{nodeNum:08x}"
