@@ -5,14 +5,17 @@ import hashlib
 import io
 import folium
 import humanize
+import numpy as np
 from threading import Lock
 from datetime import datetime
 from typing import List
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtGui import QTextCursor
-from PyQt6.QtWidgets import QTableWidgetItem
+from PyQt6.QtWidgets import QTableWidgetItem, QVBoxLayout
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtCore import pyqtSignal
+import pyqtgraph as pg
+from pyqtgraph import DateAxisItem
 
 from .meshtastic_manager import MeshtasticManager
 from .resources import MessageLevel, \
@@ -40,6 +43,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._map = None
         self._markers_group = folium.FeatureGroup(name="Stations")
         self._link_group = folium.FeatureGroup(name="Links")
+        self._plot_widget = None
 
         # Variables
         self.status_var: str = ""
@@ -58,14 +62,17 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._manager.start()
 
         self._manager.notify_frontend_signal.connect(self.refresh)
+        self._manager.notify_nodes_metrics_signal.connect(
+            self.update_nodes_metrics)
         self._manager.notify_data_signal.connect(self.update_received_data)
         self._manager.notify_message_signal.connect(
             self.update_received_message)
         self._manager.notify_traceroute_signal.connect(self.update_traceroute)
         self._manager.notify_channels_signal.connect(
             self.update_channels_table)
-        self._manager.notify_nodes_signal.connect(self.update_nodes_map)
-        self._manager.notify_nodes_signal.connect(self.update_nodes_table)
+        self._manager.notify_nodes_map_signal.connect(self.update_nodes_map)
+        self._manager.notify_nodes_table_signal.connect(
+            self.update_nodes_table)
 
         for i, device in enumerate(self._manager.get_meshtastic_devices()):
             self.device_combobox.insertItem(i, device)
@@ -81,6 +88,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.traceroute_signal.connect(self._manager.send_traceroute)
         self.export_chat_button.pressed.connect(self._manager.export_chat)
         self.export_radio_button.pressed.connect(self.export_radio)
+        for i, metric in enumerate(
+                self._manager.get_data_store().get_node_metrics_fields()):
+            self.nm_metric_combobox.insertItem(
+                i + 1, metric)
 
     def connect_device_event(self, resetDB: bool):
         self.connect_device_signal.emit(resetDB)
@@ -116,6 +127,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.scan_button.clicked.connect(self.scan_mesh)
         self.send_button.clicked.connect(self.send_message)
         self.traceroute_button.clicked.connect(self.traceroute)
+        self.nm_update_button.pressed.connect(self.update_nodes_metrics)
+
         self.message_textedit.textChanged.connect(
             self.update_text_message_length)
         self.remaining_chars_label.setText(
@@ -140,6 +153,16 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         ]
         for button in self._action_buttons:
             button.setEnabled(False)
+        self._plot_widget = pg.PlotWidget()
+        self._plot_widget.setBackground('w')
+        self._plot_widget.getPlotItem().getAxis('left').setPen(pg.mkPen(color='k'))
+        self._plot_widget.getPlotItem().getAxis('bottom').setPen(pg.mkPen(color='k'))
+        self._plot_widget.getPlotItem().getAxis('left').setTextPen(pg.mkPen(color='k'))
+        self._plot_widget.getPlotItem().getAxis(
+            'bottom').setTextPen(pg.mkPen(color='k'))
+        self._plot_widget.addLegend()
+        self._plot_widget.setAxisItems({'bottom': DateAxisItem()})
+        self.plot_layout.addWidget(self._plot_widget)
 
     def _get_meshtastic_message_fields(self) -> list:
         return [
@@ -334,6 +357,61 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         self.update_map_in_widget()
 
+    def update_nodes_metrics(self) -> str:
+        node_id = self._manager.get_data_store().get_id_from_long_name(
+            self.nm_node_combobox.currentText())
+        metric_name = self.nm_metric_combobox.currentText()
+        if not node_id or not metric_name:
+            return
+        self.refresh_metrics_plot(node_id=node_id, metric_name=metric_name)
+
+    def refresh_metrics_plot(self, node_id: str, metric_name: str) -> None:
+        self._lock.acquire()
+        metric = self._manager.get_data_store().get_node_metrics(node_id, metric_name)
+        if "timestamp" not in metric or metric_name not in metric:
+            self._lock.release()
+            return
+        if len(
+                list(
+                    filter(
+                lambda x: x is not None,
+                metric[metric_name]))) == 0:
+            self._lock.release()
+            return
+
+        if len(
+            metric["timestamp"]) == len(
+            metric[metric_name]) and len(
+                metric[metric_name]) > 0:
+            none_indexes = [
+                i for i, v in enumerate(
+                    metric[metric_name]) if v is None]
+            for i in none_indexes:
+                metric["timestamp"].pop(i)
+                metric[metric_name].pop(i)
+
+            # for i in range(len(metric["timestamp"])):
+                # self._plot_widget.plot([], [], pen=pg.mkPen('r', width=2), symbol='o', symbolPen='b', symbolSize=10)
+            self._plot_widget.plot(
+                metric["timestamp"],
+                metric[metric_name],
+                pen=pg.mkPen(
+                    'r',
+                    width=2),
+                symbol='o',
+                symbolPen='b',
+                symbolSize=10)
+            # self._plot_widget.setData(metric["timestamp"][i], metric[metric_name][i])
+            self._plot_widget.getPlotItem().getViewBox().setRange(
+                xRange=(min(metric["timestamp"]), max(metric["timestamp"])),
+                yRange=(min(metric[metric_name]), max(metric[metric_name])),
+            )
+            self._plot_widget.setLabel('left', metric_name, units='')
+            self._plot_widget.setLabel('bottom', 'Timestamp', units='')
+            self._plot_widget.setTitle(
+                f'{metric_name} vs time for node {self._manager.get_data_store().get_long_name_from_id(node_id)}')
+        self._lock.release()
+
     def send_message(self):
         message = self.message_textedit.toPlainText()
         channel_name = self.channel_combobox.currentText()
@@ -366,7 +444,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         self.recipient_combobox.clear()
         self.tr_dest_combobox.clear()
+        current_nm_node = self.nm_node_combobox.currentText()
+        self.nm_node_combobox.clear()
         self.recipient_combobox.insertItem(0, "All")
+        self.nm_node_combobox.insertItem(
+            0, "Me")
         for i, node in enumerate(nodes.values()):
             if node.id == self._local_board_id:
                 continue
@@ -374,6 +456,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 i + 1, node.long_name if node.long_name else node.id)
             self.recipient_combobox.insertItem(
                 i + 1, node.long_name if node.long_name else node.id)
+            self.nm_node_combobox.insertItem(
+                i + 2, node.long_name if node.long_name else node.id)
+        self.nm_node_combobox.setCurrentText(current_nm_node)
 
         rows: list[dict[str, any]] = []
         for node_id, node in nodes.items():

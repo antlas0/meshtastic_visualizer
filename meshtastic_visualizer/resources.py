@@ -93,17 +93,17 @@ class MeshtasticNode:
     lon: Optional[str] = None
     alt: Optional[str] = None
     batterylevel: Optional[int] = None
+    voltage: Optional[float] = None
     chutil: Optional[str] = None
     txairutil: Optional[str] = None
     rssi: Optional[str] = None
     snr: Optional[str] = None
-    last_recipient_id: Optional[str] = None
     neighbors: Optional[List[str]] = None
     hopsaway: Optional[str] = None
     firstseen: Optional[str] = None
     lastseen: Optional[str] = None
     uptime: Optional[int] = None
-    is_local: bool = False
+    is_local: Optional[bool] = None
 
 
 @dataclass
@@ -112,6 +112,20 @@ class Channel:
     name: Optional[str] = None
     role: Optional[str] = None
     psk: Optional[str] = None
+
+
+@dataclass
+class NodeMetrics:
+    node_id: str
+    timestamp: int
+    snr: Optional[float] = None
+    rssi: Optional[float] = None
+    uptime: Optional[int] = None
+    hopsaway: Optional[int] = None
+    voltage: Optional[int] = None
+    air_util_tx: Optional[float] = None
+    channel_utilization: Optional[float] = None
+    battery_level: Optional[float] = None
 
 
 @dataclass
@@ -124,6 +138,8 @@ class MeshtasticDataStore:
         default_factory=dict)  # Dict[node_id, Node object]
     messages: Dict[str, MeshtasticMessage] = field(
         default_factory=dict)  # Dict[message_id, Message object]
+    metrics: Dict[str, List[NodeMetrics]] = field(
+        default_factory=dict)  # Dict[node_id, Dict[metric_name, List[value]]]
 
     def __post_init__(self) -> None:
         self._lock = Lock()
@@ -287,3 +303,37 @@ class MeshtasticDataStore:
             self.messages[key].want_ack = message.want_ack
             self.messages[key].ack = message.ack
         self._lock.release()
+
+    def get_node_metrics_fields(self) -> list:
+        return [
+            "rssi",
+            "snr",
+            "hopsaway",
+            "uptime",
+            "voltage",
+            "air_util_tx",
+            "channel_utilization",
+        ]
+
+    def store_or_update_metrics(self, new_metric: NodeMetrics) -> None:
+        self._lock.acquire()
+        if new_metric.node_id not in self.metrics.keys():
+            self.metrics[new_metric.node_id] = []
+        self.metrics[new_metric.node_id].append(new_metric)
+        self._lock.release()
+
+    def get_node_metrics(self, node_id: str, metric: str) -> Dict:
+        self._lock.acquire()
+        res: Dict[str, List[Any]] = {}
+        if node_id not in self.metrics.keys():
+            res = {}
+        else:
+            if metric not in self.get_node_metrics_fields():
+                res = {}
+            else:
+                timestamp = [x.timestamp for x in self.metrics[node_id]]
+                values = [getattr(x, metric) for x in self.metrics[node_id]]
+                res["timestamp"] = timestamp
+                res[metric] = values
+        self._lock.release()
+        return res.copy()

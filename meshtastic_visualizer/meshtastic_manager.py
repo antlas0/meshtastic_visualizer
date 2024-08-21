@@ -28,7 +28,8 @@ from .resources import run_in_thread, \
     Channel, \
     MeshtasticNode, \
     MeshtasticMessage, \
-    PacketInfoType
+    PacketInfoType, \
+    NodeMetrics
 
 # Initialize colorama
 init(autoreset=True)
@@ -50,7 +51,9 @@ class MeshtasticManager(QObject, threading.Thread):
     notify_message_signal = pyqtSignal()
     notify_traceroute_signal = pyqtSignal(list)
     notify_channels_signal = pyqtSignal()
-    notify_nodes_signal = pyqtSignal()
+    notify_nodes_map_signal = pyqtSignal()
+    notify_nodes_table_signal = pyqtSignal()
+    notify_nodes_metrics_signal = pyqtSignal()
 
     def __init__(self, dev_path=None):
         super().__init__()
@@ -70,8 +73,14 @@ class MeshtasticManager(QObject, threading.Thread):
     def notify_channels(self):
         self.notify_channels_signal.emit()
 
-    def notify_nodes(self):
-        self.notify_nodes_signal.emit()
+    def notify_nodes_map(self):
+        self.notify_nodes_map_signal.emit()
+
+    def notify_nodes_table(self):
+        self.notify_nodes_table_signal.emit()
+
+    def notify_nodes_metrics(self):
+        self.notify_nodes_metrics_signal.emit()
 
     def notify_data(self, message: str, message_type: str):
         self.notify_data_signal.emit(message, message_type)
@@ -356,11 +365,11 @@ class MeshtasticManager(QObject, threading.Thread):
 
     @run_in_thread
     def update_node_info(self, packet) -> None:
-
         n = MeshtasticNode(
             id=self._node_id_from_num(
                 packet["from"])
         )
+        n.is_local = n.id == self._local_board_id
 
         if packet["decoded"]["portnum"] == PacketInfoType.PCK_POSITION_APP.value:
             n.lat = packet["decoded"]["position"]["latitude"] if "latitude" in packet["decoded"]["position"] else None
@@ -378,6 +387,10 @@ class MeshtasticManager(QObject, threading.Thread):
                 round(
                     packet["decoded"]["telemetry"]["deviceMetrics"]["channelUtilization"],
                     2)) if "deviceMetrics" in packet["decoded"]["telemetry"] and "channelUtilization" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
+            n.voltage = str(
+                round(
+                    packet["decoded"]["telemetry"]["deviceMetrics"]["voltage"],
+                    2)) if "deviceMetrics" in packet["decoded"]["telemetry"] and "voltage" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
             n.uptime = packet["decoded"]["telemetry"]["deviceMetrics"]["uptimeSeconds"] if "deviceMetrics" in packet[
                 "decoded"]["telemetry"] and "uptimeSeconds" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
 
@@ -400,7 +413,23 @@ class MeshtasticManager(QObject, threading.Thread):
 
         self._data.store_or_update_node(n)
 
+        nm = NodeMetrics(
+            node_id=n.id,
+            timestamp=int(round(datetime.datetime.now().timestamp())),
+            rssi=float(n.rssi) if n.rssi is not None else None,
+            snr=float(n.snr) if n.snr is not None else None,
+            hopsaway=int(n.hopsaway) if n.hopsaway is not None else None,
+            uptime=int(n.uptime) if n.uptime is not None else None,
+            air_util_tx=float(n.txairutil) if n.txairutil is not None else None,
+            channel_utilization=float(n.chutil) if n.chutil is not None else None,
+            battery_level=float(n.batterylevel) if n.batterylevel is not None else None,
+            voltage=float(n.voltage) if n.voltage is not None else None,
+        )
+        self._data.store_or_update_metrics(nm)
+        self.notify_nodes_metrics()
+
         self.notify_frontend(MessageLevel.INFO, f"Updated node {n.id}.")
+        self.notify_nodes_table()  # only notify table as map needs recreation
 
     @run_in_thread
     def load_local_nodedb(self, include_self: bool = True) -> list:
@@ -451,7 +480,8 @@ class MeshtasticManager(QObject, threading.Thread):
 
                 self._data.store_or_update_node(n)
             self.notify_frontend(MessageLevel.INFO, "Updated nodes list.")
-            self.notify_nodes()
+            self.notify_nodes_map()
+            self.notify_nodes_table()
 
     @run_in_thread
     def retrieve_channels(self) -> list:
