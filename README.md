@@ -21,6 +21,7 @@ At the moment, what works :
 * Send message with acknowledgment
 * Export messages
 * Export radio output logs
+* Metrics plotting (RF, power,...)
 
 To run :
 ```bash
