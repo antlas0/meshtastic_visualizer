@@ -69,9 +69,9 @@ def run_in_thread(method):
 @dataclass
 class MeshtasticMessage:
     mid: int
-    date: datetime.datetime
-    from_id: str
-    to_id: str
+    date: Optional[datetime.datetime] = None
+    from_id: Optional[str] = None
+    to_id: Optional[str] = None
     content: Optional[str] = None
     rx_snr: Optional[float] = None
     hop_limit: Optional[int] = None
@@ -293,16 +293,15 @@ class MeshtasticDataStore:
             self.messages[message.mid] = message
         else:
             key = key[0]
-            self.messages[key].date = datetime.datetime.now().strftime(
-                "%Y-%m-%d %H:%M:%S")
-            self.messages[key].rx_rssi = message.rx_rssi
-            self.messages[key].rx_snr = message.rx_snr
-            self.messages[key].from_id = message.from_id
-            self.messages[key].to_id = message.to_id
-            self.messages[key].hop_limit = message.hop_limit
-            self.messages[key].hop_start = message.hop_start
-            self.messages[key].want_ack = message.want_ack
-            self.messages[key].ack = message.ack
+            self.messages[key].date = message.date if message.date is not None else self.messages[key].date
+            self.messages[key].rx_rssi = message.rx_rssi if message.rx_rssi is not None else self.messages[key].rx_rssi
+            self.messages[key].rx_snr = message.rx_snr if message.rx_snr is not None else self.messages[key].rx_snr
+            self.messages[key].from_id = message.from_id if message.from_id is not None else self.messages[key].from_id
+            self.messages[key].to_id = message.to_id if message.to_id is not None else self.messages[key].to_id
+            self.messages[key].hop_limit = message.hop_limit if message.hop_limit is not None else self.messages[key].hop_limit
+            self.messages[key].hop_start = message.hop_start if message.hop_start is not None else self.messages[key].hop_start
+            self.messages[key].want_ack = message.want_ack if message.want_ack is not None else self.messages[key].want_ack
+            self.messages[key].ack = message.ack if message.ack is not None else self.messages[key].ack
         self._lock.release()
 
     def get_node_metrics_fields(self) -> list:

@@ -257,13 +257,8 @@ class MeshtasticManager(QObject, threading.Thread):
 
                 m = MeshtasticMessage(
                     mid=acked_message_id,
-                    date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     rx_rssi=packet['rxRssi'] if 'rxRssi' in packet else None,
                     rx_snr=packet['rxSnr'] if 'rxSnr' in packet else None,
-                    from_id=self._node_id_from_num(
-                        packet['from']),
-                    to_id=self._node_id_from_num(
-                        packet['to']),
                     channel_index=packet["channel"] if "channel" in packet else None,
                     hop_limit=packet['hopLimit'] if 'hopLimit' in packet else None,
                     hop_start=packet['hopStart'] if 'hopStart' in packet else None,

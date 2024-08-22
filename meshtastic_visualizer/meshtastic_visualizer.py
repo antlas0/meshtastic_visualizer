@@ -161,6 +161,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._plot_widget.getPlotItem().getAxis(
             'bottom').setTextPen(pg.mkPen(color='k'))
         self._plot_widget.addLegend()
+        self._plot_widget.setMouseEnabled(x=False, y=False)
         self._plot_widget.setAxisItems({'bottom': DateAxisItem()})
         self.plot_layout.addWidget(self._plot_widget)
 
@@ -171,12 +172,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             "from_id",
             "to_id",
             "channel_index",
-            "content",
-            "rx_rssi",
-            "rx_snr",
-            "hop_start",
-            "hop_limit",
-            "want_ack"]
+            "content"]
 
     def refresh(
             self,
@@ -424,7 +420,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             m = MeshtasticMessage(
                 mid=-1,
                 date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                from_id="Me",
+                from_id=self._local_board_id,
                 to_id=recipient,
                 content=message,
                 rx_rssi="",
@@ -626,12 +622,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             data = []
             for column in columns:
                 if column == "from_id" or column == "to_id":
-                    if getattr(message, column) == self._local_board_id:
-                        data.append("Me")
-                    elif getattr(message, column) in self._friends.keys():
-                        data.append(self._friends[getattr(message, column)])
-                    else:
-                        data.append(getattr(message, column))
+                    data.append(
+                        self._manager.get_data_store().get_long_name_from_id(
+                            getattr(
+                                message, column)))
                 elif column == "channel_index":
                     name = "DM"
                     for ch in channels:
