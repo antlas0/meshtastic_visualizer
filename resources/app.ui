@@ -431,12 +431,12 @@
         <rect>
          <x>10</x>
          <y>150</y>
-         <width>111</width>
+         <width>71</width>
          <height>31</height>
         </rect>
        </property>
        <property name="text">
-        <string>Traceroute</string>
+        <string>Start</string>
        </property>
       </widget>
       <widget class="QComboBox" name="tr_dest_combobox">
@@ -444,7 +444,7 @@
         <rect>
          <x>10</x>
          <y>30</y>
-         <width>111</width>
+         <width>71</width>
          <height>25</height>
         </rect>
        </property>
@@ -463,7 +463,7 @@
         <rect>
          <x>10</x>
          <y>70</y>
-         <width>111</width>
+         <width>71</width>
          <height>25</height>
         </rect>
        </property>
@@ -476,7 +476,7 @@
         <rect>
          <x>10</x>
          <y>110</y>
-         <width>111</width>
+         <width>71</width>
          <height>26</height>
         </rect>
        </property>
@@ -490,9 +490,9 @@
       <widget class="QTableWidget" name="traceroute_table">
        <property name="geometry">
         <rect>
-         <x>130</x>
+         <x>90</x>
          <y>30</y>
-         <width>101</width>
+         <width>141</width>
          <height>151</height>
         </rect>
        </property>
