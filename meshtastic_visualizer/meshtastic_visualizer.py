@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import List
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtGui import QTextCursor
-from PyQt6.QtWidgets import QTableWidgetItem, QVBoxLayout
+from PyQt6.QtWidgets import QTableWidgetItem, QVBoxLayout, QListWidgetItem
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtCore import pyqtSignal
 import pyqtgraph as pg
@@ -128,7 +128,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.send_button.clicked.connect(self.send_message)
         self.traceroute_button.clicked.connect(self.traceroute)
         self.nm_update_button.pressed.connect(self.update_nodes_metrics)
-
+        self.msg_node_list.itemClicked.connect(self.update_msg_recipient)
+        self.msg_channel_list.itemClicked.connect(self.update_msg_channel)
         self.message_textedit.textChanged.connect(
             self.update_text_message_length)
         self.remaining_chars_label.setText(
@@ -410,9 +411,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def send_message(self):
         message = self.message_textedit.toPlainText()
-        channel_name = self.channel_combobox.currentText()
+        channel_name = self.msg_channel_label.text()
         recipient = self._manager.get_data_store().get_id_from_long_name(
-            self.recipient_combobox.currentText())
+            self.msg_to_label.text())
         channel_index = self._manager.get_data_store(
         ).get_channel_index_from_name(channel_name)
         # Update timeout before sending
@@ -438,11 +439,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if nodes is None:
             return
 
-        self.recipient_combobox.clear()
+        self.msg_node_list.clear()
         self.tr_dest_combobox.clear()
         current_nm_node = self.nm_node_combobox.currentText()
         self.nm_node_combobox.clear()
-        self.recipient_combobox.insertItem(0, "All")
+        self.msg_node_list.insertItem(0, "All")
         self.nm_node_combobox.insertItem(
             0, "Me")
         for i, node in enumerate(nodes.values()):
@@ -450,7 +451,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 continue
             self.tr_dest_combobox.insertItem(
                 i + 1, node.long_name if node.long_name else node.id)
-            self.recipient_combobox.insertItem(
+            self.msg_node_list.insertItem(
                 i + 1, node.long_name if node.long_name else node.id)
             self.nm_node_combobox.insertItem(
                 i + 2, node.long_name if node.long_name else node.id)
@@ -548,7 +549,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if not channels:
             return
 
-        for cb in ["channel_combobox", "tr_channel_combobox"]:
+        for cb in ["msg_channel_list", "tr_channel_combobox"]:
             getattr(self, cb).clear()
             for i, channel in enumerate(channels):
                 getattr(self, cb).insertItem(i, channel.name)
@@ -656,6 +657,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         cursor = QTextCursor(self.output_textedit.textCursor())
         cursor.setPosition(len(self.output_textedit.toPlainText()))
         self.output_textedit.setTextCursor(cursor)
+
+    def update_msg_recipient(self, item: QListWidgetItem) -> None:
+        self.msg_to_label.setText(item.text())
+
+    def update_msg_channel(self, item: QListWidgetItem) -> None:
+        self.msg_channel_label.setText(item.text())
 
     def export_radio(self) -> None:
         nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
