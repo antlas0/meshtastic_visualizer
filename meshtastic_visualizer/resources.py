@@ -143,6 +143,7 @@ class MeshtasticDataStore:
 
     def __post_init__(self) -> None:
         self._lock = Lock()
+        self._metrics_maxlength = 120
 
     def is_connected(self) -> bool:
         return self.connected
@@ -321,6 +322,9 @@ class MeshtasticDataStore:
         if new_metric.node_id not in self.metrics.keys():
             self.metrics[new_metric.node_id] = []
         self.metrics[new_metric.node_id].append(new_metric)
+        self.metrics[new_metric.node_id].append(new_metric)
+        if len(self.metrics[new_metric.node_id]) > self._metrics_maxlength:
+            self.metrics[new_metric.node_id][0]
         self._lock.release()
 
     def get_node_metrics(self, node_id: str, metric: str) -> Dict:
