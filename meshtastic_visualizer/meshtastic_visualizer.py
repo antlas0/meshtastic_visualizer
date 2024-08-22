@@ -387,8 +387,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 metric["timestamp"].pop(i)
                 metric[metric_name].pop(i)
 
-            # for i in range(len(metric["timestamp"])):
-                # self._plot_widget.plot([], [], pen=pg.mkPen('r', width=2), symbol='o', symbolPen='b', symbolSize=10)
+            self._plot_widget.clear()
             self._plot_widget.plot(
                 metric["timestamp"],
                 metric[metric_name],
@@ -398,7 +397,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 symbol='o',
                 symbolPen='b',
                 symbolSize=10)
-            # self._plot_widget.setData(metric["timestamp"][i], metric[metric_name][i])
             self._plot_widget.getPlotItem().getViewBox().setRange(
                 xRange=(min(metric["timestamp"]), max(metric["timestamp"])),
                 yRange=(min(metric[metric_name]), max(metric[metric_name])),
