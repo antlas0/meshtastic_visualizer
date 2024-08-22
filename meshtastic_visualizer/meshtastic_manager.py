@@ -177,7 +177,7 @@ class MeshtasticManager(QObject, threading.Thread):
             lat=str(node["position"]["latitude"]) if "position" in node and "latitude" in node["position"] else None,
             lon=str(node["position"]["longitude"] if "position" in node and "longitude" in node["position"] else None),
             lastseen=datetime.datetime.fromtimestamp(node["lastHeard"]).strftime('%Y-%m-%d %H:%M:%S') if "lastHeard" in node and node["lastHeard"] is not None else None,
-            batterylevel=batlevel,
+            battery_level=batlevel,
             hopsaway=str(node["hopsAway"]) if "hopsAway" in node else None,
             snr=str(round(node["snr"], 2)) if "snr" in node else None,
             txairutil=str(round(node["deviceMetrics"]["airUtilTx"], 2)) if "deviceMetrics" in node and "airUtilTx" in node["deviceMetrics"] else None,
@@ -377,7 +377,7 @@ class MeshtasticManager(QObject, threading.Thread):
             n.alt = packet["decoded"]["position"]["altitude"] if "altitude" in packet["decoded"]["position"] else None
 
         if packet["decoded"]["portnum"] == PacketInfoType.PCK_TELEMETRY_APP.value:
-            n.batterylevel = packet["decoded"]["telemetry"]["deviceMetrics"]["batteryLevel"] if "deviceMetrics" in packet[
+            n.battery_level = packet["decoded"]["telemetry"]["deviceMetrics"]["batteryLevel"] if "deviceMetrics" in packet[
                 "decoded"]["telemetry"] and "batteryLevel" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
             n.txairutil = str(
                 round(
@@ -422,7 +422,7 @@ class MeshtasticManager(QObject, threading.Thread):
             uptime=int(n.uptime) if n.uptime is not None else None,
             air_util_tx=float(n.txairutil) if n.txairutil is not None else None,
             channel_utilization=float(n.chutil) if n.chutil is not None else None,
-            battery_level=float(n.batterylevel) if n.batterylevel is not None else None,
+            battery_level=float(n.battery_level) if n.battery_level is not None else None,
             voltage=float(n.voltage) if n.voltage is not None else None,
         )
         self._data.store_or_update_metrics(nm)
@@ -460,7 +460,7 @@ class MeshtasticManager(QObject, threading.Thread):
                     lastseen=datetime.datetime.fromtimestamp(
                         node["lastHeard"]).strftime('%Y-%m-%d %H:%M:%S') if "lastHeard" in node and node["lastHeard"] is not None else None,
                     id=node["user"]["id"],
-                    batterylevel=batlevel,
+                    battery_level=batlevel,
                     hopsaway=str(
                         node["hopsAway"]) if "hopsAway" in node else None,
                     snr=str(

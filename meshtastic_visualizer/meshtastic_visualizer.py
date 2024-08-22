@@ -295,9 +295,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             strl.append(f"<b>id:</b> {node.id}</br>")
             if node.hardware:
                 strl.append(f"<b>Hardware:</b> {node.hardware}</br>")
-            if node.batterylevel:
+            if node.battery_level:
                 strl.append(
-                    f"<b>Battery Level:</b> {node.batterylevel} %</br>")
+                    f"<b>Battery Level:</b> {node.battery_level} %</br>")
             if node.role:
                 strl.append(f"<b>Role:</b> {node.role}</br>")
             if node.hopsaway:
@@ -481,7 +481,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 }
             )
 
-            row.update({"Battery": node.batterylevel})
+            row.update({"Battery": node.battery_level})
             row.update(
                 {
                     "Channel util.": node.chutil,
@@ -593,7 +593,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         self._local_board_id = cfg.id
         self.devicename_label.setText(cfg.long_name)
-        self.batterylevel_progressbar.setValue(cfg.batterylevel)
+        self.batterylevel_progressbar.setValue(cfg.battery_level)
         self.batterylevel_progressbar.show()
         self.role_label.setText(f"{cfg.role}")
         self.id_label.setText(str(cfg.id))

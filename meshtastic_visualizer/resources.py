@@ -92,7 +92,7 @@ class MeshtasticNode:
     lat: Optional[str] = None
     lon: Optional[str] = None
     alt: Optional[str] = None
-    batterylevel: Optional[int] = None
+    battery_level: Optional[int] = None
     voltage: Optional[float] = None
     chutil: Optional[str] = None
     txairutil: Optional[str] = None
@@ -313,6 +313,7 @@ class MeshtasticDataStore:
             "voltage",
             "air_util_tx",
             "channel_utilization",
+            "battery_level"
         ]
 
     def store_or_update_metrics(self, new_metric: NodeMetrics) -> None:
