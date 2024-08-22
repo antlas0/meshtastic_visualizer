@@ -321,7 +321,6 @@ class MeshtasticDataStore:
         if new_metric.node_id not in self.metrics.keys():
             self.metrics[new_metric.node_id] = []
         self.metrics[new_metric.node_id].append(new_metric)
-        self.metrics[new_metric.node_id].append(new_metric)
         if len(self.metrics[new_metric.node_id]) > self._metrics_maxlength:
             self.metrics[new_metric.node_id][0]
         self._lock.release()
