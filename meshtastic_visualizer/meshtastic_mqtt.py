@@ -286,11 +286,20 @@ class MeshtasticMQTT(QObject, threading.Thread):
                             snr=mp.rx_snr,
                         )
                         nm = NodeMetrics(
-                            node_id=getattr(mp, "from"),
+                            node_id=self.node_number_to_id(
+                                getattr(
+                                    mp,
+                                    "from")),
                             rssi=mp.rx_rssi,
                             timestamp=position.time,
-                            latitude=round(position.latitude_i * 1e-7, 7),
-                            longitude=round(position.longitude_i * 1e-7, 7),
+                            latitude=round(
+                                position.latitude_i *
+                                1e-7,
+                                7),
+                            longitude=round(
+                                position.longitude_i *
+                                1e-7,
+                                7),
                             altitude=position.altitude,
                             snr=mp.rx_snr,
                         )

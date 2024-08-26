@@ -93,24 +93,27 @@ class MeshtasticDataStore(Thread):
         self._lock.release()
         return res
 
-    def get_id_from_long_name(self, long_name: str) -> str:
+    def get_id_from_long_name(self, long_name_or_id: str) -> str:
         self._lock.acquire()
         res: str = ""
         nodes = self.nodes.values()
         if nodes is None:
             res = ""
-        elif long_name == "Me":
+        elif long_name_or_id == "Me":
             node = list(filter(lambda x: x.is_local, nodes))
             if len(node) != 1:
                 res = ""
             else:
                 res = node[0].id
-        elif long_name == "All":
+        elif long_name_or_id == "All":
             res = "^all"
         else:
-            node = list(filter(lambda x: x.long_name == long_name, nodes))
+            node = list(
+                filter(
+                    lambda x: x.long_name == long_name_or_id,
+                    nodes))
             if len(node) != 1:
-                res = ""
+                res = long_name_or_id
             else:
                 res = node[0].id
         self._lock.release()
