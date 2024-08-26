@@ -109,7 +109,7 @@
         <string>Export</string>
        </property>
       </widget>
-      <widget class="QTextEdit" name="mqtt_output_textedit_2">
+      <widget class="QTextEdit" name="output_textedit">
        <property name="geometry">
         <rect>
          <x>10</x>
@@ -875,7 +875,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>10</y>
+        <y>50</y>
         <width>891</width>
         <height>311</height>
        </rect>
@@ -898,9 +898,9 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>330</y>
+        <y>370</y>
         <width>891</width>
-        <height>371</height>
+        <height>331</height>
        </rect>
       </property>
       <property name="title">
@@ -911,7 +911,7 @@
         <rect>
          <x>20</x>
          <y>30</y>
-         <width>368</width>
+         <width>411</width>
          <height>41</height>
         </rect>
        </property>
@@ -965,11 +965,80 @@
          <x>20</x>
          <y>80</y>
          <width>861</width>
-         <height>281</height>
+         <height>241</height>
         </rect>
        </property>
        <layout class="QHBoxLayout" name="plot_layout"/>
       </widget>
+     </widget>
+     <widget class="QLCDNumber" name="nodes_recently_lcd">
+      <property name="geometry">
+       <rect>
+        <x>560</x>
+        <y>10</y>
+        <width>81</width>
+        <height>31</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_15">
+      <property name="geometry">
+       <rect>
+        <x>370</x>
+        <y>40</y>
+        <width>121</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Positioned Nodes</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_19">
+      <property name="geometry">
+       <rect>
+        <x>530</x>
+        <y>40</y>
+        <width>151</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Seen recently (5min)</string>
+      </property>
+     </widget>
+     <widget class="QLCDNumber" name="nodes_gps_lcd">
+      <property name="geometry">
+       <rect>
+        <x>410</x>
+        <y>10</y>
+        <width>81</width>
+        <height>31</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLCDNumber" name="nodes_total_lcd">
+      <property name="geometry">
+       <rect>
+        <x>260</x>
+        <y>10</y>
+        <width>81</width>
+        <height>31</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_20">
+      <property name="geometry">
+       <rect>
+        <x>260</x>
+        <y>40</y>
+        <width>81</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Total nodes</string>
+      </property>
      </widget>
     </widget>
    </widget>

@@ -6,7 +6,7 @@ import io
 import folium
 import humanize
 from threading import Lock
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtGui import QTextCursor
@@ -185,6 +185,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._plot_widget.setAxisItems({'bottom': DateAxisItem()})
         self.plot_layout.addWidget(self._plot_widget)
         self.mqtt_disconnect_button.setEnabled(False)
+        self.nodes_total_lcd.setDecMode()
+        self.nodes_gps_lcd.setDecMode()
+        self.nodes_recently_lcd.setDecMode()
 
     def _get_meshtastic_message_fields(self) -> list:
         return [
@@ -464,6 +467,24 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if nodes is None:
             return
 
+        # update LCD widgets
+        self.nodes_total_lcd.display(len(nodes.values()))
+        positioned_nodes = list(
+            filter(
+                lambda x: x.lat is not None and x.lon is not None and x.lat and x.lon,
+                nodes.values()))
+        self.nodes_gps_lcd.display(len(positioned_nodes))
+        recently_seen = list(
+            filter(
+                lambda x: datetime.strptime(
+                    x.lastseen,
+                    "%Y-%m-%d %H:%M:%S") > datetime.now() -
+                timedelta(
+                    minutes=5) if x.lastseen is not None else False,
+                nodes.values()))
+        self.nodes_recently_lcd.display(len(recently_seen))
+
+        # update table
         self.msg_node_list.clear()
         self.tr_dest_combobox.clear()
         current_nm_node = self.nm_node_combobox.currentText()
