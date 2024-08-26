@@ -172,7 +172,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._action_buttons = [
             self.traceroute_button,
             self.send_button,
-            self.export_chat_button,
             self.export_radio_button,
             self.message_textedit,
         ]
