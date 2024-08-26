@@ -231,13 +231,21 @@ class MeshtasticMQTT(QObject, threading.Thread):
                     pass
                 else:
                     m = MeshtasticMessage(
-                        from_id=self.node_number_to_id(getattr(mp, "from")),
-                        to_id=self.node_number_to_id(getattr(mp, "to")),
+                        from_id=self.node_number_to_id(
+                            getattr(
+                                mp,
+                                "from")),
+                        to_id=self.node_number_to_id(
+                            getattr(
+                                mp,
+                                "to")),
                         content=text_payload,
                         mid=mp.id,
                         hop_limit=mp.hop_limit,
                         hop_start=mp.hop_start,
                         channel_index=mp.channel,
+                        date=datetime.datetime.fromtimestamp(
+                            mp.rx_time).strftime("%Y-%m-%d %H:%M:%S"),
                     )
                     self._store.store_or_update_messages(m)
                     self.notify_message()
