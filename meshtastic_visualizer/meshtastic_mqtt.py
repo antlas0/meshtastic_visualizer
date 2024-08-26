@@ -1,28 +1,16 @@
 #!/usr/bin/env python3
 
-import os
-import json
 import time
 import queue
 import ssl
 import base64
 import logging
-import datetime
-from pubsub import pub
-from colorama import Fore, init
-from dataclasses import fields, asdict
-from typing import Union, Optional, Dict
 import google.protobuf.json_format
-from typing import List, Optional
 import threading
-from threading import Lock
-from meshtastic import channel_pb2, portnums_pb2, mesh_pb2
+from meshtastic import portnums_pb2, mesh_pb2
 from PyQt6.QtCore import pyqtSignal, QObject
-from dataclasses import fields
 from meshtastic.protobuf import mesh_pb2, mqtt_pb2, portnums_pb2, telemetry_pb2
-from meshtastic.protobuf.mesh_pb2 import HardwareModel
 import paho.mqtt.client as mqtt
-from dataclasses import dataclass
 from paho.mqtt.client import MessageState
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
