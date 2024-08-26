@@ -164,7 +164,6 @@ class MeshtasticMQTT(QObject, threading.Thread):
 
     def decode_encrypted(self, mp):
         """Decrypt a meshtastic message."""
-
         try:
             # Convert key to bytes
             key_bytes = base64.b64decode(
@@ -337,7 +336,6 @@ class MeshtasticMQTT(QObject, threading.Thread):
         self.task_queue.put((task, args, kwargs))
 
     def quit(self):
-        # Signal the thread to exit
         self.task_queue.put((None, [], {}))
 
     def run(self):

@@ -425,7 +425,7 @@
           <item>
            <widget class="QLineEdit" name="mqtt_password_linedit">
             <property name="text">
-             <string>24zgUzZTtWeonk</string>
+             <string/>
             </property>
            </widget>
           </item>

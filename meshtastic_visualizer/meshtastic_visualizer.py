@@ -5,13 +5,12 @@ import hashlib
 import io
 import folium
 import humanize
-import numpy as np
 from threading import Lock
 from datetime import datetime
 from typing import List
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtGui import QTextCursor
-from PyQt6.QtWidgets import QTableWidgetItem, QVBoxLayout, QListWidgetItem
+from PyQt6.QtWidgets import QTableWidgetItem, QListWidgetItem
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtCore import pyqtSignal
 import pyqtgraph as pg
@@ -54,7 +53,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.status_var: str = ""
         self._local_board_id: str = ""
         self._action_buttons = []
-        # Set up the UI elements
         self.setup_ui()
 
         self._store = MeshtasticDataStore()
