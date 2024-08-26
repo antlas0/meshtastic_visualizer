@@ -362,7 +362,7 @@
           <item>
            <widget class="QLineEdit" name="mqtt_host_linedit">
             <property name="text">
-             <string>mqtt.flowapps.link</string>
+             <string/>
             </property>
            </widget>
           </item>
@@ -407,7 +407,7 @@
           <item>
            <widget class="QLineEdit" name="mqtt_username_linedit">
             <property name="text">
-             <string>teamFlowapps</string>
+             <string/>
             </property>
            </widget>
           </item>
@@ -443,7 +443,7 @@
           <item>
            <widget class="QLineEdit" name="mqtt_topic_linedit">
             <property name="text">
-             <string>msh/EU_868/2/e/#</string>
+             <string/>
             </property>
            </widget>
           </item>

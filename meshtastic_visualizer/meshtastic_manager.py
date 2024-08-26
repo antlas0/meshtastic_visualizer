@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 
-import os
 import json
-import copy
 import queue
 import base64
 import logging
 import datetime
 from pubsub import pub
 from colorama import Fore, init
-from dataclasses import fields, asdict
-from typing import Union, Optional, Dict
+from dataclasses import asdict
+from typing import Union, Optional,
 import google.protobuf.json_format
 from typing import List, Optional
 import threading
@@ -19,7 +17,7 @@ import meshtastic
 import meshtastic.serial_interface
 from meshtastic import channel_pb2, portnums_pb2, mesh_pb2
 from PyQt6.QtCore import pyqtSignal, QObject
-from dataclasses import fields
+
 
 from .devices import list_serial_ports
 from .resources import run_in_thread, \
