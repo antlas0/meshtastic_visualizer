@@ -103,6 +103,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.mqtt_connect_signal.connect(
             self._mqtt_manager.configure_and_start)
         self.export_chat_button.pressed.connect(self._manager.export_chat)
+        self.export_nodes_button.pressed.connect(self._manager.export_nodes)
         self.export_radio_button.pressed.connect(self.export_radio)
         for i, metric in enumerate(
                 self._store.get_node_metrics_fields()):

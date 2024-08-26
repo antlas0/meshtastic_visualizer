@@ -518,6 +518,17 @@ class MeshtasticManager(QObject, threading.Thread):
             self.notify_frontend(MessageLevel.INFO, trace)
 
     @run_in_thread
+    def export_nodes(self) -> None:
+        messages = [asdict(x) for x in self._data.get_nodes().values()]
+        data_json = json.dumps(messages, indent=4)
+        nnow = datetime.datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
+        fpath = f"nodes_{nnow}.json"
+        with open(fpath, "w") as json_file:
+            json_file.write(data_json)
+            trace = f"Exported nodes to file: {fpath}"
+            self.notify_frontend(MessageLevel.INFO, trace)
+
+    @run_in_thread
     def send_traceroute(self,
                         dest: Union[int,
                                     str],
