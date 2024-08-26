@@ -22,6 +22,7 @@ At the moment, what works :
 * Export messages
 * Export radio output logs
 * Metrics plotting (RF, power,...)
+* MQTT reader
 
 To run :
 ```bash
