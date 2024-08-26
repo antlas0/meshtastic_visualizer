@@ -3,6 +3,7 @@
 import time
 import queue
 import ssl
+import datetime
 import base64
 import logging
 import google.protobuf.json_format
@@ -255,6 +256,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                         hardware=info.hw_model,
                         snr=mp.rx_snr,
                         rssi=mp.rx_rssi,
+                        lastseen=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                     )
                     nm = NodeMetrics(
                         node_id=info.id,
@@ -284,6 +286,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                             alt=str(position.altitude),
                             rssi=mp.rx_rssi,
                             snr=mp.rx_snr,
+                            lastseen=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                         )
                         nm = NodeMetrics(
                             node_id=self.node_number_to_id(
