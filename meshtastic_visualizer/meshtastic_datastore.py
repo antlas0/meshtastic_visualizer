@@ -121,15 +121,19 @@ class MeshtasticDataStore(Thread):
 
     def get_long_name_from_id(self, id: str) -> str:
         self._lock.acquire()
-        res: str = ""
+        res: str = id
         nodes = self.nodes.values()
         if not nodes:
-            res = ""
+            res = id
         node = list(filter(lambda x: x.id == id, nodes))
         if len(node) != 1:
-            res = ""
+            res = id
         else:
             res = node[0].long_name if node[0].long_name else node[0].id
+
+        if id == "!ffffffff":
+            res = "All"
+
         self._lock.release()
         return res
 
