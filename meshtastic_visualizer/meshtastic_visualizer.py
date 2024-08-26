@@ -8,6 +8,7 @@ import humanize
 from threading import Lock
 from datetime import datetime, timedelta
 from typing import List
+from PyQt6 import QtCore
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtGui import QTextCursor
 from PyQt6.QtWidgets import QTableWidgetItem, QListWidgetItem
@@ -40,6 +41,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._lock = Lock()
         super(MeshtasticQtApp, self).__init__()
         uic.loadUi('resources/app.ui', self)
+        self.setWindowFlags(QtCore.Qt.WindowType.CustomizeWindowHint |
+                            QtCore.Qt.WindowType.WindowCloseButtonHint | QtCore.Qt.WindowType.WindowMinimizeButtonHint)
+        self.setFixedSize(self.size())
         self.show()
 
         self._markers: list = []
@@ -675,9 +679,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                                 message, column)))
                 elif column == "channel_index":
                     name = "DM"
-                    for ch in channels:
-                        if ch.index == message.channel_index:
-                            name = ch.name
+                    if channels is not None:
+                        for ch in channels:
+                            if ch.index == message.channel_index:
+                                name = ch.name
+                    else:
+                        name = message.channel_index
                     data.append(name)
 
                 else:
