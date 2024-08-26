@@ -24,12 +24,14 @@ from dataclasses import fields
 from .devices import list_serial_ports
 from .resources import run_in_thread, \
     MessageLevel, \
-    MeshtasticDataStore, \
     Channel, \
     MeshtasticNode, \
     MeshtasticMessage, \
     PacketInfoType, \
     NodeMetrics
+
+from .meshtastic_datastore import MeshtasticDataStore
+
 
 # Initialize colorama
 init(autoreset=True)
@@ -55,17 +57,18 @@ class MeshtasticManager(QObject, threading.Thread):
     notify_nodes_table_signal = pyqtSignal()
     notify_nodes_metrics_signal = pyqtSignal()
 
-    def __init__(self, dev_path=None):
+    def __init__(self):
         super().__init__()
-        self._data = MeshtasticDataStore()
-        self._data.device_path = dev_path
-        self._data.destination_id = BROADCAST_ADDR
+        self._data = None
         self._interface = None
         self._local_board_id: str = ""
         self.task_queue = queue.Queue()
         self.daemon = True
         self._store_lock = Lock()
         self._interface: Optional[meshtastic.serial_interface.SerialInterface] = None
+
+    def set_store(self, store: MeshtasticDataStore) -> None:
+        self._data = store
 
     def notify_frontend(self, level: MessageLevel, text: str):
         self.notify_frontend_signal.emit(level, text)

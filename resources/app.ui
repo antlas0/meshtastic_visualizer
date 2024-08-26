@@ -71,7 +71,7 @@
        </rect>
       </property>
       <property name="title">
-       <string>Channels</string>
+       <string>Local device channels</string>
       </property>
       <widget class="QTableWidget" name="channels_table">
        <property name="geometry">
@@ -88,24 +88,14 @@
       <property name="geometry">
        <rect>
         <x>500</x>
-        <y>90</y>
+        <y>310</y>
         <width>411</width>
-        <height>611</height>
+        <height>391</height>
        </rect>
       </property>
       <property name="title">
-       <string>Radio Output</string>
+       <string>Local device radio output</string>
       </property>
-      <widget class="QTextEdit" name="output_textedit">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>60</y>
-         <width>391</width>
-         <height>541</height>
-        </rect>
-       </property>
-      </widget>
       <widget class="QPushButton" name="export_radio_button">
        <property name="geometry">
         <rect>
@@ -119,6 +109,16 @@
         <string>Export</string>
        </property>
       </widget>
+      <widget class="QTextEdit" name="mqtt_output_textedit_2">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>70</y>
+         <width>391</width>
+         <height>311</height>
+        </rect>
+       </property>
+      </widget>
      </widget>
      <widget class="QGroupBox" name="groupBox_4">
       <property name="geometry">
@@ -130,7 +130,7 @@
        </rect>
       </property>
       <property name="title">
-       <string>Connection</string>
+       <string>Local device connection</string>
       </property>
       <widget class="QPushButton" name="connect_button">
        <property name="geometry">
@@ -195,7 +195,7 @@
        </rect>
       </property>
       <property name="title">
-       <string>Device Info</string>
+       <string>Local device Info</string>
       </property>
       <widget class="QLabel" name="label_5">
        <property name="geometry">
@@ -328,98 +328,369 @@
        </property>
       </widget>
      </widget>
-    </widget>
-    <widget class="QWidget" name="tab_map">
-     <attribute name="title">
-      <string>Map</string>
-     </attribute>
-     <widget class="QPushButton" name="scan_button">
+     <widget class="QGroupBox" name="groupBox_6">
       <property name="geometry">
        <rect>
-        <x>20</x>
+        <x>500</x>
         <y>10</y>
-        <width>111</width>
-        <height>25</height>
-       </rect>
-      </property>
-      <property name="minimumSize">
-       <size>
-        <width>50</width>
-        <height>0</height>
-       </size>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>300</width>
-        <height>16777215</height>
-       </size>
-      </property>
-      <property name="text">
-       <string>Refresh map</string>
-      </property>
-     </widget>
-     <widget class="QGroupBox" name="groupBox_7">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>40</y>
-        <width>881</width>
-        <height>661</height>
+        <width>401</width>
+        <height>261</height>
        </rect>
       </property>
       <property name="title">
-       <string>Map</string>
+       <string>MQTT Reader</string>
       </property>
-      <widget class="QWebEngineView" name="nodes_map" native="true">
+      <widget class="QWidget" name="verticalLayoutWidget">
        <property name="geometry">
         <rect>
          <x>10</x>
          <y>30</y>
-         <width>861</width>
-         <height>621</height>
+         <width>271</width>
+         <height>221</height>
         </rect>
        </property>
-       <property name="url" stdset="0">
-        <url>
-         <string>about:blank</string>
-        </url>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <widget class="QLabel" name="label_12">
+            <property name="text">
+             <string>Host</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="mqtt_host_linedit">
+            <property name="text">
+             <string>mqtt.flowapps.link</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_10">
+          <item>
+           <widget class="QLabel" name="label_18">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="text">
+             <string>Port</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="mqtt_port_spinbox">
+            <property name="minimum">
+             <number>1024</number>
+            </property>
+            <property name="maximum">
+             <number>65535</number>
+            </property>
+            <property name="value">
+             <number>1883</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <widget class="QLabel" name="label_13">
+            <property name="text">
+             <string>Username</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="mqtt_username_linedit">
+            <property name="text">
+             <string>teamFlowapps</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_8">
+          <item>
+           <widget class="QLabel" name="label_17">
+            <property name="text">
+             <string>Password</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="mqtt_password_linedit">
+            <property name="text">
+             <string>24zgUzZTtWeonk</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_6">
+          <item>
+           <widget class="QLabel" name="label_14">
+            <property name="text">
+             <string>Topic</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="mqtt_topic_linedit">
+            <property name="text">
+             <string>msh/EU_868/2/e/#</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_9">
+          <item>
+           <widget class="QLabel" name="label_16">
+            <property name="text">
+             <string>Key</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="mqtt_key_linedit">
+            <property name="text">
+             <string>AQ==</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="verticalLayoutWidget_2">
+       <property name="geometry">
+        <rect>
+         <x>300</x>
+         <y>30</y>
+         <width>91</width>
+         <height>61</height>
+        </rect>
        </property>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QPushButton" name="mqtt_connect_button">
+          <property name="text">
+           <string>Connect</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="mqtt_disconnect_button">
+          <property name="text">
+           <string>Disconnect</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </widget>
+     <widget class="Line" name="line_3">
+      <property name="geometry">
+       <rect>
+        <x>480</x>
+        <y>10</y>
+        <width>20</width>
+        <height>281</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+     <widget class="Line" name="line_4">
+      <property name="geometry">
+       <rect>
+        <x>497</x>
+        <y>280</y>
+        <width>411</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
     </widget>
-    <widget class="QWidget" name="tab_nodes">
+    <widget class="QWidget" name="tab_messages">
      <attribute name="title">
-      <string>Nodes</string>
+      <string>Messages</string>
      </attribute>
-     <widget class="QGroupBox" name="groupBox_5">
+     <widget class="QTextEdit" name="message_textedit">
+      <property name="geometry">
+       <rect>
+        <x>370</x>
+        <y>610</y>
+        <width>431</width>
+        <height>91</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="send_button">
+      <property name="geometry">
+       <rect>
+        <x>810</x>
+        <y>570</y>
+        <width>51</width>
+        <height>131</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Send</string>
+      </property>
+     </widget>
+     <widget class="QTableWidget" name="messages_table">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>10</y>
+        <width>661</width>
+        <height>551</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QListWidget" name="msg_channel_list">
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>10</y>
-        <width>631</width>
-        <height>311</height>
+        <y>40</y>
+        <width>201</width>
+        <height>151</height>
        </rect>
       </property>
-      <property name="title">
-       <string>Mesh</string>
+     </widget>
+     <widget class="QLabel" name="label_8">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>67</width>
+        <height>17</height>
+       </rect>
       </property>
-      <widget class="QTableWidget" name="mesh_table">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>30</y>
-         <width>611</width>
-         <height>271</height>
-        </rect>
-       </property>
-      </widget>
+      <property name="text">
+       <string>Channels</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_9">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>210</y>
+        <width>67</width>
+        <height>17</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Nodes</string>
+      </property>
+     </widget>
+     <widget class="QListWidget" name="msg_node_list">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>230</y>
+        <width>201</width>
+        <height>171</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QWidget" name="horizontalLayoutWidget_4">
+      <property name="geometry">
+       <rect>
+        <x>370</x>
+        <y>570</y>
+        <width>431</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>On</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="msg_channel_label">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Maximum</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>To</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="msg_to_label">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Maximum</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>103</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="remaining_chars_label">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
      <widget class="QGroupBox" name="groupBox_2">
       <property name="geometry">
        <rect>
-        <x>650</x>
-        <y>10</y>
-        <width>241</width>
+        <x>10</x>
+        <y>510</y>
+        <width>201</width>
         <height>191</height>
        </rect>
       </property>
@@ -492,8 +763,133 @@
         <rect>
          <x>90</x>
          <y>30</y>
-         <width>141</width>
+         <width>101</width>
          <height>151</height>
+        </rect>
+       </property>
+      </widget>
+     </widget>
+     <widget class="Line" name="line">
+      <property name="geometry">
+       <rect>
+        <x>220</x>
+        <y>40</y>
+        <width>20</width>
+        <height>661</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+     <widget class="Line" name="line_2">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>490</y>
+        <width>211</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="export_chat_button">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>570</y>
+        <width>89</width>
+        <height>25</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Export</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_map">
+     <attribute name="title">
+      <string>Map</string>
+     </attribute>
+     <widget class="QPushButton" name="scan_button">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>10</y>
+        <width>111</width>
+        <height>25</height>
+       </rect>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>50</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>300</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Refresh map</string>
+      </property>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_7">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>40</y>
+        <width>881</width>
+        <height>661</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Map</string>
+      </property>
+      <widget class="QWebEngineView" name="nodes_map" native="true">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>30</y>
+         <width>861</width>
+         <height>621</height>
+        </rect>
+       </property>
+       <property name="url" stdset="0">
+        <url>
+         <string>about:blank</string>
+        </url>
+       </property>
+      </widget>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_nodes">
+     <attribute name="title">
+      <string>Nodes</string>
+     </attribute>
+     <widget class="QGroupBox" name="groupBox_5">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>891</width>
+        <height>311</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Mesh</string>
+      </property>
+      <widget class="QTableWidget" name="mesh_table">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>30</y>
+         <width>871</width>
+         <height>271</height>
         </rect>
        </property>
       </widget>
@@ -574,182 +970,6 @@
        </property>
        <layout class="QHBoxLayout" name="plot_layout"/>
       </widget>
-     </widget>
-    </widget>
-    <widget class="QWidget" name="tab_messages">
-     <attribute name="title">
-      <string>Messages</string>
-     </attribute>
-     <widget class="QTextEdit" name="message_textedit">
-      <property name="geometry">
-       <rect>
-        <x>250</x>
-        <y>610</y>
-        <width>421</width>
-        <height>91</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="send_button">
-      <property name="geometry">
-       <rect>
-        <x>680</x>
-        <y>580</y>
-        <width>51</width>
-        <height>121</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Send</string>
-      </property>
-     </widget>
-     <widget class="QTableWidget" name="messages_table">
-      <property name="geometry">
-       <rect>
-        <x>230</x>
-        <y>10</y>
-        <width>671</width>
-        <height>551</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="export_chat_button">
-      <property name="geometry">
-       <rect>
-        <x>810</x>
-        <y>570</y>
-        <width>89</width>
-        <height>25</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Export</string>
-      </property>
-     </widget>
-     <widget class="QListWidget" name="msg_channel_list">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>40</y>
-        <width>211</width>
-        <height>151</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_8">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>20</y>
-        <width>67</width>
-        <height>17</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Channels</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_9">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>210</y>
-        <width>67</width>
-        <height>17</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Nodes</string>
-      </property>
-     </widget>
-     <widget class="QListWidget" name="msg_node_list">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>230</y>
-        <width>211</width>
-        <height>171</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QWidget" name="horizontalLayoutWidget_4">
-      <property name="geometry">
-       <rect>
-        <x>250</x>
-        <y>570</y>
-        <width>421</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
-       <item>
-        <widget class="QLabel" name="label_3">
-         <property name="text">
-          <string>On</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="msg_channel_label">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Maximum</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_4">
-         <property name="text">
-          <string>To</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="msg_to_label">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Maximum</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>103</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QLabel" name="remaining_chars_label">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-      </layout>
      </widget>
     </widget>
    </widget>
