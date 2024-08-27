@@ -30,7 +30,7 @@ from .meshtastic_datastore import MeshtasticDataStore
 class MeshtasticQtApp(QtWidgets.QMainWindow):
     connect_device_signal = pyqtSignal(bool)
     disconnect_device_signal = pyqtSignal()
-    scan_mesh_signal = pyqtSignal()
+    get_nodes_signal = pyqtSignal()
     send_message_signal = pyqtSignal(MeshtasticMessage)
     retrieve_channels_signal = pyqtSignal()
     retrieve_local_node_config_signal = pyqtSignal()
@@ -72,6 +72,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._mqtt_manager.notify_frontend_signal.connect(self.refresh)
         self._manager.notify_nodes_metrics_signal.connect(
             self.update_nodes_metrics)
+        self._mqtt_manager.notify_nodes_metrics_signal.connect(
+            self.update_nodes_metrics)
         self._manager.notify_data_signal.connect(self.update_received_data)
         self._manager.notify_message_signal.connect(
             self.update_received_message)
@@ -95,8 +97,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.disconnect_device_signal.connect(self._manager.disconnect_device)
         self.send_message_signal.connect(self._manager.send_text_message)
         self.retrieve_channels_signal.connect(self._manager.retrieve_channels)
-        self.scan_mesh_signal.connect(self.update_nodes_map)
-        self.scan_mesh_signal.connect(self.update_nodes_table)
+        self.get_nodes_signal.connect(self.update_nodes_map)
+        self.get_nodes_signal.connect(self.update_nodes_table)
         self.retrieve_local_node_config_signal.connect(
             self._manager.load_local_node_configuration)
         self.traceroute_signal.connect(self._manager.send_traceroute)
@@ -120,8 +122,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def disconnect_device_event(self):
         self.disconnect_device_signal.emit()
 
-    def scan_mesh_event(self):
-        self.scan_mesh_signal.emit()
+    def get_nodes_event(self):
+        self.get_nodes_signal.emit()
 
     def retrieve_channels_event(self):
         self.retrieve_channels_signal.emit()
@@ -148,7 +150,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def setup_ui(self) -> None:
         self.connect_button.clicked.connect(self.connect_device)
         self.disconnect_button.clicked.connect(self.disconnect_device)
-        self.scan_button.clicked.connect(self.scan_mesh)
+        self.scan_button.clicked.connect(self.get_nodes)
         self.send_button.clicked.connect(self.send_message)
         self.traceroute_button.clicked.connect(self.traceroute)
         self.nm_update_button.pressed.connect(self.update_nodes_metrics)
@@ -188,6 +190,14 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._plot_widget.setMouseEnabled(x=False, y=False)
         self._plot_widget.setAxisItems({'bottom': DateAxisItem()})
         self.plot_layout.addWidget(self._plot_widget)
+        self._plot_item = self._plot_widget.plot(
+            pen=pg.mkPen(
+                'r',
+                width=2),
+            symbol='o',
+            symbolPen='b',
+            symbolSize=10)
+
         self.mqtt_disconnect_button.setEnabled(False)
         self.nodes_total_lcd.setDecMode()
         self.nodes_gps_lcd.setDecMode()
@@ -421,16 +431,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 metric["timestamp"].pop(i)
                 metric[metric_name].pop(i)
 
-            self._plot_widget.clear()
-            self._plot_widget.plot(
-                metric["timestamp"],
-                metric[metric_name],
-                pen=pg.mkPen(
-                    'r',
-                    width=2),
-                symbol='o',
-                symbolPen='b',
-                symbolSize=10)
+            self._plot_item.setData(
+                x=metric["timestamp"],
+                y=metric[metric_name])
             self._plot_widget.getPlotItem().getViewBox().setRange(
                 xRange=(min(metric["timestamp"]), max(metric["timestamp"])),
                 yRange=(min(metric[metric_name]), max(metric[metric_name])),
@@ -544,6 +547,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     "Last Seen": node.lastseen,
                     "First Seen": node.firstseen,
                     "Uptime": humanize.precisedelta(node.uptime),
+                    "RX Counter": node.rx_counter,
                 }
             )
 
@@ -551,16 +555,15 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         rows.sort(key=lambda r: r.get("LastHeard") or "0000", reverse=True)
 
-        self.mesh_table.clear()
-        self.mesh_table.setRowCount(0)
         columns = [
             "User",
-            "ID",
             "AKA",
+            "ID",
             "Role",
             "Hardware",
             "Latitude",
             "Longitude",
+            "Altitude",
             "Battery",
             "Channel util.",
             "Tx air util.",
@@ -569,22 +572,28 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             "Hops Away",
             "Last Seen",
             "First Seen",
-            "Uptime"]
+            "Uptime",
+            "RX Counter"]
+
+        self.mesh_table.setRowCount(len(rows))
         self.mesh_table.setColumnCount(len(columns))
         self.mesh_table.setHorizontalHeaderLabels(columns)
-        for row in rows:
-            row_position = self.mesh_table.rowCount()
-            self.mesh_table.insertRow(row_position)
-            for i, elt in enumerate(columns):
-                data = str(row[elt])
+
+        for row_idx, row_data in enumerate(rows):
+            for col_idx, value in enumerate(row_data.values()):
+                current_item = self.mesh_table.item(row_idx, col_idx)
+                data = str(value)
                 if data == "None":
                     data = ""
-                self.mesh_table.setItem(
-                    row_position, i, QTableWidgetItem(data))
-                self.mesh_table.resizeColumnsToContents()
+                if current_item is None:
+                    self.mesh_table.setItem(
+                        row_idx, col_idx, QTableWidgetItem(data))
+                elif current_item.text() != value:
+                    current_item.setText(data)
+        self.mesh_table.resizeColumnsToContents()
 
-    def scan_mesh(self):
-        self.scan_mesh_event()
+    def get_nodes(self):
+        self.get_nodes_event()
 
     def get_channel_names(self) -> List[str]:
         config = self._store
@@ -661,22 +670,21 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         )
 
     def update_received_message(self) -> None:
-        self.messages_table.clear()
-        self.messages_table.setRowCount(0)
         columns = self._get_meshtastic_message_fields()
         self.messages_table.setColumnCount(len(columns))
         self.messages_table.setHorizontalHeaderLabels(columns)
 
         channels = self._store.get_channels()
         messages = self._store.get_messages().values()
+        self.messages_table.setRowCount(len(messages))
+        rows: list[dict[str, any]] = []
         for message in messages:
-            data = []
+            data = {}
             for column in columns:
                 if column == "from_id" or column == "to_id":
-                    data.append(
-                        self._store.get_long_name_from_id(
-                            getattr(
-                                message, column)))
+                    data[column] = self._store.get_long_name_from_id(
+                        getattr(
+                            message, column))
                 elif column == "channel_index":
                     name = "DM"
                     if channels is not None:
@@ -685,17 +693,21 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                                 name = ch.name
                     else:
                         name = message.channel_index
-                    data.append(name)
+                    data["channel_index"] = name
 
                 else:
-                    data.append(getattr(message, column))
+                    data[column] = getattr(message, column)
+            rows.append(data)
 
-            row_position = self.messages_table.rowCount()
-            self.messages_table.insertRow(row_position)
-            for i, elt in enumerate(data):
-                self.messages_table.setItem(
-                    row_position, i, QTableWidgetItem(str(elt)))
-                self.messages_table.resizeColumnsToContents()
+        for row_idx, row_data in enumerate(rows):
+            for col_idx, value in enumerate(row_data.values()):
+                current_item = self.messages_table.item(row_idx, col_idx)
+                if current_item is None:
+                    self.messages_table.setItem(
+                        row_idx, col_idx, QTableWidgetItem(str(value)))
+                elif current_item.text() != value:
+                    current_item.setText(str(value))
+        self.messages_table.resizeColumnsToContents()
 
     def update_received_data(self, message: str, message_type: str):
         self.output_textedit.setReadOnly(True)
