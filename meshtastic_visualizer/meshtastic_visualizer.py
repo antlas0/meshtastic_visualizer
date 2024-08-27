@@ -112,6 +112,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.nm_metric_combobox.insertItem(
                 i + 1, metric)
 
+        self.nodes_filter_linedit.textChanged.connect(self.update_nodes_table)
         self.mqtt_connect_button.pressed.connect(self.connect_mqtt)
         self.mqtt_disconnect_button.pressed.connect(
             self._mqtt_manager.disconnect_mqtt)
@@ -487,9 +488,22 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     x.lastseen,
                     "%Y-%m-%d %H:%M:%S") > datetime.now() -
                 timedelta(
-                    minutes=5) if x.lastseen is not None else False,
+                    minutes=30) if x.lastseen is not None else False,
                 nodes.values()))
         self.nodes_recently_lcd.display(len(recently_seen))
+
+        # filter by nodes_filter
+        filtered = nodes.values()  # nofilter
+        if len(self.nodes_filter_linedit.text()) != 0:
+            # first search in long_name, then in id
+            pattern = self.nodes_filter_linedit.text()
+            filtered = list(filter(lambda x: pattern.lower() in x.long_name.lower(
+            ) if x.long_name is not None else False, nodes.values()))
+            if not filtered:
+                filtered = list(
+                    filter(
+                        lambda x: pattern.lower() in x.id.lower(),
+                        nodes.values()))
 
         # update table
         self.msg_node_list.clear()
@@ -499,7 +513,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.msg_node_list.insertItem(0, "All")
         self.nm_node_combobox.insertItem(
             0, "Me")
-        for i, node in enumerate(nodes.values()):
+        for i, node in enumerate(filtered):
             if node.id == self._local_board_id:
                 continue
             self.tr_dest_combobox.insertItem(
@@ -511,7 +525,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.nm_node_combobox.setCurrentText(current_nm_node)
 
         rows: list[dict[str, any]] = []
-        for node_id, node in nodes.items():
+        for node in filtered:
             row = {"User": "", "ID": ""}
 
             row.update(
