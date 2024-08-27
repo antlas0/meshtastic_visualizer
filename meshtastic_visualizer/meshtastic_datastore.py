@@ -37,7 +37,7 @@ class MeshtasticDataStore(Thread):
 
     def get_local_node_config(self) -> MeshtasticNode:
         self._lock.acquire()
-        res = copy.deepcopy(self.local_node_config)
+        res = copy.copy(self.local_node_config)
         self._lock.release()
         return res
 
@@ -53,13 +53,13 @@ class MeshtasticDataStore(Thread):
 
     def get_messages(self) -> Dict[str, MeshtasticMessage]:
         self._lock.acquire()
-        res = copy.deepcopy(self.messages)
+        res = copy.copy(self.messages)
         self._lock.release()
         return res
 
     def get_channels(self) -> Optional[List[Channel]]:
         self._lock.acquire()
-        res = copy.deepcopy(self.channels)
+        res = copy.copy(self.channels)
         self._lock.release()
         return res
 
@@ -68,9 +68,9 @@ class MeshtasticDataStore(Thread):
         self.messages[str(message.mid)] = message
         self._lock.release()
 
-    def get_nodes(self) -> None:
+    def get_nodes(self) -> dict:
         self._lock.acquire()
-        res = copy.deepcopy(self.nodes)
+        res = copy.copy(self.nodes)
         self._lock.release()
         return res
 
@@ -159,12 +159,14 @@ class MeshtasticDataStore(Thread):
                 node.firstseen = node.lastseen
             else:
                 node.firstseen = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            node.rx_counter = 1
         else:
             # update
             def __get_nodes_fields():
                 return [field for field in fields(
                     MeshtasticNode) if not field.name.startswith('_')]
 
+            rx_counter = getattr(self.nodes[str(node.id)], "rx_counter") + 1
             for f in __get_nodes_fields():
                 if getattr(self.nodes[str(node.id)],
                            f.name) != getattr(node, f.name):
@@ -175,6 +177,8 @@ class MeshtasticDataStore(Thread):
                             f.name):
                         setattr(self.nodes[str(node.id)], f.name,
                                 getattr(node, f.name))
+            # update the received packet conuter
+            setattr(self.nodes[str(node.id)], "rx_counter", rx_counter)
         self._lock.release()
 
     def store_or_update_messages(self, message: MeshtasticMessage) -> None:
@@ -207,7 +211,11 @@ class MeshtasticDataStore(Thread):
             "voltage",
             "air_util_tx",
             "channel_utilization",
-            "battery_level"
+            "battery_level",
+            "latitude",
+            "longitude",
+            "altitude",
+            "speed",
         ]
 
     def store_or_update_metrics(self, new_metric: NodeMetrics) -> None:
