@@ -247,7 +247,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                         mid=mp.id,
                         hop_limit=mp.hop_limit,
                         hop_start=mp.hop_start,
-                        channel_index=se.channel_id,
+                        channel_index=mp.channel,
                         date=datetime.datetime.fromtimestamp(
                             mp.rx_time).strftime("%Y-%m-%d %H:%M:%S"),
                     )
