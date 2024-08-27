@@ -10,7 +10,7 @@ import google.protobuf.json_format
 import threading
 from meshtastic import portnums_pb2, mesh_pb2
 from PyQt6.QtCore import pyqtSignal, QObject
-from meshtastic.protobuf import mesh_pb2, mqtt_pb2, portnums_pb2, telemetry_pb2
+from meshtastic.protobuf import mesh_pb2, mqtt_pb2, portnums_pb2, telemetry_pb2, config_pb2
 import paho.mqtt.client as mqtt
 from paho.mqtt.client import MessageState
 
@@ -262,9 +262,12 @@ class MeshtasticMQTT(QObject, threading.Thread):
                         id=info.id,
                         long_name=info.long_name,
                         short_name=info.short_name,
-                        hardware=info.hw_model,
+                        hardware=mesh_pb2.HardwareModel.Name(
+                            info.hw_model),
                         snr=mp.rx_snr,
                         rssi=mp.rx_rssi,
+                        role=config_pb2.Config.DeviceConfig.Role.Name(
+                            info.role),
                         lastseen=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                     )
                     nm = NodeMetrics(
