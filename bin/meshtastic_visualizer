@@ -1,3 +1,3 @@
 #!/bin/bash
 
-python3 -m meshtastic_chat_visualizer
+python3 -m meshtastic_visualizer
