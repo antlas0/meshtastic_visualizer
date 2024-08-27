@@ -96,6 +96,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
 
     def connect_mqtt(self) -> bool:
         if not self._client.is_connected():
+            key = self._mqtt_settings.key
             if self._mqtt_settings.key == "AQ==":
                 key = "1PG7OiApB1nwvP+rz05pAQ=="
 
