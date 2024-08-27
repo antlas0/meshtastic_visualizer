@@ -48,9 +48,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         self._markers: list = []
         self._links: list = []
+        self._traces: list = []
         self._map = None
         self._markers_group = folium.FeatureGroup(name="Stations")
         self._link_group = folium.FeatureGroup(name="Links")
+        self._traces_group = folium.FeatureGroup(name="Traces")
         self._plot_widget = None
         self._settings = QSettings("antlas0", "meshtastic_visualizer")
 
@@ -99,7 +101,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.send_message_signal.connect(self._manager.send_text_message)
         self.retrieve_channels_signal.connect(self._manager.retrieve_channels)
         self.get_nodes_signal.connect(self.update_nodes_map)
-        self.get_nodes_signal.connect(self.update_nodes_table)
         self.retrieve_local_node_config_signal.connect(
             self._manager.load_local_node_configuration)
         self.traceroute_signal.connect(self._manager.send_traceroute)
@@ -333,6 +334,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         self._markers = []
         self._links = []
+        self._traces = []
 
         # in case of links traczing, pre-create a dict(node_id, [lat, lon])
         nodes_coords = {
@@ -342,7 +344,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     x.lon)] for __, x in nodes.items() if x.lat is not None and x.lon is not None}
 
         for node_id, node in nodes.items():
+            if node.lat is None or node.lon is None:
+                continue
             strl = []
+            metric_lat, metric_lon = [], []
             strl.append(f"<b>Name:</b> {node.long_name}</br>")
             strl.append(f"<b>id:</b> {node.id}</br>")
             if node.hardware:
@@ -363,24 +368,24 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             if node.uptime:
                 strl.append(
                     f"<b>Uptime:</b> {humanize.precisedelta(node.uptime)}</br>")
-            if node.lat is not None and node.lon is not None:
-                popup_content = "".join(strl)
-                popup = folium.Popup(
-                    popup_content, max_width=300, min_width=250)
-                color = "blue"
-                if node.id == self._local_board_id:
-                    color = "orange"
+            popup_content = "".join(strl)
+            popup = folium.Popup(
+                popup_content, max_width=300, min_width=250)
+            color = "blue"
+            if node.id == self._local_board_id:
+                color = "orange"
 
-                marker = folium.Marker(
-                    location=[
-                        node.lat,
-                        node.lon],
-                    popup=popup,
-                    icon=folium.Icon(color=color),
-                )
-                marker.add_to(self._markers_group)
-                self._markers.append(marker)
+            marker = folium.Marker(
+                location=[
+                    node.lat,
+                    node.lon],
+                popup=popup,
+                icon=folium.Icon(color=color),
+            )
+            marker.add_to(self._markers_group)
+            self._markers.append(marker)
 
+            # neighbors
             if node.neighbors is not None:
                 for neighbor in node.neighbors:
                     # we can trace a link
@@ -397,6 +402,17 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                             link_coords, color=__link_color(node.id))
                         link.add_to(self._link_group)
                         self._links.append(link)
+            # movement
+            metric_lat = self._store.get_node_metrics(node.id, "latitude")
+            metric_lon = self._store.get_node_metrics(node.id, "longitude")
+            if metric_lat and metric_lon:
+                traces_coords = [[float(lat), float(lon)] for lat, lon in zip(
+                    metric_lat["latitude"], metric_lon["longitude"]) if lat is not None and lon is not None]
+                if traces_coords and len(traces_coords) > 1:
+                    traces = folium.PolyLine(traces_coords)
+                    self._traces.append(traces)
+                    traces.add_to(self._traces_group)
+
         if self._markers:
             markers_lat = [x.location[0] for x in self._markers]
             markers_lon = [x.location[1] for x in self._markers]
@@ -405,6 +421,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self._markers_group.add_to(self._map)
         if self._links:
             self._link_group.add_to(self._map)
+        if self._traces:
+            self._traces_group.add_to(self._map)
+        if self._links or self._traces:
             folium.LayerControl().add_to(self._map)
 
         self.update_map_in_widget()
