@@ -101,6 +101,7 @@ class MeshtasticNode:
     lastseen: Optional[str] = None
     uptime: Optional[int] = None
     is_local: Optional[bool] = None
+    rx_counter: int = 0  # number of packets received from this node
 
 
 @dataclass
