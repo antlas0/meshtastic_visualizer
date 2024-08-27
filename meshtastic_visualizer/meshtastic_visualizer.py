@@ -13,7 +13,7 @@ from PyQt6 import QtWidgets, uic
 from PyQt6.QtGui import QTextCursor
 from PyQt6.QtWidgets import QTableWidgetItem, QListWidgetItem
 from PyQt6.QtWebEngineWidgets import QWebEngineView
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import pyqtSignal, QSettings
 import pyqtgraph as pg
 from pyqtgraph import DateAxisItem
 
@@ -52,6 +52,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._markers_group = folium.FeatureGroup(name="Stations")
         self._link_group = folium.FeatureGroup(name="Links")
         self._plot_widget = None
+        self._settings = QSettings("antlas0", "meshtastic_visualizer")
 
         # Variables
         self.status_var: str = ""
@@ -203,6 +204,15 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.nodes_total_lcd.setDecMode()
         self.nodes_gps_lcd.setDecMode()
         self.nodes_recently_lcd.setDecMode()
+        self.mqtt_host_linedit.setText(self._settings.value("mqtt_host", ""))
+        self.mqtt_port_spinbox.setValue(
+            int(self._settings.value("mqtt_port", 1883)))
+        self.mqtt_username_linedit.setText(
+            self._settings.value("mqtt_username", ""))
+        self.mqtt_password_linedit.setText(
+            self._settings.value("mqtt_password", ""))
+        self.mqtt_topic_linedit.setText(self._settings.value("mqtt_topic", ""))
+        self.mqtt_key_linedit.setText(self._settings.value("mqtt_key", "AQ=="))
 
     def _get_meshtastic_message_fields(self) -> list:
         return [
@@ -751,6 +761,13 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         m.password = self.mqtt_password_linedit.text()
         m.topic = self.mqtt_topic_linedit.text()
         m.key = self.mqtt_key_linedit.text()
+        self._settings.setValue("mqtt_host", m.host)
+        self._settings.setValue("mqtt_port", m.port)
+        self._settings.setValue("mqtt_username", m.username)
+        self._settings.setValue("mqtt_password", m.password)
+        self._settings.setValue("mqtt_topic", m.topic)
+        self._settings.setValue("mqtt_key", m.key)
+
         self.mqtt_connect_event(m)
 
     def export_radio(self) -> None:
