@@ -164,7 +164,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
             result ^= char
         return result
 
-    def decode_encrypted(self, mp):
+    def decode_encrypted(self, mp) -> bool:
         """Decrypt a meshtastic message."""
         try:
             # Convert key to bytes
@@ -190,9 +190,12 @@ class MeshtasticMQTT(QObject, threading.Thread):
             mp.decoded.CopyFrom(data)
 
         except Exception as e:
-            self.notify_frontend(MessageLevel.ERROR, f"")
+            self.notify_frontend(
+                MessageLevel.ERROR,
+                f"Could not decrypt message")
+            return False
         else:
-            self.notify_frontend(MessageLevel.INFO, f"")
+            return True
 
     def node_number_to_id(self, node_number):
         return f"!{hex(node_number)[2:]}"
@@ -244,12 +247,36 @@ class MeshtasticMQTT(QObject, threading.Thread):
                         mid=mp.id,
                         hop_limit=mp.hop_limit,
                         hop_start=mp.hop_start,
-                        channel_index=mp.channel,
+                        channel_index=se.channel_id,
                         date=datetime.datetime.fromtimestamp(
                             mp.rx_time).strftime("%Y-%m-%d %H:%M:%S"),
                     )
                     self._store.store_or_update_messages(m)
                     self.notify_message()
+
+            elif mp.decoded.portnum == portnums_pb2.NEIGHBORINFO_APP:
+                neigh = mesh_pb2.NeighborInfo()
+                try:
+                    neigh.ParseFromString(mp.decoded.payload)
+                except Exception as e:
+                    pass
+                else:
+                    n = MeshtasticNode(
+                        id=self.node_number_to_id(
+                            getattr(
+                                mp, "from")), neighbors=[
+                            self.node_number_to_id(
+                                neigh.last_sent_by_id)])
+                    nm = NodeMetrics(
+                        node_id=self.node_number_to_id(getattr(mp, "from")),
+                        snr=mp.rx_snr,
+                        rssi=mp.rx_rssi,
+                        timestamp=mp.rx_time,
+                    )
+                    self._store.store_or_update_node(n)
+                    self._store.store_or_update_metrics(nm)
+                    self.notify_nodes_metrics()
+                    self.notify_nodes_table()
 
             elif mp.decoded.portnum == portnums_pb2.NODEINFO_APP:
                 info = mesh_pb2.User()
@@ -328,24 +355,24 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 try:
                     env.ParseFromString(mp.decoded.payload)
                 except Exception as e:
-                    print(f"Error when decoding TELEMETRY_APP: {str(e)}")
+                    pass
+                else:
+                    nm = NodeMetrics(
+                        node_id=self.node_number_to_id(
+                            getattr(
+                                mp, "from")), battery_level=env.device_metrics.battery_level, voltage=round(
+                            env.device_metrics.voltage, 2), channel_utilization=round(
+                            env.device_metrics.channel_utilization, 2), air_util_tx=round(
+                            env.device_metrics.air_util_tx, 2), timestamp=env.time, )
 
-                nm = NodeMetrics(
-                    node_id=self.node_number_to_id(
-                        getattr(
-                            mp, "from")), battery_level=env.device_metrics.battery_level, voltage=round(
-                        env.device_metrics.voltage, 2), channel_utilization=round(
-                        env.device_metrics.channel_utilization, 2), air_util_tx=round(
-                        env.device_metrics.air_util_tx, 2), timestamp=env.time, )
+                    device_metrics_dict = {
+                        'Battery Level': env.device_metrics.battery_level, 'Voltage': round(
+                            env.device_metrics.voltage, 2), 'Channel Utilization': round(
+                            env.device_metrics.channel_utilization, 1), 'Air Utilization': round(
+                            env.device_metrics.air_util_tx, 1)}
 
-                device_metrics_dict = {
-                    'Battery Level': env.device_metrics.battery_level, 'Voltage': round(
-                        env.device_metrics.voltage, 2), 'Channel Utilization': round(
-                        env.device_metrics.channel_utilization, 1), 'Air Utilization': round(
-                        env.device_metrics.air_util_tx, 1)}
-
-                self._store.store_or_update_metrics(nm)
-                self.notify_nodes_metrics()
+                    self._store.store_or_update_metrics(nm)
+                    self.notify_nodes_metrics()
 
             elif mp.decoded.portnum == portnums_pb2.TRACEROUTE_APP:
                 if mp.decoded.payload:
