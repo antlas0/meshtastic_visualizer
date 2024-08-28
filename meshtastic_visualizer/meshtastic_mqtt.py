@@ -335,6 +335,32 @@ class MeshtasticMQTT(QObject, threading.Thread):
                     self.notify_nodes_metrics()
                     self.notify_nodes_table()  # only notify table as map needs recreation
 
+            elif mp.decoded.portnum == portnums_pb2.MAP_REPORT_APP:
+                mapreport = mqtt_pb2.MapReport()
+                try:
+                    mapreport.ParseFromString(mp.decoded.payload)
+                except Exception as e:
+                    pass
+                else:
+                    n = MeshtasticNode(
+                        id=self.node_number_to_id(getattr(mp, 'from')),
+                        long_name=mapreport.long_name,
+                        lat=str(round(mapreport.latitude_i * 1e-7, 7)),
+                        lon=str(round(mapreport.longitude_i * 1e-7, 7)),
+                        alt=mapreport.altitude,
+                        hardware=mesh_pb2.HardwareModel.Name(mapreport.hw_model),
+                        role=config_pb2.Config.DeviceConfig.Role.Name(mapreport.role),
+                        lastseen=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    )
+                    nm = NodeMetrics(
+                        node_id=self.node_number_to_id(getattr(mp, 'from')),
+                        timestamp=mp.rx_time,
+                    )
+                    self._store.store_or_update_node(n)
+                    self._store.store_or_update_metrics(nm)
+                    self.notify_nodes_metrics()
+                    self.notify_nodes_table()  # only notify table as map needs recreation
+
             elif mp.decoded.portnum == portnums_pb2.POSITION_APP:
                 position = mesh_pb2.Position()
                 try:
