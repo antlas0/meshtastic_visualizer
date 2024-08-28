@@ -213,9 +213,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
             se.ParseFromString(msg.payload)
             mp = se.packet
         except Exception as e:
-            self.notify_frontend(
-                MessageLevel.ERROR,
-                f"ServiceEnvelope error: {str(e)}")
+            print(f"ServiceEnvelope error: {str(e)}")
         else:
             if len(msg.payload) > self._mqtt_settings.max_msg_len:
                 self.notify_frontend(MessageLevel.ERROR, 'Message too long: ' +
