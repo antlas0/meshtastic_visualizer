@@ -26,33 +26,11 @@
    <string>Meshtastic Visualizer</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="horizontalLayoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>30</x>
-      <y>20</y>
-      <width>711</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QLabel" name="notification_label">
-       <property name="lineWidth">
-        <number>2</number>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
    <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>80</y>
+      <x>10</x>
+      <y>60</y>
       <width>1151</width>
       <height>741</height>
      </rect>
@@ -79,7 +57,7 @@
      <widget class="QGroupBox" name="groupBox">
       <property name="geometry">
        <rect>
-        <x>20</x>
+        <x>10</x>
         <y>110</y>
         <width>461</width>
         <height>201</height>
@@ -102,7 +80,7 @@
      <widget class="QGroupBox" name="groupBox_3">
       <property name="geometry">
        <rect>
-        <x>20</x>
+        <x>10</x>
         <y>320</y>
         <width>461</width>
         <height>381</height>
@@ -251,7 +229,7 @@
      <widget class="QGroupBox" name="groupBox_4">
       <property name="geometry">
        <rect>
-        <x>20</x>
+        <x>10</x>
         <y>10</y>
         <width>461</width>
         <height>91</height>
@@ -317,7 +295,7 @@
       <property name="geometry">
        <rect>
         <x>500</x>
-        <y>20</y>
+        <y>10</y>
         <width>401</width>
         <height>261</height>
        </rect>
@@ -459,7 +437,7 @@
         <rect>
          <x>290</x>
          <y>30</y>
-         <width>101</width>
+         <width>104</width>
          <height>61</height>
         </rect>
        </property>
@@ -1095,8 +1073,8 @@
    <widget class="QLabel" name="label_19">
     <property name="geometry">
      <rect>
-      <x>1040</x>
-      <y>50</y>
+      <x>980</x>
+      <y>40</y>
       <width>101</width>
       <height>17</height>
      </rect>
@@ -1108,8 +1086,8 @@
    <widget class="QLCDNumber" name="nodes_gps_lcd">
     <property name="geometry">
      <rect>
-      <x>920</x>
-      <y>20</y>
+      <x>860</x>
+      <y>10</y>
       <width>81</width>
       <height>31</height>
      </rect>
@@ -1118,8 +1096,8 @@
    <widget class="QLCDNumber" name="nodes_total_lcd">
     <property name="geometry">
      <rect>
-      <x>790</x>
-      <y>20</y>
+      <x>730</x>
+      <y>10</y>
       <width>81</width>
       <height>31</height>
      </rect>
@@ -1128,8 +1106,8 @@
    <widget class="QLabel" name="label_15">
     <property name="geometry">
      <rect>
-      <x>900</x>
-      <y>50</y>
+      <x>840</x>
+      <y>40</y>
       <width>121</width>
       <height>17</height>
      </rect>
@@ -1141,8 +1119,8 @@
    <widget class="QLCDNumber" name="nodes_recently_lcd">
     <property name="geometry">
      <rect>
-      <x>1050</x>
-      <y>20</y>
+      <x>990</x>
+      <y>10</y>
       <width>81</width>
       <height>31</height>
      </rect>
@@ -1151,8 +1129,8 @@
    <widget class="QLabel" name="label_20">
     <property name="geometry">
      <rect>
-      <x>790</x>
-      <y>50</y>
+      <x>730</x>
+      <y>40</y>
       <width>81</width>
       <height>17</height>
      </rect>
@@ -1160,6 +1138,28 @@
     <property name="text">
      <string>Total nodes</string>
     </property>
+   </widget>
+   <widget class="QWidget" name="horizontalLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>711</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout_12">
+     <item>
+      <widget class="QLabel" name="notification_bar">
+       <property name="lineWidth">
+        <number>2</number>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>

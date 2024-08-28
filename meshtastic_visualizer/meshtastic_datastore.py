@@ -151,6 +151,12 @@ class MeshtasticDataStore(Thread):
         self._lock.release()
         return res
 
+    def clear_nodes(self) -> None:
+        self._lock.acquire()
+        del self.nodes
+        self.nodes = {}
+        self._lock.release()
+
     def store_or_update_node(self, node: MeshtasticNode) -> None:
         self._lock.acquire()
         if not str(node.id) in self.nodes.keys():

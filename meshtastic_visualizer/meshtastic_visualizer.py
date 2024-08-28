@@ -149,13 +149,13 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def set_status(self, loglevel: MessageLevel, message: str) -> None:
         if loglevel.value == MessageLevel.ERROR.value:
-            self.notification_label.setText(message)
+            self.notification_bar.setText(message)
 
         if loglevel.value == MessageLevel.INFO.value or loglevel.value == MessageLevel.UNKNOWN.value:
-            self.notification_label.setText(message)
+            self.notification_bar.setText(message)
 
     def setup_ui(self) -> None:
-        self.notification_label.setOpenExternalLinks(True)
+        self.notification_bar.setOpenExternalLinks(True)
         self.connect_button.clicked.connect(self.connect_device)
         self.disconnect_button.clicked.connect(self.disconnect_device)
         self.scan_button.clicked.connect(self.get_nodes)
@@ -225,6 +225,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.messages_table.setRowCount(0)
 
     def clear_nodes(self) -> None:
+        self._store.clear_nodes()
         self.mesh_table.setRowCount(0)
         self.nodes_total_lcd.display(0)
         self.nodes_gps_lcd.display(0)
