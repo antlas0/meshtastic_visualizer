@@ -244,8 +244,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             for button in self._action_buttons:
                 button.setEnabled(False)
 
-        self.update_local_node_config()
-
         if self._mqtt_manager.is_connected():
             self.mqtt_connect_button.setEnabled(False)
             self.mqtt_disconnect_button.setEnabled(True)
@@ -496,6 +494,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         nodes = self._store.get_nodes()
         if nodes is None:
             return
+
+        self.update_local_node_config()
 
         # update LCD widgets
         self.nodes_total_lcd.display(len(nodes.values()))
