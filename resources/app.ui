@@ -116,12 +116,12 @@
         <rect>
          <x>10</x>
          <y>70</y>
-         <width>89</width>
+         <width>31</width>
          <height>25</height>
         </rect>
        </property>
        <property name="text">
-        <string>Export</string>
+        <string>⬇️</string>
        </property>
       </widget>
       <widget class="QTextEdit" name="output_textedit">
@@ -234,6 +234,19 @@
         </item>
        </layout>
       </widget>
+      <widget class="QPushButton" name="clear_radio_button">
+       <property name="geometry">
+        <rect>
+         <x>420</x>
+         <y>70</y>
+         <width>31</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>🗑️</string>
+       </property>
+      </widget>
      </widget>
      <widget class="QGroupBox" name="groupBox_4">
       <property name="geometry">
@@ -252,12 +265,12 @@
         <rect>
          <x>200</x>
          <y>30</y>
-         <width>80</width>
+         <width>91</width>
          <height>25</height>
         </rect>
        </property>
        <property name="text">
-        <string>Connect</string>
+        <string>▶️ Connect</string>
        </property>
       </widget>
       <widget class="QComboBox" name="device_combobox">
@@ -276,14 +289,14 @@
       <widget class="QPushButton" name="disconnect_button">
        <property name="geometry">
         <rect>
-         <x>290</x>
+         <x>300</x>
          <y>30</y>
-         <width>89</width>
+         <width>101</width>
          <height>25</height>
         </rect>
        </property>
        <property name="text">
-        <string>Disconnect</string>
+        <string>⏹️ Disconnect</string>
        </property>
       </widget>
       <widget class="QCheckBox" name="reset_nodedb_checkbox">
@@ -444,9 +457,9 @@
       <widget class="QWidget" name="verticalLayoutWidget_2">
        <property name="geometry">
         <rect>
-         <x>300</x>
+         <x>290</x>
          <y>30</y>
-         <width>91</width>
+         <width>101</width>
          <height>61</height>
         </rect>
        </property>
@@ -454,14 +467,14 @@
         <item>
          <widget class="QPushButton" name="mqtt_connect_button">
           <property name="text">
-           <string>Connect</string>
+           <string>▶️ Connect</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="mqtt_disconnect_button">
           <property name="text">
-           <string>Disconnect</string>
+           <string>⏹️ Disconnect</string>
           </property>
          </widget>
         </item>
@@ -511,12 +524,12 @@
         <rect>
          <x>10</x>
          <y>30</y>
-         <width>89</width>
+         <width>31</width>
          <height>25</height>
         </rect>
        </property>
        <property name="text">
-        <string>Export</string>
+        <string>⬇️</string>
        </property>
       </widget>
       <widget class="QTextEdit" name="mqtt_output_textedit">
@@ -533,6 +546,19 @@
        </property>
        <property name="readOnly">
         <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="clear_mqtt_button">
+       <property name="geometry">
+        <rect>
+         <x>600</x>
+         <y>30</y>
+         <width>31</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>🗑️</string>
        </property>
       </widget>
      </widget>
@@ -814,12 +840,25 @@
        <rect>
         <x>240</x>
         <y>570</y>
-        <width>89</width>
+        <width>31</width>
         <height>25</height>
        </rect>
       </property>
       <property name="text">
-       <string>Export</string>
+       <string>⬇️</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="clear_messages_button">
+      <property name="geometry">
+       <rect>
+        <x>1110</x>
+        <y>570</y>
+        <width>31</width>
+        <height>25</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>🗑️</string>
       </property>
      </widget>
     </widget>
@@ -932,14 +971,27 @@
       <widget class="QPushButton" name="export_nodes_button">
        <property name="geometry">
         <rect>
-         <x>1060</x>
+         <x>280</x>
          <y>40</y>
-         <width>61</width>
+         <width>31</width>
          <height>25</height>
         </rect>
        </property>
        <property name="text">
-        <string>Export</string>
+        <string>⬇️</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="clear_nodes_button">
+       <property name="geometry">
+        <rect>
+         <x>1090</x>
+         <y>40</y>
+         <width>31</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>🗑️</string>
        </property>
       </widget>
      </widget>

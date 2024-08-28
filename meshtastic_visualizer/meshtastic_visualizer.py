@@ -108,6 +108,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.export_chat_button.pressed.connect(self._manager.export_chat)
         self.export_nodes_button.pressed.connect(self._manager.export_nodes)
         self.export_radio_button.pressed.connect(self.export_radio)
+        self.clear_radio_button.pressed.connect(self.output_textedit.clear)
+        self.clear_mqtt_button.pressed.connect(self.mqtt_output_textedit.clear)
+        self.clear_messages_button.pressed.connect(self.clear_messages_table)
+        self.clear_nodes_button.pressed.connect(self.clear_nodes)
         self.export_mqtt_button.pressed.connect(self.export_mqtt_logs)
         for i, metric in enumerate(
                 self._store.get_node_metrics_fields()):
@@ -179,6 +183,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.traceroute_button,
             self.send_button,
             self.export_radio_button,
+            self.clear_radio_button,
             self.message_textedit,
         ]
         for button in self._action_buttons:
@@ -215,6 +220,15 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self._settings.value("mqtt_password", ""))
         self.mqtt_topic_linedit.setText(self._settings.value("mqtt_topic", ""))
         self.mqtt_key_linedit.setText(self._settings.value("mqtt_key", "AQ=="))
+
+    def clear_messages_table(self) -> None:
+        self.messages_table.setRowCount(0)
+
+    def clear_nodes(self) -> None:
+        self.mesh_table.setRowCount(0)
+        self.nodes_total_lcd.display(0)
+        self.nodes_gps_lcd.display(0)
+        self.nodes_recently_lcd.display(0)
 
     def _get_meshtastic_message_fields(self) -> list:
         return [
