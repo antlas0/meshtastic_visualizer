@@ -38,6 +38,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
     notify_nodes_table_signal = pyqtSignal()
     notify_nodes_metrics_signal = pyqtSignal()
     notify_message_signal = pyqtSignal()
+    notify_mqtt_enveloppe_signal = pyqtSignal(str)
 
     def __init__(self) -> None:
         super().__init__()
@@ -71,6 +72,9 @@ class MeshtasticMQTT(QObject, threading.Thread):
 
     def notify_message(self):
         self.notify_message_signal.emit()
+
+    def notify_mqtt_enveloppe(self, message: str):
+        self.notify_mqtt_enveloppe_signal.emit(message)
 
     def set_store(self, store: MeshtasticDataStore) -> None:
         self._store = store
@@ -221,11 +225,30 @@ class MeshtasticMQTT(QObject, threading.Thread):
             if mp.decoded.portnum == portnums_pb2.UNKNOWN_APP:
                 return
 
+            decrypted: bool = False
             if mp.HasField("encrypted") and not mp.HasField("decoded"):
-                self.decode_encrypted(mp)
                 is_encrypted = True
+                if self.decode_encrypted(mp):
+                    decrypted = True
 
-            details = f"{self.node_number_to_id(getattr(mp, 'from'))}: {mp.decoded.portnum}, encrypted {is_encrypted}"
+            strl = []
+            strl.append(
+                f"{self.node_number_to_id(getattr(se.packet, 'from'))}")
+            strl.append(
+                f"->{self.node_number_to_id(getattr(se.packet, 'to'))}")
+            strl.append(f"[{se.channel_id}]")
+            strl.append("{" + f"{se.gateway_id}" + "}")
+            strl.append(f"pid:{se.packet.id}")
+            if is_encrypted:
+                strl.append("|e|")
+                if decrypted:
+                    strl.append(
+                        f"pn:{portnums_pb2.PortNum.Name(se.packet.decoded.portnum)}")
+            else:
+                strl.append("|!e|")
+                strl.append(
+                    f"pn:{portnums_pb2.PortNum.Name(se.packet.decoded.portnum)}")
+            self.notify_mqtt_enveloppe(" ".join(strl))
 
             if mp.decoded.portnum == portnums_pb2.TEXT_MESSAGE_APP:
                 text_payload = ""
@@ -264,9 +287,13 @@ class MeshtasticMQTT(QObject, threading.Thread):
                     n = MeshtasticNode(
                         id=self.node_number_to_id(
                             getattr(
-                                mp, "from")), neighbors=[
+                                mp, "from"))
+                    )
+                    if getattr(mp, "from") != neigh.last_sent_by_id:
+                        n.neighbors = [
                             self.node_number_to_id(
-                                neigh.last_sent_by_id)])
+                                neigh.last_sent_by_id)]
+
                     nm = NodeMetrics(
                         node_id=self.node_number_to_id(getattr(mp, "from")),
                         snr=mp.rx_snr,

@@ -80,9 +80,9 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>140</y>
+        <y>110</y>
         <width>461</width>
-        <height>281</height>
+        <height>201</height>
        </rect>
       </property>
       <property name="title">
@@ -94,7 +94,7 @@
          <x>10</x>
          <y>30</y>
          <width>441</width>
-         <height>241</height>
+         <height>161</height>
         </rect>
        </property>
       </widget>
@@ -102,20 +102,20 @@
      <widget class="QGroupBox" name="groupBox_3">
       <property name="geometry">
        <rect>
-        <x>500</x>
-        <y>310</y>
-        <width>641</width>
-        <height>391</height>
+        <x>20</x>
+        <y>320</y>
+        <width>461</width>
+        <height>381</height>
        </rect>
       </property>
       <property name="title">
-       <string>Local device radio output</string>
+       <string>Local device radio info</string>
       </property>
       <widget class="QPushButton" name="export_radio_button">
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>30</y>
+         <y>70</y>
          <width>89</width>
          <height>25</height>
         </rect>
@@ -128,11 +128,111 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>70</y>
-         <width>621</width>
-         <height>311</height>
+         <y>100</y>
+         <width>441</width>
+         <height>271</height>
         </rect>
        </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="Line" name="line_5">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>50</y>
+         <width>441</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+      <widget class="QWidget" name="horizontalLayoutWidget_6">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>441</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_11">
+        <item>
+         <widget class="QLabel" name="label_10">
+          <property name="text">
+           <string>Id:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="id_label">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_5">
+          <property name="text">
+           <string>Name:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="devicename_label">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_6">
+          <property name="text">
+           <string>Bat Level: </string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QProgressBar" name="batterylevel_progressbar">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>30</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>75</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="value">
+           <number>0</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </widget>
      <widget class="QGroupBox" name="groupBox_4">
@@ -140,7 +240,7 @@
        <rect>
         <x>20</x>
         <y>10</y>
-        <width>391</width>
+        <width>461</width>
         <height>91</height>
        </rect>
       </property>
@@ -200,154 +300,11 @@
        </property>
       </widget>
      </widget>
-     <widget class="QGroupBox" name="groupBox_8">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>440</y>
-        <width>461</width>
-        <height>261</height>
-       </rect>
-      </property>
-      <property name="title">
-       <string>Local device Info</string>
-      </property>
-      <widget class="QLabel" name="label_5">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>70</y>
-         <width>67</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Name:</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="devicename_label">
-       <property name="geometry">
-        <rect>
-         <x>70</x>
-         <y>70</y>
-         <width>131</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_6">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>100</y>
-         <width>71</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Bat Level: </string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_7">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>130</y>
-         <width>41</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Role:</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="role_label">
-       <property name="geometry">
-        <rect>
-         <x>50</x>
-         <y>130</y>
-         <width>111</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-      <widget class="QProgressBar" name="batterylevel_progressbar">
-       <property name="geometry">
-        <rect>
-         <x>90</x>
-         <y>100</y>
-         <width>71</width>
-         <height>23</height>
-        </rect>
-       </property>
-       <property name="value">
-        <number>0</number>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_10">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>40</y>
-         <width>21</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Id:</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="id_label">
-       <property name="geometry">
-        <rect>
-         <x>40</x>
-         <y>40</y>
-         <width>81</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_11">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>160</y>
-         <width>71</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Hardware:</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="hardware_label">
-       <property name="geometry">
-        <rect>
-         <x>90</x>
-         <y>160</y>
-         <width>91</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </widget>
      <widget class="QGroupBox" name="groupBox_6">
       <property name="geometry">
        <rect>
         <x>500</x>
-        <y>10</y>
+        <y>20</y>
         <width>401</width>
         <height>261</height>
        </rect>
@@ -517,7 +474,7 @@
         <x>480</x>
         <y>10</y>
         <width>20</width>
-        <height>281</height>
+        <height>691</height>
        </rect>
       </property>
       <property name="orientation">
@@ -536,6 +493,48 @@
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_8">
+      <property name="geometry">
+       <rect>
+        <x>500</x>
+        <y>300</y>
+        <width>641</width>
+        <height>401</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>MQTT logs</string>
+      </property>
+      <widget class="QPushButton" name="export_mqtt_button">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>30</y>
+         <width>89</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Export</string>
+       </property>
+      </widget>
+      <widget class="QTextEdit" name="mqtt_output_textedit">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>60</y>
+         <width>621</width>
+         <height>331</height>
+        </rect>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_messages">

@@ -155,10 +155,8 @@ class MeshtasticDataStore(Thread):
         self._lock.acquire()
         if not str(node.id) in self.nodes.keys():
             self.nodes[str(node.id)] = node
-            if node.lastseen:
-                node.firstseen = node.lastseen
-            else:
-                node.firstseen = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            node.firstseen = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            node.lastseen = node.firstseen
             node.rx_counter = 1
         else:
             # update

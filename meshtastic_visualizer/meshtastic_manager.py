@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import json
 import queue
 import base64
@@ -514,7 +515,8 @@ class MeshtasticManager(QObject, threading.Thread):
         fpath = f"messages_{nnow}.json"
         with open(fpath, "w") as json_file:
             json_file.write(data_json)
-            trace = f"Exported chat to file: {fpath}"
+            absp = os.path.abspath(fpath)
+            trace = f"<a href='file://{absp}'>Exported chat to file: {fpath}</a>"
             self.notify_frontend(MessageLevel.INFO, trace)
 
     @run_in_thread
@@ -525,7 +527,8 @@ class MeshtasticManager(QObject, threading.Thread):
         fpath = f"nodes_{nnow}.json"
         with open(fpath, "w") as json_file:
             json_file.write(data_json)
-            trace = f"Exported nodes to file: {fpath}"
+            absp = os.path.abspath(fpath)
+            trace = f"<a href='file://{absp}'>Exported nodes to file: {fpath}</a>"
             self.notify_frontend(MessageLevel.INFO, trace)
 
     @run_in_thread

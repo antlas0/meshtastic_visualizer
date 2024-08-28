@@ -2,6 +2,7 @@
 
 
 import hashlib
+import os
 import io
 import folium
 import humanize
@@ -88,6 +89,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.update_nodes_map)
         self._mqtt_manager.notify_nodes_table_signal.connect(
             self.update_nodes_table)
+        self._mqtt_manager.notify_mqtt_enveloppe_signal.connect(
+            self.update_received_mqtt_log)
 
         for i, device in enumerate(self._manager.get_meshtastic_devices()):
             self.device_combobox.insertItem(i, device)
@@ -105,6 +108,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.export_chat_button.pressed.connect(self._manager.export_chat)
         self.export_nodes_button.pressed.connect(self._manager.export_nodes)
         self.export_radio_button.pressed.connect(self.export_radio)
+        self.export_mqtt_button.pressed.connect(self.export_mqtt_logs)
         for i, metric in enumerate(
                 self._store.get_node_metrics_fields()):
             self.nm_metric_combobox.insertItem(
@@ -147,6 +151,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.notification_label.setText(message)
 
     def setup_ui(self) -> None:
+        self.notification_label.setOpenExternalLinks(True)
         self.connect_button.clicked.connect(self.connect_device)
         self.disconnect_button.clicked.connect(self.disconnect_device)
         self.scan_button.clicked.connect(self.get_nodes)
@@ -580,12 +585,20 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 {
                     "SNR": node.snr,
                     "Hops Away": node.hopsaway,
-                    "Last Seen": node.lastseen,
-                    "First Seen": node.firstseen,
-                    "Uptime": humanize.precisedelta(node.uptime),
+                    "Last Seen": humanize.naturaltime(
+                        (datetime.strptime(
+                            node.lastseen,
+                            "%Y-%m-%d %H:%M:%S") -
+                            datetime.now())) if node.lastseen is not None else None,
+                    "First Seen": humanize.naturaltime(
+                        (datetime.strptime(
+                            node.firstseen,
+                            "%Y-%m-%d %H:%M:%S") -
+                            datetime.now())) if node.firstseen is not None else None,
+                    "Uptime": humanize.precisedelta(
+                        node.uptime),
                     "RX Counter": node.rx_counter,
-                }
-            )
+                })
 
             rows.append(row)
 
@@ -687,9 +700,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.devicename_label.setText(cfg.long_name)
         self.batterylevel_progressbar.setValue(cfg.battery_level)
         self.batterylevel_progressbar.show()
-        self.role_label.setText(f"{cfg.role}")
         self.id_label.setText(str(cfg.id))
-        self.hardware_label.setText(str(cfg.hardware))
 
     def traceroute(self):
         dest_id = self._store.get_id_from_long_name(
@@ -759,6 +770,20 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         cursor.setPosition(len(self.output_textedit.toPlainText()))
         self.output_textedit.setTextCursor(cursor)
 
+    def update_received_mqtt_log(self, log: str):
+        self.mqtt_output_textedit.setReadOnly(True)
+        tmp = [
+            self.mqtt_output_textedit.toPlainText()
+        ]
+        if self.mqtt_output_textedit.toPlainText() != "":
+            tmp.append("\n")
+        nnow = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        tmp.append(f"[{nnow}] {log}")
+        self.mqtt_output_textedit.setText("".join(tmp))
+        cursor = QTextCursor(self.mqtt_output_textedit.textCursor())
+        cursor.setPosition(len(self.mqtt_output_textedit.toPlainText()))
+        self.mqtt_output_textedit.setTextCursor(cursor)
+
     def update_msg_recipient(self, item: QListWidgetItem) -> None:
         self.msg_to_label.setText(item.text())
 
@@ -787,7 +812,17 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         fpath = f"radio_{nnow}.log"
         with open(fpath, "w") as text_file:
             text_file.write(self.output_textedit.toPlainText())
-            trace = f"Exported radio to file: {fpath}"
+            absp = os.path.abspath(fpath)
+            trace = f"<a href='file://{absp}'>Exported radio to file: {fpath}</a>"
+            self.set_status(MessageLevel.INFO, trace)
+
+    def export_mqtt_logs(self) -> None:
+        nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
+        fpath = f"mqtt_logs_{nnow}.log"
+        with open(fpath, "w") as text_file:
+            text_file.write(self.mqtt_output_textedit.toPlainText())
+            absp = os.path.abspath(fpath)
+            trace = f"<a href='file://{absp}'>Exported mqtt logs to file: {fpath}</a>"
             self.set_status(MessageLevel.INFO, trace)
 
     def quit(self) -> None:
