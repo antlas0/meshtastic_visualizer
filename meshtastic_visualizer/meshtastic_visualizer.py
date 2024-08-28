@@ -249,9 +249,21 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if self._mqtt_manager.is_connected():
             self.mqtt_connect_button.setEnabled(False)
             self.mqtt_disconnect_button.setEnabled(True)
+            self.mqtt_host_linedit.setEnabled(False)
+            self.mqtt_port_spinbox.setEnabled(False)
+            self.mqtt_username_linedit.setEnabled(False)
+            self.mqtt_password_linedit.setEnabled(False)
+            self.mqtt_topic_linedit.setEnabled(False)
+            self.mqtt_key_linedit.setEnabled(False)
         else:
             self.mqtt_connect_button.setEnabled(True)
             self.mqtt_disconnect_button.setEnabled(False)
+            self.mqtt_host_linedit.setEnabled(True)
+            self.mqtt_port_spinbox.setEnabled(True)
+            self.mqtt_username_linedit.setEnabled(True)
+            self.mqtt_password_linedit.setEnabled(True)
+            self.mqtt_topic_linedit.setEnabled(True)
+            self.mqtt_key_linedit.setEnabled(True)
 
         self._lock.release()
 
