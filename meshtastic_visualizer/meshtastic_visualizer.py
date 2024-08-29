@@ -339,7 +339,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         data = io.BytesIO()
         self._map.save(data, close_file=False)
         data.seek(0)
-        self.nodes_map.setHtml(data.getvalue().decode())
+        html = data.getvalue().decode()
+        del data
+        self.nodes_map.setHtml(html)
 
     def update_nodes_map(self):
         # we re-create from scratch every time
@@ -436,6 +438,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if links:
             self._link_group.add_to(self._map)
             folium.LayerControl().add_to(self._map)
+
+        del nodes
 
         self.update_map_in_widget()
 
@@ -639,6 +643,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             "Uptime",
             "RX Counter"]
 
+        del nodes
         self.mesh_table.setRowCount(len(rows))
         self.mesh_table.setColumnCount(len(columns))
         self.mesh_table.setHorizontalHeaderLabels(columns)

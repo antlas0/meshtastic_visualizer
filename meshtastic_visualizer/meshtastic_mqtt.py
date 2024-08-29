@@ -272,6 +272,22 @@ class MeshtasticMQTT(QObject, threading.Thread):
                         date=datetime.datetime.fromtimestamp(
                             mp.rx_time).strftime("%Y-%m-%d %H:%M:%S"),
                     )
+                    n = MeshtasticNode(
+                        id=self.node_number_to_id(
+                            getattr(
+                                mp, "from")),
+                        lastseen=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    )
+                    nm = NodeMetrics(
+                        node_id=self.node_number_to_id(getattr(mp, "from")),
+                        snr=mp.rx_snr,
+                        rssi=mp.rx_rssi,
+                        timestamp=mp.rx_time,
+                    )
+                    self._store.store_or_update_node(n)
+                    self._store.store_or_update_metrics(nm)
+                    self.notify_nodes_metrics()
+                    self.notify_nodes_table()
                     self._store.store_or_update_messages(m)
                     self.notify_message()
 
@@ -285,7 +301,8 @@ class MeshtasticMQTT(QObject, threading.Thread):
                     n = MeshtasticNode(
                         id=self.node_number_to_id(
                             getattr(
-                                mp, "from"))
+                                mp, "from")),
+                        lastseen=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                     )
                     if getattr(mp, "from") != neigh.last_sent_by_id:
                         n.neighbors = [
@@ -353,6 +370,9 @@ class MeshtasticMQTT(QObject, threading.Thread):
                     nm = NodeMetrics(
                         node_id=self.node_number_to_id(getattr(mp, 'from')),
                         timestamp=mp.rx_time,
+                        latitude=round(mapreport.latitude_i * 1e-7, 7),
+                        longitude=round(mapreport.longitude_i * 1e-7, 7),
+                        altitude=mapreport.altitude,
                     )
                     self._store.store_or_update_node(n)
                     self._store.store_or_update_metrics(nm)
@@ -408,6 +428,13 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 except Exception as e:
                     pass
                 else:
+                    n = MeshtasticNode(
+                        id=self.node_number_to_id(getattr(mp, "from")),
+                        lastseen=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        chutil=round(env.device_metrics.channel_utilization, 2),
+                        txairutil=round(env.device_metrics.air_util_tx, 2),
+                        battery_level=env.device_metrics.battery_level,
+                    )
                     nm = NodeMetrics(
                         node_id=self.node_number_to_id(
                             getattr(
@@ -422,8 +449,10 @@ class MeshtasticMQTT(QObject, threading.Thread):
                             env.device_metrics.channel_utilization, 1), 'Air Utilization': round(
                             env.device_metrics.air_util_tx, 1)}
 
+                    self._store.store_or_update_node(n)
                     self._store.store_or_update_metrics(nm)
                     self.notify_nodes_metrics()
+                    self.notify_nodes_table()
 
             elif mp.decoded.portnum == portnums_pb2.TRACEROUTE_APP:
                 if mp.decoded.payload:
