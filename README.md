@@ -14,16 +14,16 @@ Main framework used is PyQt6.
 
 At the moment, what works :
 * Display configuration of local and remote node
-* Display Channels configuration
-* Display radio output
+* Display Channels configuration (using local device)
+* Display radio output (using local device)
 * Print mesh information
-* Perform traceroute
+* Perform traceroute (using local device)
 * Display map of nodes
-* Send message with acknowledgment
-* Export messages
+* Send message with acknowledgment (using local device)
+* Export messages and metrics
 * Export radio output logs
 * Metrics plotting (RF, power,...)
-* MQTT reader
+* MQTT reader (only subscribing to updates, not pusblishing)
 
 To run :
 ```bash
