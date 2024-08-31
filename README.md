@@ -5,7 +5,7 @@ Work based on original repository of "Meshtastic Chat Desktop"
 
 > Meshtastic Chat Desktop is a desktop application designed for Meshtastic device users who want to send and receive messages using their Meshtastic device via their desktop.
 
-I forked the initial repo to work on the UI and backend interaction.  The objective is to provide a build on Linux (should wor on Windows, compatibility not ensured) to be able to graphically view a meshtastic node, without re-doing what the Python Meshtastic CLI does best.
+I forked the initial repo to work on the UI and backend interaction.  The objective is to provide a build on Linux (should work on Windows, compatibility not ensured) to be able to graphically view a meshtastic node, without re-doing what the Python Meshtastic CLI does best.
 
 ## Features
 I disabled working features from the original repo to focus on a basic working tool, and to better understand Meshtastic inner behavior.
