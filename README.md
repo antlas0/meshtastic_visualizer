@@ -1,5 +1,6 @@
 # Meshtastic Visualizer
 Python PyQt graphical interface to interface with a local node.
+Main framework used is PyQt6. (Screenshots may be out of date).
 
 Work based on original repository of "Meshtastic Chat Desktop"
 
@@ -8,10 +9,6 @@ Work based on original repository of "Meshtastic Chat Desktop"
 I forked the initial repo to work on the UI and backend interaction.  The objective is to provide a build on Linux (should work on Windows, compatibility not ensured) to be able to graphically view a meshtastic node, without re-doing what the Python Meshtastic CLI does best.
 
 ## Features
-I disabled working features from the original repo to focus on a basic working tool, and to better understand Meshtastic inner behavior.
-Main framework used is PyQt6.
-(Screenshots may be out of date).
-
 At the moment, what works :
 * Display configuration of local and remote node
 * Display Channels configuration (using local device)
