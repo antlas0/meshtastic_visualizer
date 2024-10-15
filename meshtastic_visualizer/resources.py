@@ -141,3 +141,170 @@ class MeshtasticMQTTClientSettings:
     key: Optional[str] = None
     tls: bool = True
     max_msg_len: int = 255
+
+
+MAINWINDOW_STYLESHEET = """
+    /* General Style for the Application */
+    QMainWindow {
+        background-color: #f0f0f5;
+    }
+
+    /* QLabel */
+    QLabel {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-size: 12px;
+        color: #333;
+        padding: 1px;
+    }
+
+    /* QLineEdit */
+    QLineEdit {
+        background-color: #ffffff;
+        border: 1px solid #d1d1d6;
+        border-radius: 5px;
+        padding: 1px;
+        font-size: 12px;
+        color: #333;
+    }
+
+    QLineEdit:focus {
+        border: 1px solid #007aff;
+    }
+
+    /* QTextEdit */
+    QTextEdit {
+        background-color: #ffffff;
+        border: 1px solid #d1d1d6;
+        border-radius: 5px;
+        padding: 1px;
+        font-size: 12px;
+        color: #333;
+    }
+
+    QTextEdit:focus {
+        border: 1px solid #007aff;
+    }
+
+    /* QSpinBox */
+    QSpinBox {
+        background-color: #ffffff;
+        border: 1px solid #d1d1d6;
+        border-radius: 5px;
+        padding: 1px;
+        font-size: 12px;
+        color: #333;
+    }
+
+    QSpinBox:focus {
+        border: 1px solid #007aff;
+    }
+
+    /* QPushButton */
+    QPushButton {
+        background-color: #007aff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 1px 1px;
+        font-size: 12px;
+    }
+
+    QPushButton:hover {
+        background-color: #0051c1;
+    }
+
+    QPushButton:pressed {
+        background-color: #00399a;
+    }
+
+    /* QCheckBox */
+    QCheckBox {
+        background-color: #ffffff;
+        border: 1px solid #d1d1d6;
+        border-radius: 5px;
+        padding: 1px;
+        font-size: 12px;
+        color: #333;
+    }
+
+
+    /* QComboBox */
+    QComboBox {
+        background-color: #ffffff;
+        border: 1px solid #d1d1d6;
+        border-radius: 5px;
+        padding: 1px;
+        font-size: 12px;
+        color: #333;
+    }
+
+    QComboBox:focus {
+        border: 1px solid #007aff;
+    }
+
+    /* QGroupBox */
+    QGroupBox {
+        border: 1px solid #d1d1d6;
+        border-radius: 5px;
+        padding: 10px;
+        font-size: 12px;
+        color: #333;
+    }
+
+    QGroupBox::title {
+        subcontrol-origin: margin;
+        left: 10px;
+        padding: 1px;
+        font-weight: bold;
+    }
+
+    /* QListWidget */
+    QListWidget {
+        background-color: #ffffff;
+        border: 1px solid #d1d1d6;
+        border-radius: 5px;
+        font-size: 12px;
+        color: #333;
+    }
+
+    QListWidget::header {
+        background-color: #f0f0f5;
+        color: #007aff;
+        font-weight: bold;
+        font-size: 12px;
+        padding: 1px;
+    }
+
+    QListWidget::item {
+        padding: 1px;
+    }
+
+    QListWidget::item:selected {
+        background-color: #007aff;
+        color: white;
+    }
+
+    /* QTableWidget */
+    QTableWidget {
+        background-color: #ffffff;
+        border: 1px solid #d1d1d6;
+        font-size: 12px;
+        color: #333;
+    }
+
+    QTableWidget::header {
+        background-color: #f0f0f5;
+        color: #007aff;
+        font-weight: bold;
+        font-size: 12px;
+        padding: 1px;
+    }
+    QTableWidget::item {
+        padding: 1px;
+    }
+
+    QTableWidget::item:selected {
+        background-color: #007aff;
+        color: white;
+    }
+"""

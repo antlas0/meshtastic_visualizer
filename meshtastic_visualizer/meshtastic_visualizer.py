@@ -22,7 +22,8 @@ from .meshtastic_manager import MeshtasticManager
 from .resources import MessageLevel, \
     MeshtasticMessage, \
     TEXT_MESSAGE_MAX_CHARS, \
-    MeshtasticMQTTClientSettings
+    MeshtasticMQTTClientSettings, \
+    MAINWINDOW_STYLESHEET
 
 from .meshtastic_mqtt import MeshtasticMQTT
 from .meshtastic_datastore import MeshtasticDataStore
@@ -220,6 +221,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self._settings.value("mqtt_password", ""))
         self.mqtt_topic_linedit.setText(self._settings.value("mqtt_topic", ""))
         self.mqtt_key_linedit.setText(self._settings.value("mqtt_key", "AQ=="))
+        self.setStyleSheet(MAINWINDOW_STYLESHEET)
 
     def clear_messages_table(self) -> None:
         self.messages_table.setRowCount(0)
@@ -340,6 +342,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._map.save(data, close_file=False)
         data.seek(0)
         html = data.getvalue().decode()
+        data.close()
         del data
         self.nodes_map.setHtml(html)
 
@@ -421,14 +424,14 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                             nodes_coords[node.id],
                             nodes_coords[neighbor],
                         ]
-                    if link_coords[0][0] is not None \
-                            and link_coords[0][1] is not None \
-                            and link_coords[1][0] is not None\
-                            and link_coords[1][1] is not None:
-                        link = folium.PolyLine(
-                            link_coords, color=__link_color(node.id))
-                        link.add_to(self._link_group)
-                        links.append(link)
+                        if link_coords[0][0] is not None \
+                                and link_coords[0][1] is not None \
+                                and link_coords[1][0] is not None\
+                                and link_coords[1][1] is not None:
+                            link = folium.PolyLine(
+                                link_coords, color=__link_color(node.id))
+                            link.add_to(self._link_group)
+                            links.append(link)
         if markers:
             markers_lat = [x.location[0] for x in markers]
             markers_lon = [x.location[1] for x in markers]
