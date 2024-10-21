@@ -299,6 +299,7 @@ MAINWINDOW_STYLESHEET = """
         font-size: 12px;
         padding: 1px;
     }
+
     QTableWidget::item {
         padding: 1px;
     }
@@ -306,5 +307,36 @@ MAINWINDOW_STYLESHEET = """
     QTableWidget::item:selected {
         background-color: #007aff;
         color: white;
+    }
+
+    /* QTabBar::tab */
+    QTabBar::tab {
+        color: #333;
+        border: 1px solid #999;      /* Border color for tabs */
+        padding: 8px 12px;           /* Padding around the tab names */
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+        font-size: 12px;
+    }
+
+    /* Hover effect for tabs */
+    QTabBar::tab:hover {
+        background-color: #888;      /* Lighter background when hovering */
+        font-size: 12px;
+    }
+
+    /* Selected tab */
+    QTabBar::tab:selected {
+        background-color: #007aff;   /* Background color for the selected tab */
+        color: white;                /* Text color for the selected tab */
+        border-bottom: 2px solid #007aff;  /* Bottom border to emphasize selected tab */
+        font-size: 12px;
+    }
+
+    /* Disabled tabs */
+    QTabBar::tab:disabled {
+        color: #666;                 /* Dimmed text for disabled tabs */
+        background-color: #333;
+        font-size: 12px;
     }
 """
