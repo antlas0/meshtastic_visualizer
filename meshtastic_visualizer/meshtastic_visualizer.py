@@ -202,11 +202,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.plot_layout.addWidget(self._plot_widget)
         self._plot_item = self._plot_widget.plot(
             pen=pg.mkPen(
-                'r',
-                width=2),
+                '#007aff',
+                width=1),
             symbol='o',
             symbolPen='b',
-            symbolSize=10)
+            symbolSize=8)
 
         self.mqtt_disconnect_button.setEnabled(False)
         self.nodes_total_lcd.setDecMode()

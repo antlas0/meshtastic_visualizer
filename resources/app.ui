@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1200</width>
-    <height>850</height>
+    <width>1172</width>
+    <height>701</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>1200</width>
-    <height>850</height>
+    <width>0</width>
+    <height>0</height>
    </size>
   </property>
   <property name="maximumSize">
@@ -32,7 +32,7 @@
       <x>10</x>
       <y>60</y>
       <width>1151</width>
-      <height>741</height>
+      <height>611</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -58,10 +58,16 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>130</y>
+        <y>110</y>
         <width>461</width>
-        <height>201</height>
+        <height>151</height>
        </rect>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>1</horstretch>
+        <verstretch>1</verstretch>
+       </sizepolicy>
       </property>
       <property name="title">
        <string>Local device channels</string>
@@ -72,8 +78,14 @@
          <x>10</x>
          <y>30</y>
          <width>441</width>
-         <height>161</height>
+         <height>111</height>
         </rect>
+       </property>
+       <property name="sizeIncrement">
+        <size>
+         <width>1</width>
+         <height>1</height>
+        </size>
        </property>
       </widget>
      </widget>
@@ -81,10 +93,16 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>350</y>
+        <y>270</y>
         <width>461</width>
-        <height>351</height>
+        <height>291</height>
        </rect>
+      </property>
+      <property name="sizeIncrement">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
       </property>
       <property name="title">
        <string>Local device radio info</string>
@@ -108,7 +126,7 @@
          <x>10</x>
          <y>100</y>
          <width>441</width>
-         <height>241</height>
+         <height>181</height>
         </rect>
        </property>
        <property name="readOnly">
@@ -235,6 +253,12 @@
         <height>91</height>
        </rect>
       </property>
+      <property name="sizeIncrement">
+       <size>
+        <width>200</width>
+        <height>50</height>
+       </size>
+      </property>
       <property name="title">
        <string>Local device connection</string>
       </property>
@@ -294,7 +318,7 @@
      <widget class="QGroupBox" name="groupBox_6">
       <property name="geometry">
        <rect>
-        <x>500</x>
+        <x>510</x>
         <y>10</y>
         <width>401</width>
         <height>261</height>
@@ -465,7 +489,7 @@
         <x>480</x>
         <y>10</y>
         <width>20</width>
-        <height>691</height>
+        <height>551</height>
        </rect>
       </property>
       <property name="orientation">
@@ -491,7 +515,7 @@
         <x>500</x>
         <y>300</y>
         <width>641</width>
-        <height>401</height>
+        <height>261</height>
        </rect>
       </property>
       <property name="title">
@@ -519,7 +543,7 @@
          <x>10</x>
          <y>60</y>
          <width>621</width>
-         <height>331</height>
+         <height>191</height>
         </rect>
        </property>
        <property name="readOnly">
@@ -549,7 +573,7 @@
       <property name="geometry">
        <rect>
         <x>460</x>
-        <y>610</y>
+        <y>460</y>
         <width>431</width>
         <height>91</height>
        </rect>
@@ -559,7 +583,7 @@
       <property name="geometry">
        <rect>
         <x>900</x>
-        <y>570</y>
+        <y>420</y>
         <width>51</width>
         <height>131</height>
        </rect>
@@ -574,7 +598,7 @@
         <x>240</x>
         <y>10</y>
         <width>901</width>
-        <height>551</height>
+        <height>401</height>
        </rect>
       </property>
      </widget>
@@ -582,9 +606,9 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>40</y>
+        <y>30</y>
         <width>201</width>
-        <height>151</height>
+        <height>121</height>
        </rect>
       </property>
      </widget>
@@ -592,7 +616,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>20</y>
+        <y>10</y>
         <width>67</width>
         <height>17</height>
        </rect>
@@ -605,7 +629,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>210</y>
+        <y>160</y>
         <width>67</width>
         <height>17</height>
        </rect>
@@ -618,9 +642,9 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>230</y>
+        <y>180</y>
         <width>201</width>
-        <height>171</height>
+        <height>131</height>
        </rect>
       </property>
      </widget>
@@ -628,7 +652,7 @@
       <property name="geometry">
        <rect>
         <x>460</x>
-        <y>570</y>
+        <y>420</y>
         <width>431</width>
         <height>31</height>
        </rect>
@@ -707,7 +731,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>510</y>
+        <y>340</y>
         <width>201</width>
         <height>191</height>
        </rect>
@@ -804,7 +828,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>490</y>
+        <y>320</y>
         <width>211</width>
         <height>16</height>
        </rect>
@@ -817,7 +841,7 @@
       <property name="geometry">
        <rect>
         <x>240</x>
-        <y>570</y>
+        <y>420</y>
         <width>31</width>
         <height>25</height>
        </rect>
@@ -830,7 +854,7 @@
       <property name="geometry">
        <rect>
         <x>1110</x>
-        <y>570</y>
+        <y>420</y>
         <width>31</width>
         <height>25</height>
        </rect>
@@ -875,7 +899,7 @@
         <x>20</x>
         <y>40</y>
         <width>1121</width>
-        <height>661</height>
+        <height>531</height>
        </rect>
       </property>
       <property name="title">
@@ -887,7 +911,7 @@
          <x>10</x>
          <y>30</y>
          <width>1101</width>
-         <height>621</height>
+         <height>491</height>
         </rect>
        </property>
        <property name="url" stdset="0">
@@ -906,13 +930,13 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>10</y>
+        <y>0</y>
         <width>1131</width>
-        <height>351</height>
+        <height>311</height>
        </rect>
       </property>
       <property name="title">
-       <string>Mesh</string>
+       <string/>
       </property>
       <widget class="QTableWidget" name="mesh_table">
        <property name="geometry">
@@ -920,7 +944,7 @@
          <x>10</x>
          <y>70</y>
          <width>1111</width>
-         <height>271</height>
+         <height>231</height>
         </rect>
        </property>
       </widget>
@@ -977,9 +1001,9 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>370</y>
+        <y>310</y>
         <width>1131</width>
-        <height>331</height>
+        <height>261</height>
        </rect>
       </property>
       <property name="title">
@@ -1062,7 +1086,7 @@
          <x>20</x>
          <y>80</y>
          <width>1101</width>
-         <height>241</height>
+         <height>171</height>
         </rect>
        </property>
        <layout class="QHBoxLayout" name="plot_layout"/>
