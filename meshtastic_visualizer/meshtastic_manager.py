@@ -205,37 +205,28 @@ class MeshtasticManager(QObject, threading.Thread):
             return
 
         self.notify_data("---------------", message_type="INFO")
-        print(Fore.LIGHTBLACK_EX + "---------------")
         if 'fromId' in packet:
             message = f"From ID: {packet['fromId']}"
-            print(Fore.LIGHTBLACK_EX + message)
             self.notify_data(message, message_type="INFO")
         if 'toId' in packet:
             message = f"To ID: {packet['toId']}"
-            print(Fore.LIGHTBLACK_EX + message)
             self.notify_data(message, message_type="INFO")
         if 'id' in packet:
             message = f"Packet ID: {packet['id']}"
-            print(Fore.LIGHTBLACK_EX + message)
             self.notify_data(message, message_type="INFO")
             message = f"Packet type: {packet['decoded']['portnum'].lower()}"
-            print(Fore.LIGHTBLACK_EX + message)
             self.notify_data(message, message_type="INFO")
         if 'rxSnr' in packet:
             message = f"SNR: {packet['rxSnr']}"
-            print(Fore.LIGHTBLACK_EX + message)
             self.notify_data(message, message_type="SNR")
         if 'rxRssi' in packet:
             message = f"RSSI: {packet['rxRssi']}"
-            print(Fore.LIGHTBLACK_EX + message)
             self.notify_data(message, message_type="RSSI")
         if 'hopLimit' in packet:
             message = f"Hop Limit: {packet['hopLimit']}"
-            print(Fore.LIGHTBLACK_EX + message)
             self.notify_data(message, message_type="INFO")
         if 'encrypted' in packet:
             message = f"Encrypted: {packet['encrypted']}"
-            print(Fore.LIGHTBLACK_EX + message)
             self.notify_data(message, message_type="INFO")
 
         self.update_node_info(packet)
@@ -243,12 +234,9 @@ class MeshtasticManager(QObject, threading.Thread):
         if packet["decoded"]["portnum"] == PacketInfoType.PCK_ROUTING_APP.value:
             ack_status = packet["decoded"]["routing"]["errorReason"] == "NONE"
             trace = f"Ack packet from {packet['fromId']} for packet id {packet['decoded']['requestId']}: {ack_status}"
-            print(trace)
             self.notify_data(trace, "INFO")
             if packet["decoded"]["routing"]["errorReason"] != "NONE":
-                print(
-                    f'Received a NAK, error reason: {packet["decoded"]["routing"]["errorReason"]}'
-                )
+                pass
             else:
                 if str(packet["fromId"]) == str(self._local_board_id):
                     print(
@@ -316,7 +304,7 @@ class MeshtasticManager(QObject, threading.Thread):
                     hop_limit=packet['hopLimit'] if 'hopLimit' in packet else None,
                     hop_start=packet['hopStart'] if 'hopStart' in packet else None,
                     want_ack=packet['wantAck'] if 'wantAck' in packet else None,
-                    ack="",
+                    ack="✅",
                 )
 
                 self._data.store_or_update_messages(m)
@@ -352,10 +340,6 @@ class MeshtasticManager(QObject, threading.Thread):
         self.notify_frontend(MessageLevel.INFO, trace)
         trace = f"Message sent with ID: {message.to_id} with details {sent_packet}"
         self.notify_data(trace, "INFO")
-        print(Fore.LIGHTBLACK_EX + f"{trace}")
-        if message.want_ack:
-            print(Fore.LIGHTBLACK_EX + "Waiting ack")
-
         message.mid = sent_packet.id
         self._data.set_message(message)
         self.notify_message()
@@ -538,20 +522,24 @@ class MeshtasticManager(QObject, threading.Thread):
                         hopLimit: int,
                         channelIndex: int = 0):
         """Send the trace route"""
-        if self._interface is None:
+        if self._interface is None or not dest:
             return
 
         r = mesh_pb2.RouteDiscovery()
-        self._interface.sendData(
-            r.SerializeToString(),
-            destinationId=dest,
-            portNum=portnums_pb2.PortNum.TRACEROUTE_APP,
-            wantResponse=True,
-            channelIndex=channelIndex,
-        )
-        self.notify_frontend(
-            MessageLevel.INFO,
-            f"Traceoute started to {dest}.")
+        try:
+            self._interface.sendData(
+                r.SerializeToString(),
+                destinationId=dest,
+                portNum=portnums_pb2.PortNum.TRACEROUTE_APP,
+                wantResponse=True,
+                channelIndex=channelIndex,
+            )
+        except Exception as e:
+            print(f"Could not send traceroute: {e}")
+        else:
+            self.notify_frontend(
+                MessageLevel.INFO,
+                f"Traceoute started to {dest}.")
 
     def _node_id_from_num(self, nodeNum):
         """Convert node number to node ID"""
