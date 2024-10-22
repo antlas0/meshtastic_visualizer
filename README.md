@@ -1,5 +1,5 @@
 # Meshtastic Visualizer
-Python PyQt graphical interface to interface with a local node.
+Python PyQt graphical app to interface with a local Meshtastic node using an USB connection. Possibility to subscribe to MQTT servers and retrieve nodes, messages,...
 Main framework used is PyQt6. (Screenshots may be out of date).
 
 Work based on original repository of "Meshtastic Chat Desktop"
@@ -9,18 +9,16 @@ Work based on original repository of "Meshtastic Chat Desktop"
 I forked the initial repo to work on the UI and backend interaction.  The objective is to provide a build on Linux (should work on Windows, compatibility not ensured) to be able to graphically view a meshtastic node, without re-doing what the Python Meshtastic CLI does best.
 
 ## Features
-At the moment, what works :
-* Display configuration of local and remote node
-* Display Channels configuration (using local device)
-* Display radio output (using local device)
-* Print mesh information
-* Perform traceroute (using local device)
-* Display map of nodes
-* Send message with acknowledgment (using local device)
-* Export messages and metrics
-* Export radio output logs
-* Metrics plotting (RF, power,...)
-* MQTT reader (only subscribing to updates, not pusblishing)
+| Feature | Using local device | Using MQTT |
+|---|---|---|
+| Display nodes configuration |✅|✅|
+| Display map of nodes |✅|✅|
+| Display messages |✅|✅|
+| Send messages with acknowledgment|✅|❌|
+| Perform traceroute |✅|❌|
+| Export messages and metrics |✅|✅|
+| Export events logs |✅|✅|
+| Metrics plotting (RF, power,...) |✅|✅|
 
 To run :
 ```bash
