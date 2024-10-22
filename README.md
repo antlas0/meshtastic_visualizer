@@ -1,12 +1,12 @@
 # Meshtastic Visualizer
-Python PyQt graphical app to interface with a local Meshtastic node using an USB connection. Possibility to subscribe to MQTT servers and retrieve nodes, messages,...
+Python PyQt graphical desktop app to interface with a local Meshtastic node using an USB connection. Possibility to subscribe to MQTT servers and retrieve nodes, messages,...
 Main framework used is PyQt6. (Screenshots may be out of date).
 
 Work based on original repository of "Meshtastic Chat Desktop"
 
 > Meshtastic Chat Desktop is a desktop application designed for Meshtastic device users who want to send and receive messages using their Meshtastic device via their desktop.
 
-I forked the initial repo to work on the UI and backend interaction.  The objective is to provide a build on Linux (should work on Windows, compatibility not ensured) to be able to graphically view a meshtastic node, without re-doing what the Python Meshtastic CLI does best.
+The objective is to provide a build on Linux (should work on Windows, compatibility not ensured).
 
 ## Features
 | Feature | Using local device | Using MQTT |
@@ -20,6 +20,15 @@ I forked the initial repo to work on the UI and backend interaction.  The object
 | Export events logs |✅|✅|
 | Metrics plotting (RF, power,...) |✅|✅|
 
+## Installation 
+Using the `setup.py`:
+
+```bash
+$ python -m pip install .
+```
+
+## How to start
+
 To run :
 ```bash
 $ python3 -m venv .venv
@@ -27,15 +36,6 @@ $ source .venv/bin/activate
 $ python -m pip install -r requirements.txt
 $ python -m meshtastic_visualizer
 ```
-
-or using the `setup.py`:
-
-```bash
-$ python -m pip install .
-# Linux only
-$ meshtastic_visualizer
-```
-
 Note: If you rely on Wayland, you may experience Qt event not properly managed. To fall back on a `X11` session, provide the following environment variable when launching the application: `XDG_SESSION_TYPE=x11`.
 
 ## Todo
