@@ -5,6 +5,7 @@ import hashlib
 import os
 import io
 import folium
+from folium.plugins import MousePosition, MeasureControl
 import humanize
 from threading import Lock
 from datetime import datetime, timedelta
@@ -12,6 +13,7 @@ from typing import List
 from PyQt6 import QtCore
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtGui import QTextCursor
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QTableWidgetItem, QListWidgetItem
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtCore import pyqtSignal, QSettings
@@ -93,8 +95,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._mqtt_manager.notify_mqtt_enveloppe_signal.connect(
             self.update_received_mqtt_log)
 
-        for i, device in enumerate(self._manager.get_meshtastic_devices()):
-            self.device_combobox.insertItem(i, device)
+        self._update_meshtastic_devices()
 
         self.connect_device_signal.connect(self._manager.connect_device)
         self.disconnect_device_signal.connect(self._manager.disconnect_device)
@@ -155,16 +156,28 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if loglevel.value == MessageLevel.INFO.value or loglevel.value == MessageLevel.UNKNOWN.value:
             self.notification_bar.setText(message)
 
+    def _update_meshtastic_devices(self) -> None:
+        self.device_combobox.clear()
+        for i, device in enumerate(self._manager.get_meshtastic_devices()):
+            self.device_combobox.insertItem(i, device)
+
     def setup_ui(self) -> None:
+        # You can change this to "Apple Color Emoji" or "Noto Color Emoji" on
+        # other platforms
+        emoji_font = QFont("Segoe UI Emoji", 12)
+        self.tabWidget.tabBar().setFont(emoji_font)
+        self.tabWidget.currentChanged.connect(self.remove_notification_badge)
         self.notification_bar.setOpenExternalLinks(True)
         self.connect_button.clicked.connect(self.connect_device)
+        self.scan_com_button.clicked.connect(self._update_meshtastic_devices)
         self.disconnect_button.clicked.connect(self.disconnect_device)
         self.scan_button.clicked.connect(self.get_nodes)
         self.send_button.clicked.connect(self.send_message)
         self.traceroute_button.clicked.connect(self.traceroute)
         self.nm_update_button.pressed.connect(self.update_nodes_metrics)
-        self.msg_node_list.itemClicked.connect(self.update_msg_recipient)
-        self.msg_channel_list.itemClicked.connect(self.update_msg_channel)
+        self.msg_node_list.itemClicked.connect(self.update_recipient)
+        self.msg_channel_list.itemClicked.connect(self.update_dest_channel)
+        self.mesh_table.cellClicked.connect(self.mesh_table_is_clicked)
         self.message_textedit.textChanged.connect(
             self.update_text_message_length)
         self.remaining_chars_label.setText(
@@ -175,8 +188,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             len(self._get_meshtastic_message_fields()))
         self.messages_table.setHorizontalHeaderLabels(
             self._get_meshtastic_message_fields())
-        self.traceroute_table.setColumnCount(1)
-        self.traceroute_table.setHorizontalHeaderLabels(["Id"])
+        self.traceroute_table.setColumnCount(3)
+        self.traceroute_table.setHorizontalHeaderLabels(
+            ["Id", "SNR To", "SNR Back"])
         self.batterylevel_progressbar.hide()
         self.connect_button.setEnabled(True)
         self.disconnect_button.setEnabled(False)
@@ -237,10 +251,15 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         return [
             "date",
             "ack",
+            "pki_encrypted",
             "from_id",
             "to_id",
             "channel_index",
             "content"]
+
+    def remove_notification_badge(self, index):
+        if index == 1:
+            self.tabWidget.setTabText(1, "Messages")
 
     def refresh(
             self,
@@ -303,9 +322,16 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.device_combobox.insertItem(i, device)
         self.disconnect_device_event()
 
-    def update_traceroute(self, route: list) -> None:
+    def update_traceroute(
+            self,
+            route: list,
+            snr_towards: list,
+            snr_back: list) -> None:
         self.traceroute_table.clear()
         self.traceroute_table.setRowCount(0)
+        self.traceroute_table.setColumnCount(3)
+        self.traceroute_table.setHorizontalHeaderLabels(
+            ["Id", "SNR To", "SNR Back"])
         for hop in route:
             device = self._store.get_long_name_from_id(hop)
             if hop == self._local_board_id:
@@ -315,6 +341,16 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.traceroute_table.setItem(
                 row_position, 0, QTableWidgetItem(device))
             self.traceroute_table.resizeColumnsToContents()
+
+        if len(snr_towards) > 0 and len(snr_towards) != len(snr_back):
+            return
+
+        for i in range(len(snr_towards)):
+            self.traceroute_table.setItem(
+                i, 1, QTableWidgetItem("↓" + str(snr_towards[i])))
+            self.traceroute_table.setItem(
+                i, 2, QTableWidgetItem("↑" + str(snr_back[i])))
+        self.traceroute_table.resizeColumnsToContents()
 
     def update_text_message_length(self):
         current_text = self.message_textedit.toPlainText()
@@ -333,9 +369,33 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.remaining_chars_label.setText(
             f"{remaining_chars}/{TEXT_MESSAGE_MAX_CHARS}")
 
+    def mesh_table_is_clicked(self, row, column) -> None:
+        text = self.mesh_table.item(row, 0).text()
+        if self._local_board_id and self._store.get_id_from_long_name(
+                text) == self._local_board_id:
+            text = "Me"
+        self.nm_node_combobox.setCurrentText(text)
+
     def init_map(self):
         self._map = folium.Map(zoom_start=7)
+        MousePosition().add_to(self._map)
+        MeasureControl().add_to(self._map)
         self.update_map_in_widget()
+        # from .map_handler import MapHandler
+        # from PyQt6.QtCore import Qt, QPointF, QUrl, QObject
+        # from PyQt6.QtQuickWidgets import QQuickWidget
+        # self.map_view = QQuickWidget()
+        # self.map_view.setResizeMode(QQuickWidget.ResizeMode.SizeRootObjectToView)
+        # self.map_view.setSource(QUrl.fromLocalFile("map.qml"))
+
+        # Set up the layout
+        # self.nodes_layout.addWidget(self.map_view)
+        # if self.map_obj:
+        #     self.map_handler = MapHandler(self.map_obj)
+        #     self.map_handler.markerClicked.connect(self.handle_marker_click)
+
+        # # Access QML map object and expose Python functions
+        # self.map_obj = self.map_view.rootObject().findChild(QObject, "Map")
 
     def update_map_in_widget(self):
         data = io.BytesIO()
@@ -357,6 +417,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         del self._map
         self._map = None
         self._map = folium.Map(zoom_start=7)
+        MousePosition().add_to(self._map)
+        MeasureControl().add_to(self._map)
 
         # Add a new marker
         nodes = self._store.get_nodes()
@@ -446,11 +508,18 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         self.update_map_in_widget()
 
+    def clean_plot(self) -> None:
+        self._plot_item.setData(
+            x=None,
+            y=None)
+        self._plot_widget.setTitle("No data")
+
     def update_nodes_metrics(self) -> str:
         node_id = self._store.get_id_from_long_name(
             self.nm_node_combobox.currentText())
         metric_name = self.nm_metric_combobox.currentText()
         if not node_id or not metric_name:
+            self.clean_plot()
             return
         self.refresh_metrics_plot(node_id=node_id, metric_name=metric_name)
 
@@ -458,6 +527,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._lock.acquire()
         metric = self._store.get_node_metrics(node_id, metric_name)
         if "timestamp" not in metric or metric_name not in metric:
+            self.clean_plot()
             self._lock.release()
             return
         if len(
@@ -465,6 +535,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     filter(
                 lambda x: x is not None,
                 metric[metric_name]))) == 0:
+            self.clean_plot()
             self._lock.release()
             return
 
@@ -556,7 +627,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         # update table
         self.msg_node_list.clear()
-        self.tr_dest_combobox.clear()
         current_nm_node = self.nm_node_combobox.currentText()
         self.nm_node_combobox.clear()
         self.msg_node_list.insertItem(0, "All")
@@ -565,8 +635,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         for i, node in enumerate(filtered):
             if node.id == self._local_board_id:
                 continue
-            self.tr_dest_combobox.insertItem(
-                i + 1, node.long_name if node.long_name else node.id)
             self.msg_node_list.insertItem(
                 i + 1, node.long_name if node.long_name else node.id)
             self.nm_node_combobox.insertItem(
@@ -590,38 +658,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 {
                     "Latitude": node.lat,
                     "Longitude": node.lon,
-                    "Altitude": node.alt,
-                }
-            )
-
-            row.update({"Battery": node.battery_level})
-            row.update(
-                {
-                    "Channel util.": node.chutil,
-                    "Tx air util.": node.txairutil,
-                    "RSSI": node.rssi,
-                }
-            )
-
-            row.update(
-                {
-                    "SNR": node.snr,
-                    "Hops Away": node.hopsaway,
-                    "Last Seen": humanize.naturaltime(
-                        (datetime.strptime(
-                            node.lastseen,
-                            "%Y-%m-%d %H:%M:%S") -
-                            datetime.now())) if node.lastseen is not None else None,
-                    "First Seen": humanize.naturaltime(
-                        (datetime.strptime(
-                            node.firstseen,
-                            "%Y-%m-%d %H:%M:%S") -
-                            datetime.now())) if node.firstseen is not None else None,
-                    "Uptime": humanize.precisedelta(
-                        node.uptime),
                     "RX Counter": node.rx_counter,
-                })
-
+                    "Public key": node.public_key,
+                }
+            )
             rows.append(row)
 
         rows.sort(key=lambda r: r.get("LastHeard") or "0000", reverse=True)
@@ -634,17 +674,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             "Hardware",
             "Latitude",
             "Longitude",
-            "Altitude",
-            "Battery",
-            "Channel util.",
-            "Tx air util.",
-            "RSSI",
-            "SNR",
-            "Hops Away",
-            "Last Seen",
-            "First Seen",
-            "Uptime",
-            "RX Counter"]
+            "RX Counter",
+            "Public key",
+        ]
 
         del nodes
         self.mesh_table.setRowCount(len(rows))
@@ -680,7 +712,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if not channels:
             return
 
-        for cb in ["msg_channel_list", "tr_channel_combobox"]:
+        for cb in ["msg_channel_list"]:
             getattr(self, cb).clear()
             for i, channel in enumerate(channels):
                 getattr(self, cb).insertItem(i, channel.name)
@@ -721,14 +753,17 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         self._local_board_id = cfg.id
         self.devicename_label.setText(cfg.long_name)
+        self.publickey_label.setText(cfg.public_key)
+        self.hardware_label.setText(cfg.hardware)
+        self.role_label.setText(cfg.role)
         self.batterylevel_progressbar.setValue(cfg.battery_level)
         self.batterylevel_progressbar.show()
         self.id_label.setText(str(cfg.id))
 
     def traceroute(self):
         dest_id = self._store.get_id_from_long_name(
-            self.tr_dest_combobox.currentText())
-        channel_name = self.tr_channel_combobox.currentText()
+            self.tr_dest_label.text())
+        channel_name = self.tr_channel_label.text()
         maxhops = self.tr_maxhops_spinbox.value()
         channel_index = self._manager.get_data_store(
         ).get_channel_index_from_name(channel_name)
@@ -740,6 +775,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         )
 
     def update_received_message(self) -> None:
+        if self.tabWidget.currentIndex() != 1:
+            self.tabWidget.setTabText(1, "Messages ☇")
+
         columns = self._get_meshtastic_message_fields()
         self.messages_table.setColumnCount(len(columns))
         self.messages_table.setHorizontalHeaderLabels(columns)
@@ -807,11 +845,13 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         cursor.setPosition(len(self.mqtt_output_textedit.toPlainText()))
         self.mqtt_output_textedit.setTextCursor(cursor)
 
-    def update_msg_recipient(self, item: QListWidgetItem) -> None:
+    def update_recipient(self, item: QListWidgetItem) -> None:
         self.msg_to_label.setText(item.text())
+        self.tr_dest_label.setText(item.text())
 
-    def update_msg_channel(self, item: QListWidgetItem) -> None:
+    def update_dest_channel(self, item: QListWidgetItem) -> None:
         self.msg_channel_label.setText(item.text())
+        self.tr_channel_label.setText(item.text())
 
     def connect_mqtt(self) -> None:
         m = MeshtasticMQTTClientSettings()

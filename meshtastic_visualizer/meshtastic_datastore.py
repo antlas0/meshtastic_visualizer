@@ -142,7 +142,7 @@ class MeshtasticDataStore(Thread):
         res = None
         nodes = list(
             filter(
-                lambda x: x["user"]["id"] == node_id,
+                lambda x: x.id == node_id,
                 self.nodes.values()))
         if len(nodes) != 1:
             res = None

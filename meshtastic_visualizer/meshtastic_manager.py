@@ -50,7 +50,7 @@ class MeshtasticManager(QObject, threading.Thread):
     notify_frontend_signal = pyqtSignal(MessageLevel, str)
     notify_data_signal = pyqtSignal(str, str)
     notify_message_signal = pyqtSignal()
-    notify_traceroute_signal = pyqtSignal(list)
+    notify_traceroute_signal = pyqtSignal(list, list, list)
     notify_channels_signal = pyqtSignal()
     notify_nodes_map_signal = pyqtSignal()
     notify_nodes_table_signal = pyqtSignal()
@@ -90,8 +90,12 @@ class MeshtasticManager(QObject, threading.Thread):
     def notify_message(self):
         self.notify_message_signal.emit()
 
-    def notify_traceroute(self, route: list):
-        self.notify_traceroute_signal.emit(route)
+    def notify_traceroute(
+            self,
+            route: list,
+            snr_towards: list,
+            snr_back: list):
+        self.notify_traceroute_signal.emit(route, snr_towards, snr_back)
 
     def get_data_store(self) -> MeshtasticDataStore:
         return self._data
@@ -111,7 +115,7 @@ class MeshtasticManager(QObject, threading.Thread):
                 devPath=self._data.device_path)
         except Exception as e:
             trace = f"Failed to connect to Meshtastic device {self._data.device_path}: {str(e)}"
-            self._data.set_is_connected(False)
+            self._data.connected = False
             self.notify_frontend(MessageLevel.ERROR, trace)
             return False
         else:
@@ -186,6 +190,7 @@ class MeshtasticManager(QObject, threading.Thread):
             chutil=str(round(node["deviceMetrics"]["channelUtilization"], 2)) if "deviceMetrics" in node and "channelUtilization" in node["deviceMetrics"] else None,
             uptime=node["deviceMetrics"]["uptimeSeconds"] if "deviceMetrics" in node and "uptimeSeconds" in node["deviceMetrics"] else None,
             is_local=True,
+            public_key=node["user"]["publicKey"]
         )
 
         self._local_board_id = node["user"]["id"]
@@ -254,7 +259,7 @@ class MeshtasticManager(QObject, threading.Thread):
                     hop_start=packet['hopStart'] if 'hopStart' in packet else None,
                     want_ack=False,
                     ack="✅",
-                )
+                    public_key=packet["publicKey"] if "publicKey" in packet else "")
                 self._data.store_or_update_messages(m)
                 self.notify_message()
 
@@ -269,7 +274,17 @@ class MeshtasticManager(QObject, threading.Thread):
                 for nodeNum in asDict["route"]:
                     route.append(self._node_id_from_num(nodeNum))
             route.append(self._node_id_from_num(packet["from"]))
-            self.notify_traceroute(route)
+
+            snr_towards: list = []
+            snr_back: list = []
+
+            try:
+                snr_towards = packet["decoded"]["traceroute"]["snrTowards"]
+                snr_back = packet["decoded"]["traceroute"]["snrBack"]
+            except Exception:
+                pass
+
+            self.notify_traceroute(route, snr_towards, snr_back)
 
         decoded = packet['decoded']
         if 'payload' in decoded and isinstance(
@@ -305,6 +320,8 @@ class MeshtasticManager(QObject, threading.Thread):
                     hop_start=packet['hopStart'] if 'hopStart' in packet else None,
                     want_ack=packet['wantAck'] if 'wantAck' in packet else None,
                     ack="✅",
+                    public_key=packet["publicKey"] if "publicKey" in packet else "",
+                    pki_encrypted=packet["pkiEncrypted"] if "pkiEncrypted" in packet else False,
                 )
 
                 self._data.store_or_update_messages(m)
@@ -325,6 +342,10 @@ class MeshtasticManager(QObject, threading.Thread):
         if self._interface is None:
             return
 
+        message.pki_encrypted = False
+        if message.to_id != BROADCAST_ADDR:
+            message.pki_encrypted = True
+
         message.ack = "❌"
         sent_packet = self._interface.sendData(
             data=message.content.encode("utf8"),
@@ -334,6 +355,7 @@ class MeshtasticManager(QObject, threading.Thread):
             wantResponse=True,
             channelIndex=message.channel_index,
             onResponseAckPermitted=False,
+            pkiEncrypted=message.pki_encrypted,
         )
         self.notify_data("---------------", "INFO")
         trace = f"Message sent to {message.to_id}."
@@ -431,6 +453,7 @@ class MeshtasticManager(QObject, threading.Thread):
 
                 n = MeshtasticNode(
                     long_name=node["user"]["longName"],
+                    public_key=node["user"]["publicKey"] if "publicKey" in node["user"] else "",
                     short_name=node["user"]["shortName"],
                     hardware=node["user"]["hwModel"],
                     role=node["user"]["role"] if "role" in node["user"] else None,

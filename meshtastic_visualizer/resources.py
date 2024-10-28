@@ -77,6 +77,8 @@ class MeshtasticMessage:
     hop_start: Optional[int] = None
     channel_index: Optional[int] = None
     ack: str = ""
+    public_key: str = ""
+    pki_encrypted: bool = False
 
 
 @dataclass
@@ -101,6 +103,7 @@ class MeshtasticNode:
     lastseen: Optional[str] = None
     uptime: Optional[int] = None
     is_local: Optional[bool] = None
+    public_key: str = ""
     rx_counter: int = 0  # number of packets received from this node
 
 
@@ -149,12 +152,16 @@ MAINWINDOW_STYLESHEET = """
         background-color: #f0f0f5;
     }
 
-    /* QLabel */
-    QLabel {
+    QWidget {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         font-size: 12px;
+    }
+
+    /* QLabel */
+    QLabel {
         color: #333;
         padding: 1px;
+        text-align: left;
     }
 
     /* QLineEdit */
@@ -253,7 +260,7 @@ MAINWINDOW_STYLESHEET = """
 
     QGroupBox::title {
         subcontrol-origin: margin;
-        left: 10px;
+        left: 1px;
         padding: 1px;
         font-weight: bold;
     }
@@ -283,6 +290,7 @@ MAINWINDOW_STYLESHEET = """
         background-color: #007aff;
         color: white;
     }
+
 
     /* QTableWidget */
     QTableWidget {
