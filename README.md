@@ -11,11 +11,11 @@ The objective is to provide a build on Linux (should work on Windows, compatibil
 ## Features
 | Feature | Using local device | Using MQTT |
 |---|---|---|
-| Display nodes configuration |✅|✅|
+| Display nodes configuration (with public key)|✅|✅|
 | Display map of nodes |✅|✅|
 | Display messages |✅|✅|
 | Send messages with acknowledgment|✅|❌|
-| Perform traceroute |✅|❌|
+| Perform traceroute (with SNR)|✅|❌|
 | Export nodes |✅|✅|
 | Export messages and metrics |✅|✅|
 | Export events logs |✅|✅|
