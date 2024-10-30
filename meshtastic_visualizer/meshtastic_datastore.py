@@ -157,18 +157,35 @@ class MeshtasticDataStore(Thread):
         self.nodes = {}
         self._lock.release()
 
-    def store_or_update_node(self, node: MeshtasticNode) -> None:
+    def store_or_update_node(
+            self,
+            node: MeshtasticNode,
+            init: bool = False) -> None:
         self._lock.acquire()
+        if init:
+            self.nodes[str(node.id)] = node
+            self._lock.release()
+            return
+
         if not str(node.id) in self.nodes.keys():
+            # not previously in nodedb and discovering at runtime
+            # meaning we got a packet from this node
             self.nodes[str(node.id)] = node
             node.firstseen = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             node.lastseen = node.firstseen
             node.rx_counter = 1
         else:
-            # update
+            # update already known node
+            # either it was in nodedb and it is the first packet we get
+            # either this is not the first packet we get
             def __get_nodes_fields():
                 return [field for field in fields(
                     MeshtasticNode) if not field.name.startswith('_')]
+
+            # if in nodedb previously (rx_counter == 0)
+            if getattr(self.nodes[str(node.id)], "rx_counter") == 0:
+                node.firstseen = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                node.lastseen = node.firstseen
 
             rx_counter = getattr(self.nodes[str(node.id)], "rx_counter") + 1
             for f in __get_nodes_fields():

@@ -480,9 +480,10 @@ class MeshtasticManager(QObject, threading.Thread):
                             node["deviceMetrics"]["channelUtilization"],
                             2)) if "deviceMetrics" in node and "channelUtilization" in node["deviceMetrics"] else None,
                     uptime=node["deviceMetrics"]["uptimeSeconds"] if "deviceMetrics" in node and "uptimeSeconds" in node["deviceMetrics"] else None,
+                    rx_counter=0,
                 )
 
-                self._data.store_or_update_node(n)
+                self._data.store_or_update_node(n, init=True)
             self.notify_frontend(MessageLevel.INFO, "Updated nodes list.")
             self.notify_nodes_map()
             self.notify_nodes_table()
