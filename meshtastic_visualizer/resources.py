@@ -2,7 +2,7 @@
 
 import enum
 import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
 
 
@@ -97,7 +97,7 @@ class MeshtasticNode:
     txairutil: Optional[str] = None
     rssi: Optional[str] = None
     snr: Optional[str] = None
-    neighbors: Optional[List[str]] = None
+    neighbors: List[str] = field(default_factory=list)
     hopsaway: Optional[str] = None
     firstseen: Optional[str] = None
     lastseen: Optional[str] = None
@@ -153,7 +153,7 @@ MAINWINDOW_STYLESHEET = """
     }
 
     QWidget {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         font-size: 12px;
     }
 
@@ -161,7 +161,7 @@ MAINWINDOW_STYLESHEET = """
     QLabel {
         color: #333;
         padding: 1px;
-        text-align: left;
+        text-align: auto;
     }
 
     /* QLineEdit */
@@ -170,7 +170,6 @@ MAINWINDOW_STYLESHEET = """
         border: 1px solid #d1d1d6;
         border-radius: 5px;
         padding: 1px;
-        font-size: 12px;
         color: #333;
     }
 
@@ -184,7 +183,6 @@ MAINWINDOW_STYLESHEET = """
         border: 1px solid #d1d1d6;
         border-radius: 5px;
         padding: 1px;
-        font-size: 12px;
         color: #333;
     }
 
@@ -198,7 +196,6 @@ MAINWINDOW_STYLESHEET = """
         border: 1px solid #d1d1d6;
         border-radius: 5px;
         padding: 1px;
-        font-size: 12px;
         color: #333;
     }
 
@@ -211,9 +208,8 @@ MAINWINDOW_STYLESHEET = """
         background-color: #007aff;
         color: white;
         border: none;
-        border-radius: 5px;
+        border-radius: 3px;
         padding: 1px 1px;
-        font-size: 12px;
     }
 
     QPushButton:hover {
@@ -230,10 +226,8 @@ MAINWINDOW_STYLESHEET = """
         border: 1px solid #d1d1d6;
         border-radius: 5px;
         padding: 1px;
-        font-size: 12px;
         color: #333;
     }
-
 
     /* QComboBox */
     QComboBox {
@@ -241,7 +235,6 @@ MAINWINDOW_STYLESHEET = """
         border: 1px solid #d1d1d6;
         border-radius: 5px;
         padding: 1px;
-        font-size: 12px;
         color: #333;
     }
 
@@ -254,7 +247,6 @@ MAINWINDOW_STYLESHEET = """
         border: 1px solid #d1d1d6;
         border-radius: 5px;
         padding: 10px;
-        font-size: 12px;
         color: #333;
     }
 
@@ -270,7 +262,6 @@ MAINWINDOW_STYLESHEET = """
         background-color: #ffffff;
         border: 1px solid #d1d1d6;
         border-radius: 5px;
-        font-size: 12px;
         color: #333;
     }
 
@@ -278,7 +269,6 @@ MAINWINDOW_STYLESHEET = """
         background-color: #f0f0f5;
         color: #007aff;
         font-weight: bold;
-        font-size: 12px;
         padding: 1px;
     }
 
@@ -291,12 +281,10 @@ MAINWINDOW_STYLESHEET = """
         color: white;
     }
 
-
     /* QTableWidget */
     QTableWidget {
         background-color: #ffffff;
         border: 1px solid #d1d1d6;
-        font-size: 12px;
         color: #333;
     }
 
@@ -304,7 +292,6 @@ MAINWINDOW_STYLESHEET = """
         background-color: #f0f0f5;
         color: #007aff;
         font-weight: bold;
-        font-size: 12px;
         padding: 1px;
     }
 
@@ -324,13 +311,11 @@ MAINWINDOW_STYLESHEET = """
         padding: 8px 12px;           /* Padding around the tab names */
         border-top-left-radius: 5px;
         border-top-right-radius: 5px;
-        font-size: 12px;
     }
 
     /* Hover effect for tabs */
     QTabBar::tab:hover {
         background-color: #888;      /* Lighter background when hovering */
-        font-size: 12px;
     }
 
     /* Selected tab */
@@ -338,13 +323,11 @@ MAINWINDOW_STYLESHEET = """
         background-color: #007aff;   /* Background color for the selected tab */
         color: white;                /* Text color for the selected tab */
         border-bottom: 2px solid #007aff;  /* Bottom border to emphasize selected tab */
-        font-size: 12px;
     }
 
     /* Disabled tabs */
     QTabBar::tab:disabled {
         color: #666;                 /* Dimmed text for disabled tabs */
         background-color: #333;
-        font-size: 12px;
     }
 """

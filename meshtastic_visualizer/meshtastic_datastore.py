@@ -182,7 +182,7 @@ class MeshtasticDataStore(Thread):
                 return [field for field in fields(
                     MeshtasticNode) if not field.name.startswith('_')]
 
-            # if in nodedb previously (rx_counter == 0)
+            # if in nodedb previously but unseen so far (rx_counter == 0)
             if getattr(self.nodes[str(node.id)], "rx_counter") == 0:
                 node.firstseen = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 node.lastseen = node.firstseen

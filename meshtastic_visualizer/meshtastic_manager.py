@@ -209,6 +209,19 @@ class MeshtasticManager(QObject, threading.Thread):
         if "portnum" not in packet["decoded"]:
             return
 
+        decoded = packet['decoded']
+        if 'payload' not in decoded or not isinstance(
+                decoded['payload'], bytes):
+            return
+
+        nodes_to_update: list = []
+
+        node_from = MeshtasticNode(
+            id=self._node_id_from_num(
+                packet["from"])
+        )
+        node_from.is_local = node_from.id == self._local_board_id
+
         self.notify_data("---------------", message_type="INFO")
         if 'fromId' in packet:
             message = f"From ID: {packet['fromId']}"
@@ -234,13 +247,46 @@ class MeshtasticManager(QObject, threading.Thread):
             message = f"Encrypted: {packet['encrypted']}"
             self.notify_data(message, message_type="INFO")
 
-        self.update_node_info(packet)
+        node_from.rssi = str(
+            round(
+                packet["rxRssi"],
+                2)) if "rxRssi" in packet else None
+        node_from.snr = str(
+            round(
+                packet["rxSnr"],
+                2)) if "rxSnr" in packet else None
+        node_from.hopsaway = str(
+            packet["hopsAway"]) if "hopsAway" in packet else None
+        node_from.lastseen = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        if packet["decoded"]["portnum"] == PacketInfoType.PCK_ROUTING_APP.value:
-            ack_status = packet["decoded"]["routing"]["errorReason"] == "NONE"
+        if decoded["portnum"] == PacketInfoType.PCK_TELEMETRY_APP.value:
+            node_from.battery_level = decoded["telemetry"]["deviceMetrics"]["batteryLevel"] if "deviceMetrics" in packet[
+                "decoded"]["telemetry"] and "batteryLevel" in decoded["telemetry"]["deviceMetrics"] else None
+            node_from.txairutil = str(
+                round(
+                    decoded["telemetry"]["deviceMetrics"]["airUtilTx"],
+                    2)) if "deviceMetrics" in decoded["telemetry"] and "airUtilTx" in decoded["telemetry"]["deviceMetrics"] else None
+            node_from.chutil = str(
+                round(
+                    decoded["telemetry"]["deviceMetrics"]["channelUtilization"],
+                    2)) if "deviceMetrics" in decoded["telemetry"] and "channelUtilization" in decoded["telemetry"]["deviceMetrics"] else None
+            node_from.voltage = str(
+                round(
+                    decoded["telemetry"]["deviceMetrics"]["voltage"],
+                    2)) if "deviceMetrics" in decoded["telemetry"] and "voltage" in decoded["telemetry"]["deviceMetrics"] else None
+            node_from.uptime = decoded["telemetry"]["deviceMetrics"]["uptimeSeconds"] if "deviceMetrics" in packet[
+                "decoded"]["telemetry"] and "uptimeSeconds" in decoded["telemetry"]["deviceMetrics"] else None
+
+        if decoded["portnum"] == PacketInfoType.PCK_POSITION_APP.value:
+            node_from.lat = decoded["position"]["latitude"] if "latitude" in decoded["position"] else None
+            node_from.lon = decoded["position"]["longitude"] if "longitude" in decoded["position"] else None
+            node_from.alt = decoded["position"]["altitude"] if "altitude" in decoded["position"] else None
+
+        if decoded["portnum"] == PacketInfoType.PCK_ROUTING_APP.value:
+            ack_status = decoded["routing"]["errorReason"] == "NONE"
             trace = f"Ack packet from {packet['fromId']} for packet id {packet['decoded']['requestId']}: {ack_status}"
             self.notify_data(trace, "INFO")
-            if packet["decoded"]["routing"]["errorReason"] != "NONE":
+            if decoded["routing"]["errorReason"] != "NONE":
                 pass
             else:
                 if str(packet["fromId"]) == str(self._local_board_id):
@@ -248,7 +294,7 @@ class MeshtasticManager(QObject, threading.Thread):
                         f"Received an implicit ACK. Packet will likely arrive, but cannot be guaranteed."
                     )
 
-                acked_message_id = packet["decoded"]["requestId"]
+                acked_message_id = decoded["requestId"]
 
                 m = MeshtasticMessage(
                     mid=acked_message_id,
@@ -263,33 +309,50 @@ class MeshtasticManager(QObject, threading.Thread):
                 self._data.store_or_update_messages(m)
                 self.notify_message()
 
-        if packet["decoded"]["portnum"] == PacketInfoType.PCK_TRACEROUTE_APP.value:
+        if decoded["portnum"] == PacketInfoType.PCK_TRACEROUTE_APP.value:
             self.notify_frontend(MessageLevel.INFO, f"Traceoute completed.")
-            routeDiscovery = mesh_pb2.RouteDiscovery()
-            routeDiscovery.ParseFromString(packet["decoded"]["payload"])
-            asDict = google.protobuf.json_format.MessageToDict(routeDiscovery)
+            route = self._extract_route_discovery(packet)
+            neighbors = self._extract_route_neighbors(route)
 
-            route: list = [self._node_id_from_num(packet["to"])]
-            if "route" in asDict:
-                for nodeNum in asDict["route"]:
-                    route.append(self._node_id_from_num(nodeNum))
-            route.append(self._node_id_from_num(packet["from"]))
+            for k, v in neighbors.items():
+                if k == node_from.id:
+                    if not neighbors[node_from.id] in node_from.neighbors:
+                        node_from.neighbors.append(neighbors[node_from.id])
+                else:
+                    n = self._data.get_node_from_id(k)
+                    updated_node = MeshtasticNode(
+                        id=n.id, neighbors=n.neighbors)
+                    if not neighbors[updated_node.id] in updated_node.neighbors:
+                        updated_node.neighbors.append(
+                            neighbors[updated_node.id])
+                        nodes_to_update.append(updated_node)
 
             snr_towards: list = []
             snr_back: list = []
 
+            # https://js.meshtastic.org/types/Protobuf.Mesh.RouteDiscovery.html
+            # values scaled by 4
+            SCALING_FACTOR = 4.0
             try:
-                snr_towards = packet["decoded"]["traceroute"]["snrTowards"]
-                snr_back = packet["decoded"]["traceroute"]["snrBack"]
+                snr_towards = [str(float(x) / SCALING_FACTOR)
+                               for x in decoded["traceroute"]["snrTowards"]]
+            except Exception:
+                pass
+            try:
+                snr_back = [str(float(x) / SCALING_FACTOR)
+                            for x in decoded["traceroute"]["snrBack"]]
             except Exception:
                 pass
 
             self.notify_traceroute(route, snr_towards, snr_back)
 
-        decoded = packet['decoded']
-        if 'payload' in decoded and isinstance(
-                decoded['payload'],
-                bytes) and decoded["portnum"] == PacketInfoType.PCK_TEXT_MESSAGE_APP.value:
+        if decoded["portnum"] == PacketInfoType.PCK_NEIGHBORINFO_APP.value:
+            if "neighbors" in decoded["neighborinfo"]:
+                node_from.neighbors = [
+                    self._node_id_from_num(
+                        x["nodeId"]) for x in decoded["neighborinfo"]["neighbors"]]
+
+        if decoded["portnum"] == PacketInfoType.PCK_TEXT_MESSAGE_APP.value:
             data = decoded['payload']
             try:
                 current_message = data.decode('utf-8').strip()
@@ -337,6 +400,33 @@ class MeshtasticManager(QObject, threading.Thread):
             packet["decoded"].pop("payload")
         self.notify_data(str(packet["decoded"]), "INFO")
 
+        nodes_to_update.append(node_from)
+        self.update_nodes_info(nodes_to_update)
+
+    def _extract_route_discovery(self, packet) -> list:
+        route: list = []
+        routeDiscovery = mesh_pb2.RouteDiscovery()
+        try:
+            routeDiscovery.ParseFromString(packet["decoded"]["payload"])
+            asDict = google.protobuf.json_format.MessageToDict(routeDiscovery)
+            route: list = [self._node_id_from_num(packet["to"])]
+            if "route" in asDict:
+                for nodeNum in asDict["route"]:
+                    route.append(self._node_id_from_num(nodeNum))
+            route.append(self._node_id_from_num(packet["from"]))
+        except Exception as e:
+            logging.warning(f"Could not extract route discovery {e}")
+
+        return route
+
+    def _extract_route_neighbors(self, route: list) -> dict:
+        neighbors = {}
+        if not route or len(route) <= 1:
+            return {}
+        for i in range(len(route) - 1):
+            neighbors[route[i]] = route[i + 1]
+        return neighbors
+
     @run_in_thread
     def send_text_message(self, message: MeshtasticMessage):
         if self._interface is None:
@@ -367,72 +457,28 @@ class MeshtasticManager(QObject, threading.Thread):
         self.notify_message()
 
     @run_in_thread
-    def update_node_info(self, packet) -> None:
-        n = MeshtasticNode(
-            id=self._node_id_from_num(
-                packet["from"])
-        )
-        n.is_local = n.id == self._local_board_id
+    def update_nodes_info(self, nodes: List[MeshtasticNode]) -> None:
 
-        if packet["decoded"]["portnum"] == PacketInfoType.PCK_POSITION_APP.value:
-            n.lat = packet["decoded"]["position"]["latitude"] if "latitude" in packet["decoded"]["position"] else None
-            n.lon = packet["decoded"]["position"]["longitude"] if "longitude" in packet["decoded"]["position"] else None
-            n.alt = packet["decoded"]["position"]["altitude"] if "altitude" in packet["decoded"]["position"] else None
+        for n in nodes:
+            self._data.store_or_update_node(n)
 
-        if packet["decoded"]["portnum"] == PacketInfoType.PCK_TELEMETRY_APP.value:
-            n.battery_level = packet["decoded"]["telemetry"]["deviceMetrics"]["batteryLevel"] if "deviceMetrics" in packet[
-                "decoded"]["telemetry"] and "batteryLevel" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
-            n.txairutil = str(
-                round(
-                    packet["decoded"]["telemetry"]["deviceMetrics"]["airUtilTx"],
-                    2)) if "deviceMetrics" in packet["decoded"]["telemetry"] and "airUtilTx" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
-            n.chutil = str(
-                round(
-                    packet["decoded"]["telemetry"]["deviceMetrics"]["channelUtilization"],
-                    2)) if "deviceMetrics" in packet["decoded"]["telemetry"] and "channelUtilization" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
-            n.voltage = str(
-                round(
-                    packet["decoded"]["telemetry"]["deviceMetrics"]["voltage"],
-                    2)) if "deviceMetrics" in packet["decoded"]["telemetry"] and "voltage" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
-            n.uptime = packet["decoded"]["telemetry"]["deviceMetrics"]["uptimeSeconds"] if "deviceMetrics" in packet[
-                "decoded"]["telemetry"] and "uptimeSeconds" in packet["decoded"]["telemetry"]["deviceMetrics"] else None
+            nm = NodeMetrics(
+                node_id=n.id,
+                timestamp=int(round(datetime.datetime.now().timestamp())),
+                rssi=float(n.rssi) if n.rssi is not None else None,
+                snr=float(n.snr) if n.snr is not None else None,
+                hopsaway=int(n.hopsaway) if n.hopsaway is not None else None,
+                uptime=int(n.uptime) if n.uptime is not None else None,
+                air_util_tx=float(n.txairutil) if n.txairutil is not None else None,
+                channel_utilization=float(n.chutil) if n.chutil is not None else None,
+                battery_level=float(n.battery_level) if n.battery_level is not None else None,
+                voltage=float(n.voltage) if n.voltage is not None else None,
+            )
+            self._data.store_or_update_metrics(nm)
+            self.notify_nodes_metrics()
 
-        if packet["decoded"]["portnum"] == PacketInfoType.PCK_NEIGHBORINFO_APP.value:
-            if "neighbors" in packet["decoded"]["neighborinfo"]:
-                n.neighbors = [
-                    self._node_id_from_num(
-                        x["nodeId"]) for x in packet["decoded"]["neighborinfo"]["neighbors"]]
-
-        n.rssi = str(
-            round(
-                packet["rxRssi"],
-                2)) if "rxRssi" in packet else None
-        n.snr = str(
-            round(
-                packet["rxSnr"],
-                2)) if "rxSnr" in packet else None
-        n.hopsaway = str(packet["hopsAway"]) if "hopsAway" in packet else None
-        n.lastseen = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-        self._data.store_or_update_node(n)
-
-        nm = NodeMetrics(
-            node_id=n.id,
-            timestamp=int(round(datetime.datetime.now().timestamp())),
-            rssi=float(n.rssi) if n.rssi is not None else None,
-            snr=float(n.snr) if n.snr is not None else None,
-            hopsaway=int(n.hopsaway) if n.hopsaway is not None else None,
-            uptime=int(n.uptime) if n.uptime is not None else None,
-            air_util_tx=float(n.txairutil) if n.txairutil is not None else None,
-            channel_utilization=float(n.chutil) if n.chutil is not None else None,
-            battery_level=float(n.battery_level) if n.battery_level is not None else None,
-            voltage=float(n.voltage) if n.voltage is not None else None,
-        )
-        self._data.store_or_update_metrics(nm)
-        self.notify_nodes_metrics()
-
-        self.notify_frontend(MessageLevel.INFO, f"Updated node {n.id}.")
-        self.notify_nodes_table()  # only notify table as map needs recreation
+            self.notify_frontend(MessageLevel.INFO, f"Updated node {n.id}.")
+            self.notify_nodes_table()  # only notify table as map needs recreation
 
     @run_in_thread
     def load_local_nodedb(self, include_self: bool = True) -> list:

@@ -51,8 +51,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.show()
 
         self._map = None
-        self._markers_group = folium.FeatureGroup(name="Stations")
-        self._link_group = folium.FeatureGroup(name="Links")
         self._plot_widget = None
         self._settings = QSettings("antlas0", "meshtastic_visualizer")
 
@@ -243,6 +241,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def clear_nodes(self) -> None:
         self._store.clear_nodes()
         self.mesh_table.setRowCount(0)
+        self.msg_node_list.clear()
         self.nodes_total_lcd.display(0)
         self.nodes_gps_lcd.display(0)
         self.nodes_recently_lcd.display(0)
@@ -342,12 +341,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 row_position, 0, QTableWidgetItem(device))
             self.traceroute_table.resizeColumnsToContents()
 
-        if len(snr_towards) > 0 and len(snr_towards) != len(snr_back):
-            return
-
         for i in range(len(snr_towards)):
             self.traceroute_table.setItem(
                 i, 1, QTableWidgetItem("↓" + str(snr_towards[i])))
+        for i in range(len(snr_back)):
             self.traceroute_table.setItem(
                 i, 2, QTableWidgetItem("↑" + str(snr_back[i])))
         self.traceroute_table.resizeColumnsToContents()
@@ -425,6 +422,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if nodes is None:
             return
 
+        markers_group = folium.FeatureGroup(name="Stations")
+        links_group = folium.FeatureGroup(name="Links")
         markers: list = []
         links: list = []
         traces: list = []
@@ -474,7 +473,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 popup=popup,
                 icon=folium.Icon(color=color),
             )
-            marker.add_to(self._markers_group)
+            marker.add_to(markers_group)
             markers.append(marker)
 
             # neighbors
@@ -492,16 +491,16 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                                 and link_coords[1][1] is not None:
                             link = folium.PolyLine(
                                 link_coords, color=__link_color(node.id))
-                            link.add_to(self._link_group)
+                            link.add_to(links_group)
                             links.append(link)
         if markers:
             markers_lat = [x.location[0] for x in markers]
             markers_lon = [x.location[1] for x in markers]
             self._map.fit_bounds([[min(markers_lat), min(markers_lon)], [
                                  max(markers_lat), max(markers_lon)]])
-            self._markers_group.add_to(self._map)
+            markers_group.add_to(self._map)
         if links:
-            self._link_group.add_to(self._map)
+            links_group.add_to(self._map)
             folium.LayerControl().add_to(self._map)
 
         del nodes
@@ -626,6 +625,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                         nodes.values()))
 
         # update table
+        current_row = None
+        if self.msg_node_list.currentRow():
+            current_row = self.msg_node_list.currentRow()
         self.msg_node_list.clear()
         current_nm_node = self.nm_node_combobox.currentText()
         self.nm_node_combobox.clear()
@@ -640,6 +642,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.nm_node_combobox.insertItem(
                 i + 2, node.long_name if node.long_name else node.id)
         self.nm_node_combobox.setCurrentText(current_nm_node)
+        if current_row:
+            self.msg_node_list.setCurrentRow(current_row)
 
         rows: list[dict[str, any]] = []
         for node in filtered:
@@ -767,7 +771,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         maxhops = self.tr_maxhops_spinbox.value()
         channel_index = self._manager.get_data_store(
         ).get_channel_index_from_name(channel_name)
-
+        self.traceroute_table.setRowCount(0)
+        self.traceroute_table.setColumnCount(3)
+        self.traceroute_table.setHorizontalHeaderLabels(
+            ["Id", "SNR To", "SNR Back"])
         self.traceroute_event(
             dest_id=dest_id,
             maxhops=maxhops,
