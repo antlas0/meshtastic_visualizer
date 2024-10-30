@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1169</width>
-    <height>696</height>
+    <width>1158</width>
+    <height>688</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -29,10 +29,10 @@
    <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>0</x>
       <y>60</y>
       <width>1151</width>
-      <height>611</height>
+      <height>601</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -1607,7 +1607,7 @@
       <x>10</x>
       <y>10</y>
       <width>711</width>
-      <height>41</height>
+      <height>31</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_12">
