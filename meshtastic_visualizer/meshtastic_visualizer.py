@@ -242,6 +242,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._store.clear_nodes()
         self.mesh_table.setRowCount(0)
         self.msg_node_list.clear()
+        self.nm_node_combobox.clear()
         self.nodes_total_lcd.display(0)
         self.nodes_gps_lcd.display(0)
         self.nodes_recently_lcd.display(0)
