@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1172</width>
-    <height>683</height>
+    <height>684</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -60,7 +60,7 @@
         <x>10</x>
         <y>110</y>
         <width>711</width>
-        <height>451</height>
+        <height>131</height>
        </rect>
       </property>
       <property name="sizeIncrement">
@@ -72,155 +72,6 @@
       <property name="title">
        <string>Local device radio info</string>
       </property>
-      <widget class="QPushButton" name="export_radio_button">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>140</y>
-         <width>31</width>
-         <height>25</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>⬇️</string>
-       </property>
-      </widget>
-      <widget class="QTextEdit" name="output_textedit">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>170</y>
-         <width>401</width>
-         <height>271</height>
-        </rect>
-       </property>
-       <property name="readOnly">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="Line" name="line_5">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>120</y>
-         <width>401</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="clear_radio_button">
-       <property name="geometry">
-        <rect>
-         <x>380</x>
-         <y>140</y>
-         <width>31</width>
-         <height>25</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>🗑️</string>
-       </property>
-      </widget>
-      <widget class="QWidget" name="verticalLayoutWidget_4">
-       <property name="geometry">
-        <rect>
-         <x>430</x>
-         <y>50</y>
-         <width>271</width>
-         <height>81</height>
-        </rect>
-       </property>
-       <layout class="QVBoxLayout" name="verticalLayout_4">
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_15">
-          <item>
-           <widget class="QLabel" name="label_22">
-            <property name="maximumSize">
-             <size>
-              <width>40</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>Role:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="role_label">
-            <property name="text">
-             <string/>
-            </property>
-            <property name="textInteractionFlags">
-             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_16">
-          <item>
-           <widget class="QLabel" name="label_23">
-            <property name="font">
-             <font>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>Channels</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </widget>
-      <widget class="Line" name="line_6">
-       <property name="geometry">
-        <rect>
-         <x>410</x>
-         <y>40</y>
-         <width>16</width>
-         <height>391</height>
-        </rect>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-      </widget>
-      <widget class="QTableWidget" name="channels_table">
-       <property name="geometry">
-        <rect>
-         <x>430</x>
-         <y>140</y>
-         <width>271</width>
-         <height>200</height>
-        </rect>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>350</width>
-         <height>200</height>
-        </size>
-       </property>
-       <property name="sizeIncrement">
-        <size>
-         <width>1</width>
-         <height>1</height>
-        </size>
-       </property>
-      </widget>
       <widget class="QLabel" name="label_5">
        <property name="geometry">
         <rect>
@@ -531,13 +382,54 @@
         <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
        </property>
       </widget>
+      <widget class="QLabel" name="label_22">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>110</y>
+         <width>31</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>40</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>Role:</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="role_label">
+       <property name="geometry">
+        <rect>
+         <x>40</x>
+         <y>110</y>
+         <width>291</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="textInteractionFlags">
+        <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+       </property>
+      </widget>
      </widget>
      <widget class="QGroupBox" name="groupBox_4">
       <property name="geometry">
        <rect>
         <x>10</x>
         <y>10</y>
-        <width>461</width>
+        <width>431</width>
         <height>91</height>
        </rect>
       </property>
@@ -579,8 +471,8 @@
       <widget class="QPushButton" name="disconnect_button">
        <property name="geometry">
         <rect>
-         <x>330</x>
-         <y>30</y>
+         <x>200</x>
+         <y>60</y>
          <width>101</width>
          <height>25</height>
         </rect>
@@ -605,8 +497,8 @@
       <widget class="QPushButton" name="scan_com_button">
        <property name="geometry">
         <rect>
-         <x>200</x>
-         <y>60</y>
+         <x>320</x>
+         <y>30</y>
          <width>101</width>
          <height>25</height>
         </rect>
@@ -757,31 +649,31 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="verticalLayoutWidget_2">
+      <widget class="QPushButton" name="mqtt_disconnect_button">
+       <property name="geometry">
+        <rect>
+         <x>290</x>
+         <y>60</y>
+         <width>101</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>⏹️ Disconnect</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="mqtt_connect_button">
        <property name="geometry">
         <rect>
          <x>290</x>
          <y>30</y>
-         <width>104</width>
-         <height>91</height>
+         <width>101</width>
+         <height>25</height>
         </rect>
        </property>
-       <layout class="QVBoxLayout" name="verticalLayout_2">
-        <item>
-         <widget class="QPushButton" name="mqtt_connect_button">
-          <property name="text">
-           <string>▶️ Connect</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="mqtt_disconnect_button">
-          <property name="text">
-           <string>⏹️ Disconnect</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
+       <property name="text">
+        <string>▶️ Connect</string>
+       </property>
       </widget>
      </widget>
      <widget class="Line" name="line_3">
@@ -797,26 +689,13 @@
        <enum>Qt::Vertical</enum>
       </property>
      </widget>
-     <widget class="Line" name="line_4">
-      <property name="geometry">
-       <rect>
-        <x>737</x>
-        <y>280</y>
-        <width>401</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-     </widget>
      <widget class="QGroupBox" name="groupBox_8">
       <property name="geometry">
        <rect>
         <x>740</x>
-        <y>300</y>
+        <y>280</y>
         <width>401</width>
-        <height>261</height>
+        <height>281</height>
        </rect>
       </property>
       <property name="title">
@@ -844,7 +723,7 @@
          <x>10</x>
          <y>60</y>
          <width>381</width>
-         <height>191</height>
+         <height>211</height>
         </rect>
        </property>
        <property name="readOnly">
@@ -855,6 +734,58 @@
        <property name="geometry">
         <rect>
          <x>360</x>
+         <y>30</y>
+         <width>31</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>🗑️</string>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_7">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>250</y>
+        <width>711</width>
+        <height>311</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Radio logs</string>
+      </property>
+      <widget class="QTextEdit" name="output_textedit">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>60</y>
+         <width>691</width>
+         <height>251</height>
+        </rect>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="export_radio_button">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>30</y>
+         <width>31</width>
+         <height>25</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>⬇️</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="clear_radio_button">
+       <property name="geometry">
+        <rect>
+         <x>670</x>
          <y>30</y>
          <width>31</width>
          <height>25</height>
@@ -1058,7 +989,7 @@
         <x>10</x>
         <y>290</y>
         <width>321</width>
-        <height>281</height>
+        <height>271</height>
        </rect>
       </property>
       <property name="title">
@@ -1070,7 +1001,7 @@
          <x>10</x>
          <y>120</y>
          <width>301</width>
-         <height>151</height>
+         <height>141</height>
         </rect>
        </property>
       </widget>
@@ -1122,9 +1053,15 @@
         </item>
         <item>
          <widget class="QPushButton" name="traceroute_button">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="minimumSize">
            <size>
-            <width>30</width>
+            <width>80</width>
             <height>0</height>
            </size>
           </property>
@@ -1283,7 +1220,7 @@
      <widget class="QPushButton" name="export_chat_button">
       <property name="geometry">
        <rect>
-        <x>370</x>
+        <x>350</x>
         <y>420</y>
         <width>31</width>
         <height>25</height>
@@ -1315,21 +1252,21 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>0</y>
+        <y>10</y>
         <width>581</width>
-        <height>321</height>
+        <height>311</height>
        </rect>
       </property>
       <property name="title">
-       <string/>
+       <string>Nodes</string>
       </property>
       <widget class="QTableWidget" name="mesh_table">
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>50</y>
+         <y>70</y>
          <width>561</width>
-         <height>261</height>
+         <height>231</height>
         </rect>
        </property>
       </widget>
@@ -1337,7 +1274,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>10</y>
+         <y>30</y>
          <width>231</width>
          <height>31</height>
         </rect>
@@ -1359,7 +1296,7 @@
        <property name="geometry">
         <rect>
          <x>250</x>
-         <y>10</y>
+         <y>30</y>
          <width>31</width>
          <height>25</height>
         </rect>
@@ -1372,7 +1309,7 @@
        <property name="geometry">
         <rect>
          <x>540</x>
-         <y>10</y>
+         <y>30</y>
          <width>31</width>
          <height>25</height>
         </rect>
@@ -1388,17 +1325,17 @@
         <x>10</x>
         <y>330</y>
         <width>581</width>
-        <height>241</height>
+        <height>231</height>
        </rect>
       </property>
       <property name="title">
-       <string/>
+       <string>Metrics</string>
       </property>
       <widget class="QWidget" name="horizontalLayoutWidget_2">
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>10</y>
+         <y>30</y>
          <width>561</width>
          <height>41</height>
         </rect>
@@ -1459,7 +1396,7 @@
         <item>
          <widget class="QPushButton" name="nm_update_button">
           <property name="text">
-           <string>Update</string>
+           <string>⟳ Update</string>
           </property>
          </widget>
         </item>
@@ -1469,9 +1406,9 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>60</y>
+         <y>80</y>
          <width>561</width>
-         <height>171</height>
+         <height>141</height>
         </rect>
        </property>
        <layout class="QHBoxLayout" name="plot_layout"/>
@@ -1483,13 +1420,13 @@
         <x>600</x>
         <y>0</y>
         <width>541</width>
-        <height>571</height>
+        <height>561</height>
        </rect>
       </property>
       <property name="title">
        <string/>
       </property>
-      <widget class="QPushButton" name="scan_button">
+      <widget class="QPushButton" name="refresh_map_button">
        <property name="geometry">
         <rect>
          <x>10</x>
@@ -1520,7 +1457,7 @@
          <x>10</x>
          <y>40</y>
          <width>521</width>
-         <height>521</height>
+         <height>511</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="nodes_layout">

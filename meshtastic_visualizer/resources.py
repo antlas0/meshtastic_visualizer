@@ -106,6 +106,9 @@ class MeshtasticNode:
     public_key: str = ""
     rx_counter: int = 0  # number of packets received from this node
 
+    def has_location(self) -> bool:
+        return (self.lat is not None and self.lon is not None)
+
 
 @dataclass
 class Channel:
@@ -218,6 +221,10 @@ MAINWINDOW_STYLESHEET = """
 
     QPushButton:pressed {
         background-color: #00399a;
+    }
+
+    QPushButton:disabled {
+        background-color: #80bfff;
     }
 
     /* QCheckBox */

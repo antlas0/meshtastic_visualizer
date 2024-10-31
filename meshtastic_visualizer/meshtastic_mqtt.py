@@ -338,6 +338,8 @@ class MeshtasticMQTT(QObject, threading.Thread):
                         role=config_pb2.Config.DeviceConfig.Role.Name(
                             info.role),
                         lastseen=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        public_key=str(
+                            info.public_key),
                     )
                     nm = NodeMetrics(
                         node_id=info.id,
