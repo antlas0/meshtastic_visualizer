@@ -320,6 +320,8 @@ class MeshtasticManager(QObject, threading.Thread):
                         node_from.neighbors.append(neighbors[node_from.id])
                 else:
                     n = self._data.get_node_from_id(k)
+                    if n is None:
+                        continue
                     updated_node = MeshtasticNode(
                         id=n.id, neighbors=n.neighbors)
                     if not neighbors[updated_node.id] in updated_node.neighbors:
