@@ -156,7 +156,7 @@ MAINWINDOW_STYLESHEET = """
     }
 
     QWidget {
-        font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-family: Helvetica, Arial;
         font-size: 12px;
     }
 

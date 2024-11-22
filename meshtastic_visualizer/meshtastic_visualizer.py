@@ -377,7 +377,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         # zoom in the map on the node if it has coordinates
         node = self._store.get_node_from_id(node_id)
-        if not node.has_location():
+        if not node or not node.has_location():
             return
 
         min_multiplier: float = 0.999
@@ -468,6 +468,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             popup = folium.Popup(
                 popup_content, max_width=300, min_width=250)
             color = "blue"
+            if node.rx_counter > 0:
+                color = "green"
             if node.id == self._local_board_id:
                 color = "orange"
 
@@ -655,10 +657,20 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         rows: list[dict[str, any]] = []
         for node in filtered:
-            row = {"User": "", "ID": ""}
+            row = {"Status": "", "User": "", "ID": ""}
 
+            status_line = []
+
+            if node.lastseen:
+                recently_seen = datetime.strptime(
+                    node.lastseen, "%Y-%m-%d %H:%M:%S") > datetime.now() - timedelta(minutes=30)
+                if recently_seen:
+                    status_line.append("📶")
+            if node.rx_counter > 0:
+                status_line.append(f"{node.rx_counter}✉️")
             row.update(
                 {
+                    "Status": "|".join(status_line),
                     "User": node.long_name,
                     "AKA": node.short_name,
                     "ID": node.id,
@@ -670,7 +682,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 {
                     "Latitude": node.lat,
                     "Longitude": node.lon,
-                    "RX Counter": node.rx_counter,
                     "Public key": node.public_key,
                     "Last seen": node.lastseen,
                 }
@@ -680,6 +691,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         rows.sort(key=lambda r: r.get("LastHeard") or "0000", reverse=True)
 
         columns = [
+            "Status",
             "User",
             "AKA",
             "ID",
@@ -687,7 +699,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             "Hardware",
             "Latitude",
             "Longitude",
-            "RX Counter",
             "Public key",
             "Last seen",
         ]
