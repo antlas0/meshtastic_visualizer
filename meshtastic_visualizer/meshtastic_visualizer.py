@@ -368,8 +368,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             f"{remaining_chars}/{TEXT_MESSAGE_MAX_CHARS}")
 
     def mesh_table_is_clicked(self, row, column) -> None:
-        node_id = self.mesh_table.item(row, 1).text()
-        long_name = self.mesh_table.item(row, 0).text()
+        node_id = self.mesh_table.item(row, 2).text()
+        long_name = self.mesh_table.item(row, 1).text()
         if self._local_board_id and node_id == self._local_board_id:
             long_name = "Me"
 
