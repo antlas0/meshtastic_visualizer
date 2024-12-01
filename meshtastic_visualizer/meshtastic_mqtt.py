@@ -22,7 +22,8 @@ from .resources import run_in_thread, \
     MeshtasticNode, \
     MeshtasticMessage, \
     NodeMetrics, \
-    MeshtasticMQTTClientSettings
+    MeshtasticMQTTClientSettings, \
+    MeshtasticPacket
 
 from .meshtastic_datastore import MeshtasticDataStore
 
@@ -220,14 +221,17 @@ class MeshtasticMQTT(QObject, threading.Thread):
                                      str(len(msg.payload)) + ' bytes long, skipping.')
                 return
 
-            if mp.decoded.portnum == portnums_pb2.UNKNOWN_APP:
-                return
-
             decrypted: bool = False
             if mp.HasField("encrypted") and not mp.HasField("decoded"):
                 is_encrypted = True
                 if self.decode_encrypted(mp):
                     decrypted = True
+
+            if is_encrypted and not decrypted:
+                return
+
+            if decrypted and mp.decoded.portnum == portnums_pb2.UNKNOWN_APP:
+                return
 
             strl = []
             strl.append(
@@ -247,6 +251,27 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 strl.append(
                     f"pn:{portnums_pb2.PortNum.Name(se.packet.decoded.portnum)}")
             self.notify_mqtt_enveloppe(" ".join(strl))
+
+            self._store.store_packet(
+                MeshtasticPacket(
+                    date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
+                    pid=se.packet.id,
+                    from_id=self.node_number_to_id(
+                        getattr(
+                            se.packet,
+                            'from')),
+                    to_id=self.node_number_to_id(
+                        getattr(
+                            se.packet,
+                            'to')),
+                    channel_id=se.channel_id,
+                    is_encrypted=is_encrypted,
+                    is_decrypted=decrypted,
+                    gateway_id=se.gateway_id,
+                    payload=mp.decoded.payload,
+                    port_num=portnums_pb2.PortNum.Name(
+                        se.packet.decoded.portnum),
+                ))
 
             if mp.decoded.portnum == portnums_pb2.TEXT_MESSAGE_APP:
                 text_payload = ""

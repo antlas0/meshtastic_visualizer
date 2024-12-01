@@ -149,6 +149,20 @@ class MeshtasticMQTTClientSettings:
     max_msg_len: int = 255
 
 
+@dataclass
+class MeshtasticPacket:
+    date: str  # datetime.datetime.strftime("%Y-%m-%d %H:%M:%S")
+    pid: str
+    from_id: str
+    to_id: str
+    channel_id: str
+    is_encrypted: bool
+    payload: bytes
+    port_num: str
+    gateway_id: str = ""
+    is_decrypted: bool = False
+
+
 MAINWINDOW_STYLESHEET = """
     /* General Style for the Application */
     QMainWindow {
@@ -284,6 +298,31 @@ MAINWINDOW_STYLESHEET = """
     }
 
     QListWidget::item:selected {
+        background-color: #007aff;
+        color: white;
+    }
+
+    /* QTreeWidget */
+
+    QTreeWidget {
+        background-color: #ffffff;
+        border: 1px solid #d1d1d6;
+        border-radius: 5px;
+        color: #333;
+    }
+
+    QTreeWidget::header {
+        background-color: #f0f0f5;
+        color: #007aff;
+        font-weight: bold;
+        padding: 1px;
+    }
+
+    QTreeWidget::item {
+        padding: 1px;
+    }
+
+    QTreeWidget::item:selected {
         background-color: #007aff;
         color: white;
     }

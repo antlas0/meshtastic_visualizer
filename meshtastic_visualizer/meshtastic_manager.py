@@ -27,7 +27,9 @@ from .resources import run_in_thread, \
     MeshtasticNode, \
     MeshtasticMessage, \
     PacketInfoType, \
-    NodeMetrics
+    NodeMetrics, \
+    MeshtasticPacket
+
 
 from .meshtastic_datastore import MeshtasticDataStore
 
@@ -222,6 +224,20 @@ class MeshtasticManager(QObject, threading.Thread):
         )
         node_from.is_local = node_from.id == self._local_board_id
 
+        message_to_store = None
+
+        self._data.store_packet(
+            MeshtasticPacket(
+                date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
+                pid=packet["id"],
+                from_id=packet['fromId'],
+                to_id=packet['toId'],
+                channel_id=packet["channel"] if "channel" in packet else None,
+                is_encrypted=packet["pkiEncrypted"] if "pkiEncrypted" in packet else False,
+                payload=decoded['payload'],
+                port_num=decoded["portnum"],
+            ))
+
         self.notify_data("---------------", message_type="INFO")
         if 'fromId' in packet:
             message = f"From ID: {packet['fromId']}"
@@ -392,7 +408,6 @@ class MeshtasticManager(QObject, threading.Thread):
                 self._data.store_or_update_messages(m)
                 print(
                     Fore.GREEN + f"Received message: {m}")
-                self._data.get_messages()[str(m.mid)] = m
                 self.notify_frontend(
                     MessageLevel.INFO,
                     f"New message received from {packet['fromId']}")
@@ -449,6 +464,20 @@ class MeshtasticManager(QObject, threading.Thread):
             onResponseAckPermitted=False,
             pkiEncrypted=message.pki_encrypted,
         )
+
+        self._data.store_packet(
+            MeshtasticPacket(
+                date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
+                pid=str(-1),
+                from_id=self._local_board_id,
+                to_id=message.to_id,
+                channel_id=message.channel_index,
+                is_encrypted=message.pki_encrypted,
+                payload=message.content.encode("utf8"),
+                port_num=PacketInfoType.PCK_TEXT_MESSAGE_APP.value,
+            )
+        )
+
         self.notify_data("---------------", "INFO")
         trace = f"Message sent to {message.to_id}."
         self.notify_frontend(MessageLevel.INFO, trace)
@@ -609,6 +638,19 @@ class MeshtasticManager(QObject, threading.Thread):
         except Exception as e:
             print(f"Could not send traceroute: {e}")
         else:
+            self._data.store_packet(
+                MeshtasticPacket(
+                    date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
+                    pid=str(-1),
+                    from_id=self._local_board_id,
+                    to_id=dest,
+                    channel_id=channelIndex,
+                    is_encrypted=False,
+                    payload=None,
+                    port_num=portnums_pb2.PortNum.TRACEROUTE_APP,
+                )
+            )
+
             self.notify_frontend(
                 MessageLevel.INFO,
                 f"Traceoute started to {dest}.")

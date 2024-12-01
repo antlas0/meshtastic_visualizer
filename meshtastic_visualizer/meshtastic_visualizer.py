@@ -14,11 +14,12 @@ from PyQt6 import QtCore
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtGui import QTextCursor
 from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QTableWidgetItem, QListWidgetItem
+from PyQt6.QtWidgets import QTableWidgetItem, QListWidgetItem, QTreeWidgetItem
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtCore import pyqtSignal, QSettings
 import pyqtgraph as pg
 from pyqtgraph import DateAxisItem
+from dataclasses import asdict
 
 from .meshtastic_manager import MeshtasticManager
 from .resources import MessageLevel, \
@@ -76,10 +77,13 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._mqtt_manager.notify_nodes_metrics_signal.connect(
             self.update_nodes_metrics)
         self._manager.notify_data_signal.connect(self.update_received_data)
+        self._manager.notify_data_signal.connect(self.update_message_treeview)
         self._manager.notify_message_signal.connect(
             self.update_received_message)
         self._mqtt_manager.notify_message_signal.connect(
             self.update_received_message)
+        self._mqtt_manager.notify_mqtt_enveloppe_signal.connect(
+            self.update_message_treeview)
         self._manager.notify_traceroute_signal.connect(self.update_traceroute)
         self._manager.notify_channels_signal.connect(
             self.update_channels_list)
@@ -220,6 +224,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         self.mqtt_disconnect_button.setEnabled(False)
         self.nodes_total_lcd.setDecMode()
+        self.packets_total_lcd.setDecMode()
         self.nodes_gps_lcd.setDecMode()
         self.nodes_recently_lcd.setDecMode()
         self.mqtt_host_linedit.setText(self._settings.value("mqtt_host", ""))
@@ -231,6 +236,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self._settings.value("mqtt_password", ""))
         self.mqtt_topic_linedit.setText(self._settings.value("mqtt_topic", ""))
         self.mqtt_key_linedit.setText(self._settings.value("mqtt_key", "AQ=="))
+        self.packets_treewidget.setHeaderLabels(["Packet", "Details"])
         self.setStyleSheet(MAINWINDOW_STYLESHEET)
 
     def clear_messages_table(self) -> None:
@@ -259,7 +265,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def remove_notification_badge(self, index):
         if index == 1:
-            self.tabWidget.setTabText(1, "Messages")
+            self.tabWidget.setTabText(2, "Messages")
 
     def refresh(
             self,
@@ -374,26 +380,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             long_name = "Me"
 
         self.nm_node_combobox.setCurrentText(long_name)
-
-        # zoom in the map on the node if it has coordinates
-        node = self._store.get_node_from_id(node_id)
-        if not node or not node.has_location():
-            return
-
-        min_multiplier: float = 0.999
-        max_multiplier: float = 1.001
-        bounds = [[float(node.lat) *
-                   min_multiplier if float(node.lat) > 0 else float(node.lat) *
-                   max_multiplier, float(node.lon) *
-                   min_multiplier if float(node.lon) > 0 else float(node.lon) *
-                   max_multiplier], [float(node.lat) *
-                                     max_multiplier if float(node.lat) > 0 else float(node.lat) *
-                                     min_multiplier, float(node.lon) *
-                                     max_multiplier if float(node.lon) > 0 else float(node.lon) *
-                                     min_multiplier], ]
-
-        self._map.fit_bounds(bounds)
-        self.update_map_in_widget()
 
     def init_map(self):
         self._map = folium.Map(zoom_start=7)
@@ -776,8 +762,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         )
 
     def update_received_message(self) -> None:
-        if self.tabWidget.currentIndex() != 1:
-            self.tabWidget.setTabText(1, "Messages ✉")
+        if self.tabWidget.currentIndex() != 2:
+            self.tabWidget.setTabText(2, "Messages ✉")
 
         headers = self._get_meshtastic_message_header_fields()
         columns = list(headers.keys())
@@ -785,7 +771,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.messages_table.setHorizontalHeaderLabels(headers.values())
 
         channels = self._store.get_channels()
-        messages = self._store.get_messages().values()
+        messages = self._store.get_messages()
         self.messages_table.setRowCount(len(messages))
         rows: list[dict[str, any]] = []
 
@@ -819,6 +805,23 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 elif current_item.text() != value:
                     current_item.setText(str(value))
         self.messages_table.resizeColumnsToContents()
+
+    def update_message_treeview(self) -> None:
+        # Example: Modify existing items or add new ones
+        packets = self._store.get_packets()
+        alreading_existing_packets = [
+            self.packets_treewidget.topLevelItem(i).text(0) for i in range(
+                self.packets_treewidget.topLevelItemCount())]
+        for packet in packets:
+            if str(packet.date) in alreading_existing_packets:
+                continue
+            category_item = QTreeWidgetItem([str(packet.date), ""])
+            self.packets_treewidget.addTopLevelItem(category_item)
+            for sub_item, value in asdict(packet).items():
+                sub_item_widget = QTreeWidgetItem([str(sub_item), str(value)])
+                category_item.addChild(sub_item_widget)
+        self.packets_treewidget.resizeColumnToContents(0)
+        self.packets_total_lcd.display(len(packets))
 
     def update_received_data(self, message: str, message_type: str):
         self.output_textedit.setReadOnly(True)

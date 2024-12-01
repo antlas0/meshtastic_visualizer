@@ -11,7 +11,8 @@ from .resources import run_in_thread, \
     Channel, \
     MeshtasticNode, \
     MeshtasticMessage, \
-    NodeMetrics
+    NodeMetrics, \
+    MeshtasticPacket
 
 
 @dataclass
@@ -26,6 +27,8 @@ class MeshtasticDataStore(Thread):
         default_factory=dict)  # Dict[message_id, Message object]
     metrics: Dict[str, List[NodeMetrics]] = field(
         default_factory=dict)  # Dict[node_id, Dict[metric_name, List[value]]]
+    packets: Dict[str, MeshtasticPacket] = field(
+        default_factory=dict)
 
     def __post_init__(self) -> None:
         self._lock = Lock()
@@ -53,7 +56,7 @@ class MeshtasticDataStore(Thread):
 
     def get_messages(self) -> Dict[str, MeshtasticMessage]:
         self._lock.acquire()
-        res = copy.copy(self.messages)
+        res = copy.copy(self.messages.values())
         self._lock.release()
         return res
 
@@ -67,6 +70,23 @@ class MeshtasticDataStore(Thread):
         self._lock.acquire()
         self.messages[str(message.mid)] = message
         self._lock.release()
+
+    def store_packet(self, packet: MeshtasticPacket) -> None:
+        self._lock.acquire()
+        self.packets[str(packet.date)] = packet
+        self._lock.release()
+
+    def get_packets(self) -> List:
+        self._lock.acquire()
+        packets = list(self.packets.values())
+        self._lock.release()
+        return packets
+
+    def get_messages(self) -> List:
+        self._lock.acquire()
+        messages = list(self.messages.values())
+        self._lock.release()
+        return messages
 
     def get_nodes(self) -> dict:
         self._lock.acquire()
