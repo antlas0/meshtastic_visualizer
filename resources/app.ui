@@ -24,11 +24,15 @@
   </property>
   <property name="font">
    <font>
+    <family>Freesans</family>
     <pointsize>10</pointsize>
    </font>
   </property>
   <property name="windowTitle">
    <string>Meshtastic Visualizer</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">font-family: Freesans, Emoji One;</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QTabWidget" name="tabWidget">
@@ -51,6 +55,14 @@
       <width>16777215</width>
       <height>16777215</height>
      </size>
+    </property>
+    <property name="font">
+     <font>
+      <family>Liberation sans</family>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">font-family: Liberation sans, emoji one</string>
     </property>
     <property name="currentIndex">
      <number>0</number>
@@ -100,6 +112,7 @@
        </property>
        <property name="font">
         <font>
+         <family>Liberation sans</family>
          <pointsize>10</pointsize>
          <weight>75</weight>
          <bold>true</bold>
@@ -169,6 +182,7 @@
        </property>
        <property name="font">
         <font>
+         <family>Liberation sans</family>
          <pointsize>10</pointsize>
          <weight>75</weight>
          <bold>true</bold>
@@ -223,6 +237,7 @@
        </property>
        <property name="font">
         <font>
+         <family>Liberation sans</family>
          <pointsize>10</pointsize>
          <weight>75</weight>
          <bold>true</bold>
@@ -292,6 +307,7 @@
        </property>
        <property name="font">
         <font>
+         <family>Liberation sans</family>
          <pointsize>10</pointsize>
          <weight>75</weight>
          <bold>true</bold>
@@ -352,6 +368,7 @@
        </property>
        <property name="font">
         <font>
+         <family>Liberation sans</family>
          <pointsize>10</pointsize>
          <weight>75</weight>
          <bold>true</bold>
@@ -409,6 +426,7 @@
        </property>
        <property name="font">
         <font>
+         <family>Liberation sans</family>
          <pointsize>10</pointsize>
          <weight>75</weight>
          <bold>true</bold>
@@ -537,7 +555,7 @@
          <x>10</x>
          <y>30</y>
          <width>271</width>
-         <height>221</height>
+         <height>224</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
@@ -1186,7 +1204,7 @@
        <rect>
         <x>500</x>
         <y>420</y>
-        <width>431</width>
+        <width>3785</width>
         <height>31</height>
        </rect>
       </property>
@@ -1201,6 +1219,7 @@
          </property>
          <property name="font">
           <font>
+           <family>Liberation sans</family>
            <pointsize>10</pointsize>
            <weight>75</weight>
            <bold>true</bold>
@@ -1244,6 +1263,7 @@
          </property>
          <property name="font">
           <font>
+           <family>Liberation sans</family>
            <pointsize>10</pointsize>
            <weight>75</weight>
            <bold>true</bold>
@@ -1361,6 +1381,7 @@
          <widget class="QLabel" name="label_24">
           <property name="font">
            <font>
+            <family>Liberation sans</family>
             <pointsize>10</pointsize>
             <weight>75</weight>
             <bold>true</bold>
@@ -1438,6 +1459,7 @@
        </property>
        <property name="font">
         <font>
+         <family>Liberation sans</family>
          <pointsize>10</pointsize>
          <weight>75</weight>
          <bold>true</bold>
@@ -1498,6 +1520,7 @@
        </property>
        <property name="font">
         <font>
+         <family>Liberation sans</family>
          <pointsize>10</pointsize>
          <weight>75</weight>
          <bold>true</bold>
@@ -1607,7 +1630,7 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>711</width>
+      <width>1208</width>
       <height>31</height>
      </rect>
     </property>
