@@ -181,7 +181,5 @@ class RadioPacket:
 
 
 MAINWINDOW_STYLESHEET = """
-    QWidget {
-        font-size: 12px;
-    }
+
 """
