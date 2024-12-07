@@ -195,9 +195,6 @@ class MeshtasticMQTT(QObject, threading.Thread):
             mp.decoded.CopyFrom(data)
 
         except Exception as e:
-            self.notify_frontend(
-                MessageLevel.ERROR,
-                f"Could not decrypt message")
             return False
         else:
             return True
@@ -217,8 +214,8 @@ class MeshtasticMQTT(QObject, threading.Thread):
             pass
         else:
             if len(msg.payload) > self._mqtt_settings.max_msg_len:
-                self.notify_frontend(MessageLevel.ERROR, 'Message too long: ' +
-                                     str(len(msg.payload)) + ' bytes long, skipping.')
+                print(MessageLevel.ERROR, 'Message too long: ' +
+                      str(len(msg.payload)) + ' bytes long, skipping.')
                 return
 
             decrypted: bool = False

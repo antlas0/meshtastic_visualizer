@@ -75,14 +75,15 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.update_nodes_metrics)
         self._mqtt_manager.notify_nodes_metrics_signal.connect(
             self.update_nodes_metrics)
-        self._manager.notify_data_signal.connect(self.update_received_data)
-        self._manager.notify_data_signal.connect(self.update_message_treeview)
+        self._manager.notify_radio_log_signal.connect(self.update_radio_log)
+        self._manager.notify_radio_log_signal.connect(
+            self.update_packets_treeview)
         self._manager.notify_message_signal.connect(
             self.update_received_message)
         self._mqtt_manager.notify_message_signal.connect(
             self.update_received_message)
         self._mqtt_manager.notify_mqtt_enveloppe_signal.connect(
-            self.update_message_treeview)
+            self.update_packets_treeview)
         self._manager.notify_traceroute_signal.connect(self.update_traceroute)
         self._manager.notify_channels_signal.connect(
             self.update_channels_list)
@@ -805,7 +806,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     current_item.setText(str(value))
         self.messages_table.resizeColumnsToContents()
 
-    def update_message_treeview(self) -> None:
+    def update_packets_treeview(self) -> None:
         # Example: Modify existing items or add new ones
         packets = self._store.get_mqttpackets() + self._store.get_radiopackets()
         alreading_existing_packets = [
@@ -823,7 +824,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packets_treewidget.resizeColumnToContents(1)
         self.packets_total_lcd.display(len(packets))
 
-    def update_received_data(self, message: str, message_type: str):
+    def update_radio_log(self, message: str, message_type: str):
         self.output_textedit.setReadOnly(True)
         tmp = [
             self.output_textedit.toPlainText()

@@ -50,7 +50,7 @@ BROADCAST_ADDR = "^all"
 class MeshtasticManager(QObject, threading.Thread):
 
     notify_frontend_signal = pyqtSignal(MessageLevel, str)
-    notify_data_signal = pyqtSignal(str, str)
+    notify_radio_log_signal = pyqtSignal(str, str)
     notify_message_signal = pyqtSignal()
     notify_traceroute_signal = pyqtSignal(list, list, list)
     notify_channels_signal = pyqtSignal()
@@ -86,8 +86,8 @@ class MeshtasticManager(QObject, threading.Thread):
     def notify_nodes_metrics(self):
         self.notify_nodes_metrics_signal.emit()
 
-    def notify_data(self, message: str, message_type: str):
-        self.notify_data_signal.emit(message, message_type)
+    def notify_radio_log(self, message: str, message_type: str):
+        self.notify_radio_log_signal.emit(message, message_type)
 
     def notify_message(self):
         self.notify_message_signal.emit()
@@ -162,10 +162,6 @@ class MeshtasticManager(QObject, threading.Thread):
         node = self._interface.getNode(
             self._local_board_id, False).resetNodeDb()
 
-        self.notify_frontend(
-            MessageLevel.INFO,
-            "Local node configuration retrieved.")
-
     @run_in_thread
     def load_local_node_configuration(self) -> None:
         if self._interface is None:
@@ -198,10 +194,6 @@ class MeshtasticManager(QObject, threading.Thread):
         self._local_board_id = node["user"]["id"]
 
         self._data.set_local_node_config(n)
-
-        self.notify_frontend(
-            MessageLevel.INFO,
-            "Local node configuration retrieved.")
 
     @run_in_thread
     def on_receive(self, packet: dict,
@@ -240,30 +232,30 @@ class MeshtasticManager(QObject, threading.Thread):
                 rssi=packet["rxRssi"] if "rxRssi" in packet else 0,
             ))
 
-        self.notify_data("---------------", message_type="INFO")
+        self.notify_radio_log("---------------", message_type="INFO")
         if 'fromId' in packet:
             message = f"From ID: {packet['fromId']}"
-            self.notify_data(message, message_type="INFO")
+            self.notify_radio_log(message, message_type="INFO")
         if 'toId' in packet:
             message = f"To ID: {packet['toId']}"
-            self.notify_data(message, message_type="INFO")
+            self.notify_radio_log(message, message_type="INFO")
         if 'id' in packet:
             message = f"Packet ID: {packet['id']}"
-            self.notify_data(message, message_type="INFO")
+            self.notify_radio_log(message, message_type="INFO")
             message = f"Packet type: {packet['decoded']['portnum'].lower()}"
-            self.notify_data(message, message_type="INFO")
+            self.notify_radio_log(message, message_type="INFO")
         if 'rxSnr' in packet:
             message = f"SNR: {packet['rxSnr']}"
-            self.notify_data(message, message_type="SNR")
+            self.notify_radio_log(message, message_type="SNR")
         if 'rxRssi' in packet:
             message = f"RSSI: {packet['rxRssi']}"
-            self.notify_data(message, message_type="RSSI")
+            self.notify_radio_log(message, message_type="RSSI")
         if 'hopLimit' in packet:
             message = f"Hop Limit: {packet['hopLimit']}"
-            self.notify_data(message, message_type="INFO")
+            self.notify_radio_log(message, message_type="INFO")
         if 'encrypted' in packet:
             message = f"Encrypted: {packet['encrypted']}"
-            self.notify_data(message, message_type="INFO")
+            self.notify_radio_log(message, message_type="INFO")
 
         node_from.rssi = str(
             round(
@@ -303,7 +295,7 @@ class MeshtasticManager(QObject, threading.Thread):
         if decoded["portnum"] == PacketInfoType.PCK_ROUTING_APP.value:
             ack_status = decoded["routing"]["errorReason"] == "NONE"
             trace = f"Ack packet from {packet['fromId']} for packet id {packet['decoded']['requestId']}: {ack_status}"
-            self.notify_data(trace, "INFO")
+            self.notify_radio_log(trace, "INFO")
             if decoded["routing"]["errorReason"] != "NONE":
                 pass
             else:
@@ -328,7 +320,6 @@ class MeshtasticManager(QObject, threading.Thread):
                 self.notify_message()
 
         if decoded["portnum"] == PacketInfoType.PCK_TRACEROUTE_APP.value:
-            self.notify_frontend(MessageLevel.INFO, f"Traceoute completed.")
             route = self._extract_route_discovery(packet)
             neighbors = self._extract_route_neighbors(route)
 
@@ -380,7 +371,7 @@ class MeshtasticManager(QObject, threading.Thread):
                 print(
                     Fore.LIGHTBLACK_EX +
                     f"Received non-text payload: {decoded['payload']}")
-                self.notify_data(
+                self.notify_radio_log(
                     f"Received non-text payload: {decoded['payload']}",
                     message_type="INFO")
                 return
@@ -410,14 +401,11 @@ class MeshtasticManager(QObject, threading.Thread):
                 self._data.store_or_update_messages(m)
                 print(
                     Fore.GREEN + f"Received message: {m}")
-                self.notify_frontend(
-                    MessageLevel.INFO,
-                    f"New message received from {packet['fromId']}")
 
                 self.notify_message()
         if "payload" in packet["decoded"]:
             packet["decoded"].pop("payload")
-        self.notify_data(str(packet["decoded"]), "INFO")
+        self.notify_radio_log(str(packet["decoded"]), "INFO")
 
         nodes_to_update.append(node_from)
         self.update_nodes_info(nodes_to_update)
@@ -483,11 +471,9 @@ class MeshtasticManager(QObject, threading.Thread):
             )
         )
 
-        self.notify_data("---------------", "INFO")
-        trace = f"Message sent to {message.to_id}."
-        self.notify_frontend(MessageLevel.INFO, trace)
+        self.notify_radio_log("---------------", "INFO")
         trace = f"Message sent with ID: {message.to_id} with details {sent_packet}"
-        self.notify_data(trace, "INFO")
+        self.notify_radio_log(trace, "INFO")
         message.mid = sent_packet.id
         self._data.set_message(message)
         self.notify_message()
@@ -513,7 +499,6 @@ class MeshtasticManager(QObject, threading.Thread):
             self._data.store_or_update_metrics(nm)
             self.notify_nodes_metrics()
 
-            self.notify_frontend(MessageLevel.INFO, f"Updated node {n.id}.")
             self.notify_nodes_table()  # only notify table as map needs recreation
 
     @run_in_thread
@@ -566,7 +551,6 @@ class MeshtasticManager(QObject, threading.Thread):
                 )
 
                 self._data.store_or_update_node(n, init=True)
-            self.notify_frontend(MessageLevel.INFO, "Updated nodes list.")
             self.notify_nodes_map()
             self.notify_nodes_table()
 
@@ -594,7 +578,6 @@ class MeshtasticManager(QObject, threading.Thread):
             self.notify_frontend(MessageLevel.ERROR, trace)
             self.notify_channels()
         else:
-            self.notify_frontend(MessageLevel.INFO, "Channels retrieved.")
             self.notify_channels()
 
     @run_in_thread
@@ -659,12 +642,9 @@ class MeshtasticManager(QObject, threading.Thread):
                 )
             )
 
-            self.notify_data("---------------", "INFO")
+            self.notify_radio_log("---------------", "INFO")
             trace = f"Traceroute sent to {dest}."
-            self.notify_data(trace, "INFO")
-            self.notify_frontend(
-                MessageLevel.INFO,
-                f"Traceoute started to {dest}.")
+            self.notify_radio_log(trace, "INFO")
 
     def _node_id_from_num(self, nodeNum):
         """Convert node number to node ID"""
