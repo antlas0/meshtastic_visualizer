@@ -820,6 +820,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 sub_item_widget = QTreeWidgetItem([str(sub_item), str(value)])
                 category_item.addChild(sub_item_widget)
         self.packets_treewidget.resizeColumnToContents(0)
+        self.packets_treewidget.resizeColumnToContents(1)
         self.packets_total_lcd.display(len(packets))
 
     def update_received_data(self, message: str, message_type: str):

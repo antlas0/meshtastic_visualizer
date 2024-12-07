@@ -252,7 +252,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                     f"pn:{portnums_pb2.PortNum.Name(se.packet.decoded.portnum)}")
             self.notify_mqtt_enveloppe(" ".join(strl))
 
-            self._store.store_packet(
+            self._store.store_mqttpacket(
                 MQTTPacket(
                     date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
                     pid=se.packet.id,
