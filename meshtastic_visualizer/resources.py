@@ -150,7 +150,7 @@ class MeshtasticMQTTClientSettings:
 
 
 @dataclass
-class MeshtasticPacket:
+class MQTTPacket:
     date: str  # datetime.datetime.strftime("%Y-%m-%d %H:%M:%S")
     pid: str
     from_id: str
@@ -161,219 +161,27 @@ class MeshtasticPacket:
     port_num: str
     gateway_id: str = ""
     is_decrypted: bool = False
+    source: str = "mqtt"
+
+
+@dataclass
+class RadioPacket:
+    date: str  # datetime.datetime.strftime("%Y-%m-%d %H:%M:%S")
+    pid: str
+    from_id: str
+    to_id: str
+    channel_id: str
+    is_encrypted: bool
+    payload: bytes
+    port_num: str
+    snr: float = 0.0
+    rssi: float = 0.0
+    hoplimit: int = 0
+    source: str = "radio"
 
 
 MAINWINDOW_STYLESHEET = """
-    /* General Style for the Application */
-    QMainWindow {
-        background-color: #f0f0f5;
-    }
-
     QWidget {
-        font-family: Helvetica, Arial;
         font-size: 12px;
-    }
-
-    /* QLabel */
-    QLabel {
-        color: #333;
-        padding: 1px;
-        text-align: auto;
-    }
-
-    /* QLineEdit */
-    QLineEdit {
-        background-color: #ffffff;
-        border: 1px solid #d1d1d6;
-        border-radius: 5px;
-        padding: 1px;
-        color: #333;
-    }
-
-    QLineEdit:focus {
-        border: 1px solid #007aff;
-    }
-
-    /* QTextEdit */
-    QTextEdit {
-        background-color: #ffffff;
-        border: 1px solid #d1d1d6;
-        border-radius: 5px;
-        padding: 1px;
-        color: #333;
-    }
-
-    QTextEdit:focus {
-        border: 1px solid #007aff;
-    }
-
-    /* QSpinBox */
-    QSpinBox {
-        background-color: #ffffff;
-        border: 1px solid #d1d1d6;
-        border-radius: 5px;
-        padding: 1px;
-        color: #333;
-    }
-
-    QSpinBox:focus {
-        border: 1px solid #007aff;
-    }
-
-    /* QPushButton */
-    QPushButton {
-        background-color: #007aff;
-        color: white;
-        border: none;
-        border-radius: 3px;
-        padding: 1px 1px;
-    }
-
-    QPushButton:hover {
-        background-color: #0051c1;
-    }
-
-    QPushButton:pressed {
-        background-color: #00399a;
-    }
-
-    QPushButton:disabled {
-        background-color: #80bfff;
-    }
-
-    /* QCheckBox */
-    QCheckBox {
-        background-color: #ffffff;
-        border: 1px solid #d1d1d6;
-        border-radius: 5px;
-        padding: 1px;
-        color: #333;
-    }
-
-    /* QComboBox */
-    QComboBox {
-        background-color: #ffffff;
-        border: 1px solid #d1d1d6;
-        border-radius: 5px;
-        padding: 1px;
-        color: #333;
-    }
-
-    QComboBox:focus {
-        border: 1px solid #007aff;
-    }
-
-    /* QGroupBox */
-    QGroupBox {
-        border: 1px solid #d1d1d6;
-        border-radius: 5px;
-        padding: 10px;
-        color: #333;
-    }
-
-    QGroupBox::title {
-        subcontrol-origin: margin;
-        left: 1px;
-        padding: 1px;
-        font-weight: bold;
-    }
-
-    /* QListWidget */
-    QListWidget {
-        background-color: #ffffff;
-        border: 1px solid #d1d1d6;
-        border-radius: 5px;
-        color: #333;
-    }
-
-    QListWidget::header {
-        background-color: #f0f0f5;
-        color: #007aff;
-        font-weight: bold;
-        padding: 1px;
-    }
-
-    QListWidget::item {
-        padding: 1px;
-    }
-
-    QListWidget::item:selected {
-        background-color: #007aff;
-        color: white;
-    }
-
-    /* QTreeWidget */
-
-    QTreeWidget {
-        background-color: #ffffff;
-        border: 1px solid #d1d1d6;
-        border-radius: 5px;
-        color: #333;
-    }
-
-    QTreeWidget::header {
-        background-color: #f0f0f5;
-        color: #007aff;
-        font-weight: bold;
-        padding: 1px;
-    }
-
-    QTreeWidget::item {
-        padding: 1px;
-    }
-
-    QTreeWidget::item:selected {
-        background-color: #007aff;
-        color: white;
-    }
-
-    /* QTableWidget */
-    QTableWidget {
-        background-color: #ffffff;
-        border: 1px solid #d1d1d6;
-        color: #333;
-    }
-
-    QTableWidget::header {
-        background-color: #f0f0f5;
-        color: #007aff;
-        font-weight: bold;
-        padding: 1px;
-    }
-
-    QTableWidget::item {
-        padding: 1px;
-    }
-
-    QTableWidget::item:selected {
-        background-color: #007aff;
-        color: white;
-    }
-
-    /* QTabBar::tab */
-    QTabBar::tab {
-        color: #333;
-        border: 1px solid #999;      /* Border color for tabs */
-        padding: 8px 12px;           /* Padding around the tab names */
-        border-top-left-radius: 5px;
-        border-top-right-radius: 5px;
-    }
-
-    /* Hover effect for tabs */
-    QTabBar::tab:hover {
-        background-color: #888;      /* Lighter background when hovering */
-    }
-
-    /* Selected tab */
-    QTabBar::tab:selected {
-        background-color: #007aff;   /* Background color for the selected tab */
-        color: white;                /* Text color for the selected tab */
-        border-bottom: 2px solid #007aff;  /* Bottom border to emphasize selected tab */
-    }
-
-    /* Disabled tabs */
-    QTabBar::tab:disabled {
-        color: #666;                 /* Dimmed text for disabled tabs */
-        background-color: #333;
     }
 """

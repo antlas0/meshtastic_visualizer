@@ -28,7 +28,7 @@ from .resources import run_in_thread, \
     MeshtasticMessage, \
     PacketInfoType, \
     NodeMetrics, \
-    MeshtasticPacket
+    RadioPacket
 
 
 from .meshtastic_datastore import MeshtasticDataStore
@@ -226,8 +226,8 @@ class MeshtasticManager(QObject, threading.Thread):
 
         message_to_store = None
 
-        self._data.store_packet(
-            MeshtasticPacket(
+        self._data.store_radiopacket(
+            RadioPacket(
                 date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
                 pid=packet["id"],
                 from_id=packet['fromId'],
@@ -236,6 +236,8 @@ class MeshtasticManager(QObject, threading.Thread):
                 is_encrypted=packet["pkiEncrypted"] if "pkiEncrypted" in packet else False,
                 payload=decoded['payload'],
                 port_num=decoded["portnum"],
+                snr=packet["rxSnr"] if "rxSnr" in packet else 0,
+                rssi=packet["rxRssi"] if "rxRssi" in packet else 0,
             ))
 
         self.notify_data("---------------", message_type="INFO")
@@ -465,16 +467,19 @@ class MeshtasticManager(QObject, threading.Thread):
             pkiEncrypted=message.pki_encrypted,
         )
 
-        self._data.store_packet(
-            MeshtasticPacket(
+        self._data.store_radiopacket(
+            RadioPacket(
                 date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
-                pid=str(-1),
+                pid=sent_packet.id,
                 from_id=self._local_board_id,
                 to_id=message.to_id,
-                channel_id=message.channel_index,
+                channel_id=sent_packet.channel,
                 is_encrypted=message.pki_encrypted,
                 payload=message.content.encode("utf8"),
                 port_num=PacketInfoType.PCK_TEXT_MESSAGE_APP.value,
+                snr=-1.0,
+                rssi=-1.0,
+                hoplimit=sent_packet.hop_limit
             )
         )
 
@@ -638,8 +643,8 @@ class MeshtasticManager(QObject, threading.Thread):
         except Exception as e:
             print(f"Could not send traceroute: {e}")
         else:
-            self._data.store_packet(
-                MeshtasticPacket(
+            self._data.store_radiopacket(
+                RadioPacket(
                     date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
                     pid=str(-1),
                     from_id=self._local_board_id,
@@ -647,10 +652,16 @@ class MeshtasticManager(QObject, threading.Thread):
                     channel_id=channelIndex,
                     is_encrypted=False,
                     payload=None,
-                    port_num=portnums_pb2.PortNum.TRACEROUTE_APP,
+                    port_num=PacketInfoType.PCK_TRACEROUTE_APP.value,
+                    snr=-1.0,
+                    rssi=-1.0,
+                    hoplimit=hopLimit,
                 )
             )
 
+            self.notify_data("---------------", "INFO")
+            trace = f"Traceroute sent to {dest}."
+            self.notify_data(trace, "INFO")
             self.notify_frontend(
                 MessageLevel.INFO,
                 f"Traceoute started to {dest}.")

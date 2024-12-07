@@ -12,7 +12,8 @@ from .resources import run_in_thread, \
     MeshtasticNode, \
     MeshtasticMessage, \
     NodeMetrics, \
-    MeshtasticPacket
+    MQTTPacket, \
+    RadioPacket
 
 
 @dataclass
@@ -27,7 +28,9 @@ class MeshtasticDataStore(Thread):
         default_factory=dict)  # Dict[message_id, Message object]
     metrics: Dict[str, List[NodeMetrics]] = field(
         default_factory=dict)  # Dict[node_id, Dict[metric_name, List[value]]]
-    packets: Dict[str, MeshtasticPacket] = field(
+    mqttpackets: Dict[str, MQTTPacket] = field(
+        default_factory=dict)
+    radiopackets: Dict[str, MQTTPacket] = field(
         default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -71,14 +74,25 @@ class MeshtasticDataStore(Thread):
         self.messages[str(message.mid)] = message
         self._lock.release()
 
-    def store_packet(self, packet: MeshtasticPacket) -> None:
+    def store_mqttpacket(self, packet: MQTTPacket) -> None:
         self._lock.acquire()
-        self.packets[str(packet.date)] = packet
+        self.mqttpackets[str(packet.date)] = packet
         self._lock.release()
 
-    def get_packets(self) -> List:
+    def get_mqttpackets(self) -> List:
         self._lock.acquire()
-        packets = list(self.packets.values())
+        packets = list(self.mqttpackets.values())
+        self._lock.release()
+        return packets
+
+    def store_radiopacket(self, packet: RadioPacket) -> None:
+        self._lock.acquire()
+        self.radiopackets[str(packet.date)] = packet
+        self._lock.release()
+
+    def get_radiopackets(self) -> List:
+        self._lock.acquire()
+        packets = list(self.radiopackets.values())
         self._lock.release()
         return packets
 

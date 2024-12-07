@@ -6,7 +6,6 @@ import os
 import io
 import folium
 from folium.plugins import MousePosition, MeasureControl
-import humanize
 from threading import Lock
 from datetime import datetime, timedelta
 from typing import List
@@ -656,7 +655,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 status_line.append(f"{node.rx_counter}✉️")
             row.update(
                 {
-                    "Status": "|".join(status_line),
+                    "Status": " ".join(status_line),
                     "User": node.long_name,
                     "AKA": node.short_name,
                     "ID": node.id,
@@ -808,7 +807,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def update_message_treeview(self) -> None:
         # Example: Modify existing items or add new ones
-        packets = self._store.get_packets()
+        packets = self._store.get_mqttpackets() + self._store.get_radiopackets()
         alreading_existing_packets = [
             self.packets_treewidget.topLevelItem(i).text(0) for i in range(
                 self.packets_treewidget.topLevelItemCount())]

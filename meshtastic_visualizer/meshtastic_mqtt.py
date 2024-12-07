@@ -23,7 +23,7 @@ from .resources import run_in_thread, \
     MeshtasticMessage, \
     NodeMetrics, \
     MeshtasticMQTTClientSettings, \
-    MeshtasticPacket
+    MQTTPacket
 
 from .meshtastic_datastore import MeshtasticDataStore
 
@@ -253,7 +253,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
             self.notify_mqtt_enveloppe(" ".join(strl))
 
             self._store.store_packet(
-                MeshtasticPacket(
+                MQTTPacket(
                     date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
                     pid=se.packet.id,
                     from_id=self.node_number_to_id(
