@@ -6,6 +6,5 @@ pubsub==0.1.2
 PyQt6
 pyserial==3.5
 PyQt6-WebEngine
-humanize
 pyqtgraph
 paho-mqtt
