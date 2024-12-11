@@ -216,8 +216,6 @@ class MeshtasticManager(QObject, threading.Thread):
         )
         node_from.is_local = node_from.id == self._local_board_id
 
-        message_to_store = None
-
         self._data.store_radiopacket(
             RadioPacket(
                 date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
