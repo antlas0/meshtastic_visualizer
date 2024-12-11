@@ -177,7 +177,7 @@ class RadioPacket:
     decoded: Optional[dict] = None
     snr: Optional[float] = None
     rssi: Optional[float] = None
-    hoplimit: int = 0
+    hop_limit: Optional[int] = None
     source: str = "radio"
 
 

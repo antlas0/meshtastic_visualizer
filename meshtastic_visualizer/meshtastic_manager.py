@@ -231,6 +231,7 @@ class MeshtasticManager(QObject, threading.Thread):
                 port_num=decoded["portnum"],
                 snr=packet["rxSnr"] if "rxSnr" in packet else None,
                 rssi=packet["rxRssi"] if "rxRssi" in packet else None,
+                hop_limit=packet["hopLimit"] if "hopLimit" in packet else None,
             ))
 
         self.notify_radio_log("---------------", message_type="INFO")
