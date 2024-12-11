@@ -293,31 +293,29 @@ class MeshtasticManager(QObject, threading.Thread):
             node_from.alt = decoded["position"]["altitude"] if "altitude" in decoded["position"] else None
 
         if decoded["portnum"] == PacketInfoType.PCK_ROUTING_APP.value:
-            ack_status = decoded["routing"]["errorReason"] == "NONE"
+            ack_status = decoded["routing"]["errorReason"]
             trace = f"Ack packet from {packet['fromId']} for packet id {packet['decoded']['requestId']}: {ack_status}"
             self.notify_radio_log(trace, "INFO")
-            if decoded["routing"]["errorReason"] != "NONE":
-                pass
-            else:
-                if str(packet["fromId"]) == str(self._local_board_id):
-                    print(
-                        f"Received an implicit ACK. Packet will likely arrive, but cannot be guaranteed."
-                    )
 
-                acked_message_id = decoded["requestId"]
+            acked_message_id = decoded["requestId"]
 
-                m = MeshtasticMessage(
-                    mid=acked_message_id,
-                    rx_rssi=packet['rxRssi'] if 'rxRssi' in packet else None,
-                    rx_snr=packet['rxSnr'] if 'rxSnr' in packet else None,
-                    channel_index=packet["channel"] if "channel" in packet else None,
-                    hop_limit=packet['hopLimit'] if 'hopLimit' in packet else None,
-                    hop_start=packet['hopStart'] if 'hopStart' in packet else None,
-                    want_ack=False,
-                    ack="✅",
-                    public_key=packet["publicKey"] if "publicKey" in packet else "")
-                self._data.store_or_update_messages(m)
-                self.notify_message()
+            ack_label = {
+                "MAX_RETRANSMIT": "❌",
+                "NONE": "✅",
+            }
+
+            m = MeshtasticMessage(
+                mid=acked_message_id,
+                rx_rssi=packet['rxRssi'] if 'rxRssi' in packet else None,
+                rx_snr=packet['rxSnr'] if 'rxSnr' in packet else None,
+                channel_index=packet["channel"] if "channel" in packet else None,
+                hop_limit=packet['hopLimit'] if 'hopLimit' in packet else None,
+                hop_start=packet['hopStart'] if 'hopStart' in packet else None,
+                want_ack=False,
+                ack=ack_label[ack_status],
+                public_key=packet["publicKey"] if "publicKey" in packet else "")
+            self._data.store_or_update_messages(m)
+            self.notify_message()
 
         if decoded["portnum"] == PacketInfoType.PCK_TRACEROUTE_APP.value:
             route = self._extract_route_discovery(packet)
@@ -443,13 +441,12 @@ class MeshtasticManager(QObject, threading.Thread):
         if message.to_id != BROADCAST_ADDR:
             message.pki_encrypted = True
 
-        message.ack = "❌"
+        message.ack = "..."
         sent_packet = self._interface.sendData(
             data=message.content.encode("utf8"),
             destinationId=message.to_id,
             portNum=portnums_pb2.PortNum.TEXT_MESSAGE_APP,
             wantAck=message.want_ack,
-            wantResponse=True,
             channelIndex=message.channel_index,
             onResponseAckPermitted=False,
             pkiEncrypted=message.pki_encrypted,
