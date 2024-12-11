@@ -227,9 +227,10 @@ class MeshtasticManager(QObject, threading.Thread):
                 channel_id=packet["channel"] if "channel" in packet else None,
                 is_encrypted=packet["pkiEncrypted"] if "pkiEncrypted" in packet else False,
                 payload=decoded['payload'],
+                decoded=str(decoded),
                 port_num=decoded["portnum"],
-                snr=packet["rxSnr"] if "rxSnr" in packet else 0,
-                rssi=packet["rxRssi"] if "rxRssi" in packet else 0,
+                snr=packet["rxSnr"] if "rxSnr" in packet else None,
+                rssi=packet["rxRssi"] if "rxRssi" in packet else None,
             ))
 
         self.notify_radio_log("---------------", message_type="INFO")
@@ -314,7 +315,7 @@ class MeshtasticManager(QObject, threading.Thread):
                 want_ack=False,
                 ack=ack_label[ack_status],
                 public_key=packet["publicKey"] if "publicKey" in packet else "")
-            self._data.store_or_update_messages(m)
+            self._data.store_or_update_messages(m, only_update=True)
             self.notify_message()
 
         if decoded["portnum"] == PacketInfoType.PCK_TRACEROUTE_APP.value:
@@ -462,8 +463,8 @@ class MeshtasticManager(QObject, threading.Thread):
                 is_encrypted=message.pki_encrypted,
                 payload=message.content.encode("utf8"),
                 port_num=PacketInfoType.PCK_TEXT_MESSAGE_APP.value,
-                snr=-1.0,
-                rssi=-1.0,
+                snr=None,
+                rssi=None,
                 hoplimit=sent_packet.hop_limit
             )
         )
@@ -633,8 +634,8 @@ class MeshtasticManager(QObject, threading.Thread):
                     is_encrypted=False,
                     payload=None,
                     port_num=PacketInfoType.PCK_TRACEROUTE_APP.value,
-                    snr=-1.0,
-                    rssi=-1.0,
+                    snr=None,
+                    rssi=None,
                     hoplimit=hopLimit,
                 )
             )

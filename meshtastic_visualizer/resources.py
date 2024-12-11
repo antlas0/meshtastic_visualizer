@@ -174,8 +174,9 @@ class RadioPacket:
     is_encrypted: bool
     payload: bytes
     port_num: str
-    snr: float = 0.0
-    rssi: float = 0.0
+    decoded: Optional[dict] = None
+    snr: Optional[float] = None
+    rssi: Optional[float] = None
     hoplimit: int = 0
     source: str = "radio"
 

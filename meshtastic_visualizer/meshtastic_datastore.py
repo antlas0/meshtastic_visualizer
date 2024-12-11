@@ -242,14 +242,18 @@ class MeshtasticDataStore(Thread):
             setattr(self.nodes[str(node.id)], "rx_counter", rx_counter)
         self._lock.release()
 
-    def store_or_update_messages(self, message: MeshtasticMessage) -> None:
+    def store_or_update_messages(
+            self,
+            message: MeshtasticMessage,
+            only_update: bool = False) -> None:
         self._lock.acquire()
         key = list(
             filter(
                 lambda x: self.messages[x].mid == message.mid,
                 self.messages.keys()))
         if len(key) == 0:
-            self.messages[message.mid] = message
+            if not only_update:
+                self.messages[message.mid] = message
         else:
             key = key[0]
             self.messages[key].date = message.date if message.date is not None else self.messages[key].date
