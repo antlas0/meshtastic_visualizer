@@ -573,10 +573,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 from_id=self._local_board_id,
                 to_id=recipient,
                 content=message,
-                rx_rssi="",
-                rx_snr="",
-                hop_limit="",
-                hop_start="",
                 want_ack=True,
                 channel_index=channel_index,
             )
@@ -796,13 +792,17 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                         name = message.channel_index
                     data[headers[column]] = name
                 elif column == "ack":
-                    ack_label = "❔"
+                    label = "❔"
                     if getattr(message, column) is True:
-                        ack_label = "✅"
+                        label = "✅"
                     if getattr(message, column) is False:
-                        ack_label = "❌"
-
-                    data[headers[column]] = ack_label
+                        label = "❌"
+                    data[headers[column]] = label
+                elif column == "pki_encrypted":
+                    label = "⚠️"
+                    if getattr(message, column) is True:
+                        label = "🔒"
+                    data[headers[column]] = label
                 else:
                     data[headers[column]] = getattr(message, column)
             rows.append(data)
