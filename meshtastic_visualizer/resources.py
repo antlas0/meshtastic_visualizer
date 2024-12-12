@@ -76,7 +76,7 @@ class MeshtasticMessage:
     rx_rssi: Optional[int] = None
     hop_start: Optional[int] = None
     channel_index: Optional[int] = None
-    ack: str = ""
+    ack: Optional[bool] = None
     public_key: str = ""
     pki_encrypted: bool = False
 

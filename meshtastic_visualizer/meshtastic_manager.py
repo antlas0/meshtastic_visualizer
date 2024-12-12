@@ -300,8 +300,8 @@ class MeshtasticManager(QObject, threading.Thread):
             acked_message_id = decoded["requestId"]
 
             ack_label = {
-                "MAX_RETRANSMIT": "❌",
-                "NONE": "✅",
+                "MAX_RETRANSMIT": False,
+                "NONE": True,
             }
 
             m = MeshtasticMessage(
@@ -441,7 +441,6 @@ class MeshtasticManager(QObject, threading.Thread):
         if message.to_id != BROADCAST_ADDR:
             message.pki_encrypted = True
 
-        message.ack = "..."
         sent_packet = self._interface.sendData(
             data=message.content.encode("utf8"),
             destinationId=message.to_id,
@@ -472,7 +471,7 @@ class MeshtasticManager(QObject, threading.Thread):
         trace = f"Message sent with ID: {message.to_id} with details {sent_packet}"
         self.notify_radio_log(trace, "INFO")
         message.mid = sent_packet.id
-        self._data.set_message(message)
+        self._data.store_or_update_messages(message)
         self.notify_message()
 
     @run_in_thread
@@ -579,7 +578,7 @@ class MeshtasticManager(QObject, threading.Thread):
 
     @run_in_thread
     def export_chat(self) -> None:
-        messages = [asdict(x) for x in self._data.get_messages().values()]
+        messages = [asdict(x) for x in self._data.get_messages()]
         data_json = json.dumps(messages, indent=4)
         nnow = datetime.datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
         fpath = f"messages_{nnow}.json"

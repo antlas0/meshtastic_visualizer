@@ -795,7 +795,14 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     else:
                         name = message.channel_index
                     data[headers[column]] = name
+                elif column == "ack":
+                    ack_label = "❔"
+                    if getattr(message, column) is True:
+                        ack_label = "✅"
+                    if getattr(message, column) is False:
+                        ack_label = "❌"
 
+                    data[headers[column]] = ack_label
                 else:
                     data[headers[column]] = getattr(message, column)
             rows.append(data)

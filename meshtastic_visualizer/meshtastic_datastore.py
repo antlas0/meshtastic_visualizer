@@ -57,22 +57,11 @@ class MeshtasticDataStore(Thread):
         setattr(self.local_node_config, field, value)
         self._lock.release()
 
-    def get_messages(self) -> Dict[str, MeshtasticMessage]:
-        self._lock.acquire()
-        res = copy.copy(self.messages.values())
-        self._lock.release()
-        return res
-
     def get_channels(self) -> Optional[List[Channel]]:
         self._lock.acquire()
         res = copy.copy(self.channels)
         self._lock.release()
         return res
-
-    def set_message(self, message: MeshtasticMessage) -> None:
-        self._lock.acquire()
-        self.messages[str(message.mid)] = message
-        self._lock.release()
 
     def store_mqttpacket(self, packet: MQTTPacket) -> None:
         self._lock.acquire()
