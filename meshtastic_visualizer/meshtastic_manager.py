@@ -464,7 +464,7 @@ class MeshtasticManager(QObject, threading.Thread):
                 port_num=PacketInfoType.PCK_TEXT_MESSAGE_APP.value,
                 snr=None,
                 rssi=None,
-                hoplimit=sent_packet.hop_limit
+                hop_limit=sent_packet.hop_limit
             )
         )
 
