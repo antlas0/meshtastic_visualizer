@@ -115,6 +115,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.clear_radio_button.pressed.connect(self.output_textedit.clear)
         self.clear_mqtt_button.pressed.connect(self.mqtt_output_textedit.clear)
         self.clear_messages_button.pressed.connect(self.clear_messages_table)
+        self.clear_messages_button.pressed.connect(self._store.clear_messages)
         self.clear_nodes_button.pressed.connect(self.clear_nodes)
         self.export_mqtt_button.pressed.connect(self.export_mqtt_logs)
         for i, metric in enumerate(

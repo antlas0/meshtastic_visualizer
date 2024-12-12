@@ -174,6 +174,12 @@ class MeshtasticDataStore(Thread):
         self._lock.release()
         return res
 
+    def clear_messages(self) -> None:
+        self._lock.acquire()
+        del self.messages
+        self.messages = {}
+        self._lock.release()
+
     def clear_nodes(self) -> None:
         self._lock.acquire()
         del self.nodes
