@@ -50,11 +50,11 @@ BROADCAST_ADDR = "^all"
 class MeshtasticManager(QObject, threading.Thread):
 
     notify_frontend_signal = pyqtSignal(MessageLevel, str)
+    refresh_ui_signal = pyqtSignal()
     notify_radio_log_signal = pyqtSignal(str, str)
     notify_message_signal = pyqtSignal()
     notify_traceroute_signal = pyqtSignal(list, list, list)
     notify_channels_signal = pyqtSignal()
-    notify_nodes_map_signal = pyqtSignal()
     notify_nodes_table_signal = pyqtSignal()
     notify_nodes_metrics_signal = pyqtSignal()
 
@@ -70,27 +70,6 @@ class MeshtasticManager(QObject, threading.Thread):
 
     def set_store(self, store: MeshtasticDataStore) -> None:
         self._data = store
-
-    def notify_frontend(self, level: MessageLevel, text: str):
-        self.notify_frontend_signal.emit(level, text)
-
-    def notify_channels(self):
-        self.notify_channels_signal.emit()
-
-    def notify_nodes_map(self):
-        self.notify_nodes_map_signal.emit()
-
-    def notify_nodes_table(self):
-        self.notify_nodes_table_signal.emit()
-
-    def notify_nodes_metrics(self):
-        self.notify_nodes_metrics_signal.emit()
-
-    def notify_radio_log(self, message: str, message_type: str):
-        self.notify_radio_log_signal.emit(message, message_type)
-
-    def notify_message(self):
-        self.notify_message_signal.emit()
 
     def notify_traceroute(
             self,
@@ -110,16 +89,18 @@ class MeshtasticManager(QObject, threading.Thread):
 
     @run_in_thread
     def connect_device(self, resetDB: bool = False) -> bool:
+        res = False
         if self._interface is not None:
-            return False
+            self.refresh_ui_signal.emit()
+            return res
         try:
             self._interface = meshtastic.serial_interface.SerialInterface(
                 devPath=self._data.device_path)
         except Exception as e:
             trace = f"Failed to connect to Meshtastic device {self._data.device_path}: {str(e)}"
             self._data.connected = False
-            self.notify_frontend(MessageLevel.ERROR, trace)
-            return False
+            self.notify_frontend_signal.emit(MessageLevel.ERROR, trace)
+            self.refresh_ui_signal.emit()
         else:
             # Subscribe to received message events
             pub.subscribe(self.on_receive, "meshtastic.receive")
@@ -133,12 +114,18 @@ class MeshtasticManager(QObject, threading.Thread):
                 self.reset_local_node_db()
             self.load_local_nodedb()
             self.load_local_node_configuration()
-            self.notify_frontend(MessageLevel.INFO, trace)
-            return True
+            self.notify_frontend_signal.emit(MessageLevel.INFO, trace)
+            res = True
+        finally:
+            pass
+        self.refresh_ui_signal.emit()
+        return res
 
     @run_in_thread
     def disconnect_device(self) -> bool:
+        res = False
         if self._interface is None:
+            self.refresh_ui_signal.emit()
             return False
 
         try:
@@ -147,13 +134,17 @@ class MeshtasticManager(QObject, threading.Thread):
             self._interface = None
         except Exception as e:
             trace = f"Failed to disconnect from Meshtastic device: {str(e)}"
-            self.notify_frontend(MessageLevel.ERROR, trace)
-            return False
+            self.notify_frontend_signal.emit(MessageLevel.ERROR, trace)
         else:
             trace = f"Meshtastic device disconnected."
             self._data.connected = False
-            self.notify_frontend(MessageLevel.INFO, trace)
-            return True
+            self.notify_frontend_signal.emit(MessageLevel.INFO, trace)
+            res = True
+        finally:
+            pass
+
+        self.refresh_ui_signal.emit()
+        return res
 
     @run_in_thread
     def reset_local_node_db(self) -> None:
@@ -232,30 +223,28 @@ class MeshtasticManager(QObject, threading.Thread):
                 hop_limit=packet["hopLimit"] if "hopLimit" in packet else None,
             ))
 
-        self.notify_radio_log("---------------", message_type="INFO")
+        message = []
         if 'fromId' in packet:
-            message = f"From ID: {packet['fromId']}"
-            self.notify_radio_log(message, message_type="INFO")
+            message.append(f"{packet['fromId']}")
         if 'toId' in packet:
-            message = f"To ID: {packet['toId']}"
-            self.notify_radio_log(message, message_type="INFO")
+            message.append(f"->{packet['toId']}")
         if 'id' in packet:
-            message = f"Packet ID: {packet['id']}"
-            self.notify_radio_log(message, message_type="INFO")
-            message = f"Packet type: {packet['decoded']['portnum'].lower()}"
-            self.notify_radio_log(message, message_type="INFO")
+            message.append(f",pid:{packet['id']}")
+
+        message.append(f"pn:{packet['decoded']['portnum'].lower()}")
         if 'rxSnr' in packet:
-            message = f"SNR: {packet['rxSnr']}"
-            self.notify_radio_log(message, message_type="SNR")
+            message.append(f",snr:{packet['rxSnr']}")
         if 'rxRssi' in packet:
-            message = f"RSSI: {packet['rxRssi']}"
-            self.notify_radio_log(message, message_type="RSSI")
+            message.append(f",rssi: {packet['rxRssi']}")
         if 'hopLimit' in packet:
-            message = f"Hop Limit: {packet['hopLimit']}"
-            self.notify_radio_log(message, message_type="INFO")
-        if 'encrypted' in packet:
-            message = f"Encrypted: {packet['encrypted']}"
-            self.notify_radio_log(message, message_type="INFO")
+            message.append(f",hoplimit: {packet['hopLimit']}")
+        if "encrypted" in packet:
+            if packet["encrypted"]:
+                message.append(f"|e|")
+            else:
+                message.append(f"|!e|")
+
+        self.notify_radio_log_signal.emit(" ".join(message), "INFO")
 
         node_from.rssi = str(
             round(
@@ -295,7 +284,7 @@ class MeshtasticManager(QObject, threading.Thread):
         if decoded["portnum"] == PacketInfoType.PCK_ROUTING_APP.value:
             ack_status = decoded["routing"]["errorReason"]
             trace = f"Ack packet from {packet['fromId']} for packet id {packet['decoded']['requestId']}: {ack_status}"
-            self.notify_radio_log(trace, "INFO")
+            self.notify_radio_log_signal.emit(trace, "INFO")
 
             acked_message_id = decoded["requestId"]
 
@@ -315,7 +304,7 @@ class MeshtasticManager(QObject, threading.Thread):
                 ack=ack_label[ack_status],
                 public_key=packet["publicKey"] if "publicKey" in packet else "")
             self._data.store_or_update_messages(m, only_update=True)
-            self.notify_message()
+            self.notify_message_signal.emit()
 
         if decoded["portnum"] == PacketInfoType.PCK_TRACEROUTE_APP.value:
             route = self._extract_route_discovery(packet)
@@ -369,7 +358,7 @@ class MeshtasticManager(QObject, threading.Thread):
                 print(
                     Fore.LIGHTBLACK_EX +
                     f"Received non-text payload: {decoded['payload']}")
-                self.notify_radio_log(
+                self.notify_radio_log_signal.emit(
                     f"Received non-text payload: {decoded['payload']}",
                     message_type="INFO")
                 return
@@ -400,10 +389,10 @@ class MeshtasticManager(QObject, threading.Thread):
                 print(
                     Fore.GREEN + f"Received message: {m}")
 
-                self.notify_message()
+                self.notify_message_signal.emit()
         if "payload" in packet["decoded"]:
             packet["decoded"].pop("payload")
-        self.notify_radio_log(str(packet["decoded"]), "INFO")
+        self.notify_radio_log_signal.emit(str(packet["decoded"]), "INFO")
 
         nodes_to_update.append(node_from)
         self.update_nodes_info(nodes_to_update)
@@ -467,12 +456,12 @@ class MeshtasticManager(QObject, threading.Thread):
             )
         )
 
-        self.notify_radio_log("---------------", "INFO")
+        self.notify_radio_log_signal.emit("---------------", "INFO")
         trace = f"Message sent with ID: {message.to_id} with details {sent_packet}"
-        self.notify_radio_log(trace, "INFO")
+        self.notify_radio_log_signal.emit(trace, "INFO")
         message.mid = sent_packet.id
         self._data.store_or_update_messages(message)
-        self.notify_message()
+        self.notify_message_signal.emit()
 
     @run_in_thread
     def update_nodes_info(self, nodes: List[MeshtasticNode]) -> None:
@@ -493,9 +482,9 @@ class MeshtasticManager(QObject, threading.Thread):
                 voltage=float(n.voltage) if n.voltage is not None else None,
             )
             self._data.store_or_update_metrics(nm)
-            self.notify_nodes_metrics()
+            self.notify_nodes_metrics_signal.emit()
 
-            self.notify_nodes_table()  # only notify table as map needs recreation
+            self.notify_nodes_table_signal.emit()
 
     @run_in_thread
     def load_local_nodedb(self, include_self: bool = True) -> list:
@@ -547,8 +536,7 @@ class MeshtasticManager(QObject, threading.Thread):
                 )
 
                 self._data.store_or_update_node(n, init=True)
-            self.notify_nodes_map()
-            self.notify_nodes_table()
+            self.notify_nodes_table_signal.emit()
 
     @run_in_thread
     def retrieve_channels(self) -> list:
@@ -571,34 +559,10 @@ class MeshtasticManager(QObject, threading.Thread):
                     )
         except Exception as e:
             trace = f"Failed to get channels: {str(e)}"
-            self.notify_frontend(MessageLevel.ERROR, trace)
-            self.notify_channels()
+            self.notify_frontend_signal.emit(MessageLevel.ERROR, trace)
+            self.notify_channels_signal.emit()
         else:
-            self.notify_channels()
-
-    @run_in_thread
-    def export_chat(self) -> None:
-        messages = [asdict(x) for x in self._data.get_messages()]
-        data_json = json.dumps(messages, indent=4)
-        nnow = datetime.datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
-        fpath = f"messages_{nnow}.json"
-        with open(fpath, "w") as json_file:
-            json_file.write(data_json)
-            absp = os.path.abspath(fpath)
-            trace = f"<a href='file://{absp}'>Exported chat to file: {fpath}</a>"
-            self.notify_frontend(MessageLevel.INFO, trace)
-
-    @run_in_thread
-    def export_nodes(self) -> None:
-        messages = [asdict(x) for x in self._data.get_nodes().values()]
-        data_json = json.dumps(messages, indent=4)
-        nnow = datetime.datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
-        fpath = f"nodes_{nnow}.json"
-        with open(fpath, "w") as json_file:
-            json_file.write(data_json)
-            absp = os.path.abspath(fpath)
-            trace = f"<a href='file://{absp}'>Exported nodes to file: {fpath}</a>"
-            self.notify_frontend(MessageLevel.INFO, trace)
+            self.notify_channels_signal.emit()
 
     @run_in_thread
     def send_traceroute(self,
@@ -638,9 +602,9 @@ class MeshtasticManager(QObject, threading.Thread):
                 )
             )
 
-            self.notify_radio_log("---------------", "INFO")
+            self.notify_radio_log_signal.emit("---------------", "INFO")
             trace = f"Traceroute sent to {dest}."
-            self.notify_radio_log(trace, "INFO")
+            self.notify_radio_log_signal.emit(trace, "INFO")
 
     def _node_id_from_num(self, nodeNum):
         """Convert node number to node ID"""

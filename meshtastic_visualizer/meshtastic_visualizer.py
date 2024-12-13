@@ -4,6 +4,7 @@
 import hashlib
 import os
 import io
+import json
 import folium
 from folium.plugins import MousePosition, MeasureControl
 from threading import Lock
@@ -69,8 +70,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._mqtt_manager.set_store(self._store)
         self._mqtt_manager.start()
 
-        self._manager.notify_frontend_signal.connect(self.refresh)
-        self._mqtt_manager.notify_frontend_signal.connect(self.refresh)
+        self._manager.refresh_ui_signal.connect(self.refresh_ui)
+        self._mqtt_manager.refresh_ui_signal.connect(self.refresh_ui)
+        self._manager.notify_frontend_signal.connect(
+            self.refresh_status_header)
+        self._mqtt_manager.notify_frontend_signal.connect(
+            self.refresh_status_header)
         self._manager.notify_nodes_metrics_signal.connect(
             self.update_nodes_metrics)
         self._mqtt_manager.notify_nodes_metrics_signal.connect(
@@ -87,11 +92,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._manager.notify_traceroute_signal.connect(self.update_traceroute)
         self._manager.notify_channels_signal.connect(
             self.update_channels_list)
-        self._manager.notify_nodes_map_signal.connect(self.update_nodes_map)
         self._manager.notify_nodes_table_signal.connect(
             self.update_nodes_table)
-        self._mqtt_manager.notify_nodes_map_signal.connect(
-            self.update_nodes_map)
         self._mqtt_manager.notify_nodes_table_signal.connect(
             self.update_nodes_table)
         self._mqtt_manager.notify_mqtt_enveloppe_signal.connect(
@@ -109,8 +111,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.traceroute_signal.connect(self._manager.send_traceroute)
         self.mqtt_connect_signal.connect(
             self._mqtt_manager.configure_and_start)
-        self.export_chat_button.pressed.connect(self._manager.export_chat)
-        self.export_nodes_button.pressed.connect(self._manager.export_nodes)
+        self.export_chat_button.pressed.connect(self.export_chat)
+        self.export_packets_button.pressed.connect(self.export_packets)
+        self.export_nodes_button.pressed.connect(self.export_nodes)
         self.export_radio_button.pressed.connect(self.export_radio)
         self.clear_radio_button.pressed.connect(self.output_textedit.clear)
         self.clear_mqtt_button.pressed.connect(self.mqtt_output_textedit.clear)
@@ -280,19 +283,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if index == 1:
             self.tabWidget.setTabText(2, "Messages")
 
-    def refresh(
-            self,
-            status: MessageLevel = MessageLevel.UNKNOWN,
-            message=None) -> None:
-        """
-        Refresh all UI at once
-        """
+    def refresh_ui(self) -> None:
         self._lock.acquire()
-
         data = self._store
-        if message is not None:
-            self.set_status(status, message)
-
         if data.is_connected():
             self.connect_button.setEnabled(False)
             self.disconnect_button.setEnabled(True)
@@ -322,7 +315,18 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.mqtt_password_linedit.setEnabled(True)
             self.mqtt_topic_linedit.setEnabled(True)
             self.mqtt_key_linedit.setEnabled(True)
+        self._lock.release()
 
+    def refresh_status_header(
+            self,
+            status: MessageLevel = MessageLevel.UNKNOWN,
+            message=None) -> None:
+        """
+        Update header status bar
+        """
+        self._lock.acquire()
+        if message is not None:
+            self.set_status(status, message)
         self._lock.release()
 
     def connect_device(self):
@@ -836,7 +840,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def update_packets_treeview(self) -> None:
         # Example: Modify existing items or add new ones
-        packets = self._store.get_mqttpackets() + self._store.get_radiopackets()
+        packets = self._store.get_mqtt_packets() + self._store.get_radio_packets()
         alreading_existing_packets = [
             self.packets_treewidget.topLevelItem(i).text(0) for i in range(
                 self.packets_treewidget.topLevelItemCount())]
@@ -933,6 +937,45 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             text_file.write(self.mqtt_output_textedit.toPlainText())
             absp = os.path.abspath(fpath)
             trace = f"<a href='file://{absp}'>Exported mqtt logs to file: {fpath}</a>"
+            self.set_status(MessageLevel.INFO, trace)
+
+    def export_packets(self) -> None:
+        packets = self._store.get_mqtt_packets() + self._store.get_radio_packets()
+        packets_list = [asdict(x) for x in packets]
+        for p in packets_list:
+            try:
+                p["payload"] = str(p["payload"])
+            except Exception as e:
+                p["payload"] = "convertion error"
+        data_json = json.dumps(packets_list, indent=4)
+        nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
+        fpath = f"packet_{nnow}.json"
+        with open(fpath, "w") as json_file:
+            json_file.write(data_json)
+            absp = os.path.abspath(fpath)
+            trace = f"<a href='file://{absp}'>Exported chat to file: {fpath}</a>"
+            self.set_status(MessageLevel.INFO, trace)
+
+    def export_chat(self) -> None:
+        messages = [asdict(x) for x in self._store.get_messages()]
+        data_json = json.dumps(messages, indent=4)
+        nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
+        fpath = f"messages_{nnow}.json"
+        with open(fpath, "w") as json_file:
+            json_file.write(data_json)
+            absp = os.path.abspath(fpath)
+            trace = f"<a href='file://{absp}'>Exported chat to file: {fpath}</a>"
+            self.set_status(MessageLevel.INFO, trace)
+
+    def export_nodes(self) -> None:
+        messages = [asdict(x) for x in self._store.get_nodes().values()]
+        data_json = json.dumps(messages, indent=4)
+        nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
+        fpath = f"nodes_{nnow}.json"
+        with open(fpath, "w") as json_file:
+            json_file.write(data_json)
+            absp = os.path.abspath(fpath)
+            trace = f"<a href='file://{absp}'>Exported nodes to file: {fpath}</a>"
             self.set_status(MessageLevel.INFO, trace)
 
     def quit(self) -> None:

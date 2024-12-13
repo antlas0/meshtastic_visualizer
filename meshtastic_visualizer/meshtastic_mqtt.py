@@ -35,7 +35,7 @@ logging.basicConfig(level=logging.ERROR)
 class MeshtasticMQTT(QObject, threading.Thread):
 
     notify_frontend_signal = pyqtSignal(MessageLevel, str)
-    notify_nodes_map_signal = pyqtSignal()
+    refresh_ui_signal = pyqtSignal()
     notify_nodes_table_signal = pyqtSignal()
     notify_nodes_metrics_signal = pyqtSignal()
     notify_message_signal = pyqtSignal()
@@ -59,24 +59,6 @@ class MeshtasticMQTT(QObject, threading.Thread):
         self._store = None
         self._mqtt_thread = None
 
-    def notify_nodes_map(self):
-        self.notify_nodes_map_signal.emit()
-
-    def notify_nodes_table(self):
-        self.notify_nodes_table_signal.emit()
-
-    def notify_nodes_metrics(self):
-        self.notify_nodes_metrics_signal.emit()
-
-    def notify_frontend(self, level: MessageLevel, text: str):
-        self.notify_frontend_signal.emit(level, text)
-
-    def notify_message(self):
-        self.notify_message_signal.emit()
-
-    def notify_mqtt_enveloppe(self, message: str):
-        self.notify_mqtt_enveloppe_signal.emit(message)
-
     def set_store(self, store: MeshtasticDataStore) -> None:
         self._store = store
 
@@ -99,7 +81,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
     def is_connected(self) -> bool:
         return self._client.is_connected()
 
-    def connect_mqtt(self) -> bool:
+    def connect_mqtt(self) -> None:
         if not self._client.is_connected():
             key = self._mqtt_settings.key
             if self._mqtt_settings.key == "AQ==":
@@ -121,11 +103,11 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 self._client.connect(
                     self._mqtt_settings.host, self._mqtt_settings.port, 60)
             except Exception as e:
-                self.notify_frontend(
+                self.notify_frontend_signal.emit(
                     MessageLevel.ERROR,
                     f"Could not connect to MQTT server {self._mqtt_settings.host}:{self._mqtt_settings.port}")
             else:
-                self.notify_frontend(
+                self.notify_frontend_signal.emit(
                     MessageLevel.INFO,
                     f"Succesfully connected to MQTT server {self._mqtt_settings.host}:{self._mqtt_settings.port}")
                 self._mqtt_thread = threading.Thread(
@@ -135,32 +117,34 @@ class MeshtasticMQTT(QObject, threading.Thread):
     def on_connect(self, client, userdata, flags, reason_code, properties):
         if not reason_code.is_failure:
             if self._client.is_connected():
-                self.notify_frontend(
+                self.notify_frontend_signal.emit(
                     MessageLevel.INFO,
                     f"Connected to {self._mqtt_settings.host}:{self._mqtt_settings.port}")
                 try:
                     self._client.subscribe(self._mqtt_settings.topic)
                 except Exception as e:
-                    self.notify_frontend(
+                    self.notify_frontend_signal.emit(
                         MessageLevel.ERROR,
                         f"Could not subscribe to topic {self._mqtt_settings.topic}")
-                self.notify_frontend(
+                self.notify_frontend_signal.emit(
                     MessageLevel.INFO,
                     f"Subscribed to root topic {self._mqtt_settings.topic}")
             else:
-                self.notify_frontend(
+                self.notify_frontend_signal.emit(
                     MessageLevel.ERROR,
                     f"Failed to connect to {self._mqtt_settings.host}:{self._mqtt_settings.port}")
         else:
-            self.notify_frontend(
+            self.notify_frontend_signal.emit(
                 MessageLevel.ERROR,
                 f"Failed to connect to {self._mqtt_settings.host}:{self._mqtt_settings.port}: {reason_code.names[reason_code.value]}")
             time.sleep(2)
+        self.refresh_ui_signal.emit()
 
     def on_disconnect(self, client, userdata, flags, reason_code, properties):
-        self.notify_frontend(
+        self.notify_frontend_signal.emit(
             MessageLevel.ERROR,
             f"Disconnected from {self._mqtt_settings.host}:{self._mqtt_settings.port}")
+        self.refresh_ui_signal.emit()
 
     def xor_hash(data: bytes) -> int:
         """Return XOR hash of all bytes in the provided string."""
@@ -247,9 +231,9 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 strl.append("|!e|")
                 strl.append(
                     f"pn:{portnums_pb2.PortNum.Name(se.packet.decoded.portnum)}")
-            self.notify_mqtt_enveloppe(" ".join(strl))
+            self.notify_mqtt_enveloppe_signal.emit(" ".join(strl))
 
-            self._store.store_mqttpacket(
+            self._store.store_mqtt_packet(
                 MQTTPacket(
                     date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
                     pid=se.packet.id,
@@ -308,10 +292,10 @@ class MeshtasticMQTT(QObject, threading.Thread):
                     )
                     self._store.store_or_update_node(n)
                     self._store.store_or_update_metrics(nm)
-                    self.notify_nodes_metrics()
-                    self.notify_nodes_table()
+                    self.notify_nodes_metrics_signal.emit()
+                    self.notify_nodes_table_signal.emit()
                     self._store.store_or_update_messages(m)
-                    self.notify_message()
+                    self.notify_message_signal.emit()
 
             elif mp.decoded.portnum == portnums_pb2.NEIGHBORINFO_APP:
                 neigh = mesh_pb2.NeighborInfo()
@@ -339,8 +323,8 @@ class MeshtasticMQTT(QObject, threading.Thread):
                     )
                     self._store.store_or_update_node(n)
                     self._store.store_or_update_metrics(nm)
-                    self.notify_nodes_metrics()
-                    self.notify_nodes_table()
+                    self.notify_nodes_metrics_signal.emit()
+                    self.notify_nodes_table_signal.emit()
 
             elif mp.decoded.portnum == portnums_pb2.NODEINFO_APP:
                 info = mesh_pb2.User()
@@ -371,8 +355,8 @@ class MeshtasticMQTT(QObject, threading.Thread):
                     )
                     self._store.store_or_update_node(n)
                     self._store.store_or_update_metrics(nm)
-                    self.notify_nodes_metrics()
-                    self.notify_nodes_table()  # only notify table as map needs recreation
+                    self.notify_nodes_metrics_signal.emit()
+                    self.notify_nodes_table_signal.emit()
 
             elif mp.decoded.portnum == portnums_pb2.MAP_REPORT_APP:
                 mapreport = mqtt_pb2.MapReport()
@@ -400,8 +384,8 @@ class MeshtasticMQTT(QObject, threading.Thread):
                     )
                     self._store.store_or_update_node(n)
                     self._store.store_or_update_metrics(nm)
-                    self.notify_nodes_metrics()
-                    self.notify_nodes_table()  # only notify table as map needs recreation
+                    self.notify_nodes_metrics_signal.emit()
+                    self.notify_nodes_table_signal.emit()
 
             elif mp.decoded.portnum == portnums_pb2.POSITION_APP:
                 position = mesh_pb2.Position()
@@ -442,8 +426,8 @@ class MeshtasticMQTT(QObject, threading.Thread):
                         )
                         self._store.store_or_update_node(n)
                         self._store.store_or_update_metrics(nm)
-                        self.notify_nodes_metrics()
-                        self.notify_nodes_table()  # only notify table as map needs recreation
+                        self.notify_nodes_metrics_signal.emit()
+                        self.notify_nodes_table_signal.emit()
 
             elif mp.decoded.portnum == portnums_pb2.TELEMETRY_APP:
                 env = telemetry_pb2.Telemetry()
@@ -475,8 +459,8 @@ class MeshtasticMQTT(QObject, threading.Thread):
 
                     self._store.store_or_update_node(n)
                     self._store.store_or_update_metrics(nm)
-                    self.notify_nodes_metrics()
-                    self.notify_nodes_table()
+                    self.notify_nodes_metrics_signal.emit()
+                    self.notify_nodes_table_signal.emit()
 
             elif mp.decoded.portnum == portnums_pb2.TRACEROUTE_APP:
                 if mp.decoded.payload:

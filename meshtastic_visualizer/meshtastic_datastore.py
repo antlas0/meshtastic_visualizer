@@ -63,12 +63,12 @@ class MeshtasticDataStore(Thread):
         self._lock.release()
         return res
 
-    def store_mqttpacket(self, packet: MQTTPacket) -> None:
+    def store_mqtt_packet(self, packet: MQTTPacket) -> None:
         self._lock.acquire()
         self.mqttpackets[str(packet.date)] = packet
         self._lock.release()
 
-    def get_mqttpackets(self) -> List:
+    def get_mqtt_packets(self) -> List:
         self._lock.acquire()
         packets = list(self.mqttpackets.values())
         self._lock.release()
@@ -79,7 +79,7 @@ class MeshtasticDataStore(Thread):
         self.radiopackets[str(packet.date)] = packet
         self._lock.release()
 
-    def get_radiopackets(self) -> List:
+    def get_radio_packets(self) -> List:
         self._lock.acquire()
         packets = list(self.radiopackets.values())
         self._lock.release()
@@ -96,18 +96,6 @@ class MeshtasticDataStore(Thread):
         del self.mqttpackets
         self.mqttpackets = {}
         self._lock.release()
-
-    def get_messages(self) -> List:
-        self._lock.acquire()
-        messages = list(self.messages.values())
-        self._lock.release()
-        return messages
-
-    def get_nodes(self) -> dict:
-        self._lock.acquire()
-        res = copy.copy(self.nodes)
-        self._lock.release()
-        return res
 
     def set_device_path(self, path: str) -> None:
         self._lock.acquire()
@@ -186,16 +174,28 @@ class MeshtasticDataStore(Thread):
         self._lock.release()
         return res
 
-    def clear_messages(self) -> None:
+    def get_nodes(self) -> dict:
         self._lock.acquire()
-        del self.messages
-        self.messages = {}
+        res = copy.copy(self.nodes)
         self._lock.release()
+        return res
 
     def clear_nodes(self) -> None:
         self._lock.acquire()
         del self.nodes
         self.nodes = {}
+        self._lock.release()
+
+    def get_messages(self) -> List:
+        self._lock.acquire()
+        messages = list(self.messages.values())
+        self._lock.release()
+        return messages
+
+    def clear_messages(self) -> None:
+        self._lock.acquire()
+        del self.messages
+        self.messages = {}
         self._lock.release()
 
     def clear_nodes_metrics(self) -> None:

@@ -1131,6 +1131,19 @@
        <string>🗑️</string>
       </property>
      </widget>
+     <widget class="QPushButton" name="export_packets_button">
+      <property name="geometry">
+       <rect>
+        <x>210</x>
+        <y>80</y>
+        <width>31</width>
+        <height>25</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>⬇️</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="tab_messages">
      <attribute name="title">
