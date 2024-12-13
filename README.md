@@ -16,9 +16,9 @@ The objective is to provide a build on Linux (should work on Windows, compatibil
 | Display messages |✅|✅|
 | Send messages with acknowledgment|✅|❌|
 | Perform traceroute (with SNR)|✅|❌|
-| Export nodes |✅|✅|
-| Export messages and metrics |✅|✅|
-| Export events logs |✅|✅|
+| Export nodes (json) |✅|✅|
+| Export messages and packets (json) |✅|✅|
+| Export events logs (json) |✅|✅|
 | Metrics plotting (RF, power,...) |✅|✅|
 
 ## Installation 
