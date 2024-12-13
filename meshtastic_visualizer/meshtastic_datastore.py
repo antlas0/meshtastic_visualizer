@@ -85,6 +85,18 @@ class MeshtasticDataStore(Thread):
         self._lock.release()
         return packets
 
+    def clear_radio_packets(self) -> None:
+        self._lock.acquire()
+        del self.radiopackets
+        self.radiopackets = {}
+        self._lock.release()
+
+    def clear_mqtt_packets(self) -> None:
+        self._lock.acquire()
+        del self.mqttpackets
+        self.mqttpackets = {}
+        self._lock.release()
+
     def get_messages(self) -> List:
         self._lock.acquire()
         messages = list(self.messages.values())

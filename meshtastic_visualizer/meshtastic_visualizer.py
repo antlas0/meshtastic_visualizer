@@ -117,6 +117,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.clear_messages_button.pressed.connect(self.clear_messages_table)
         self.clear_messages_button.pressed.connect(self._store.clear_messages)
         self.clear_nodes_button.pressed.connect(self.clear_nodes)
+        self.clear_packets_button.pressed.connect(self.clear_packets)
         self.export_mqtt_button.pressed.connect(self.export_mqtt_logs)
         for i, metric in enumerate(
                 self._store.get_node_metrics_fields()):
@@ -238,6 +239,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.mqtt_topic_linedit.setText(self._settings.value("mqtt_topic", ""))
         self.mqtt_key_linedit.setText(self._settings.value("mqtt_key", "AQ=="))
         self.packets_treewidget.setHeaderLabels(["Packet", "Details"])
+        self.packettype_combobox.insertItem(0, "All")
+        self.packettype_combobox.currentIndexChanged.connect(
+            self.clean_packets_treeview)
         self.setStyleSheet(MAINWINDOW_STYLESHEET)
 
     def clear_messages_table(self) -> None:
@@ -252,6 +256,14 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.nodes_total_lcd.display(0)
         self.nodes_gps_lcd.display(0)
         self.nodes_recently_lcd.display(0)
+
+    def clear_packets(self) -> None:
+        self._store.clear_radio_packets()
+        self._store.clear_mqtt_packets()
+        self.packets_treewidget.clear()
+        self.packettype_combobox.clear()
+        self.packettype_combobox.insertItem(0, "All")
+        self.packets_total_lcd.display(0)
 
     def _get_meshtastic_message_header_fields(self) -> dict:
         return {
@@ -818,13 +830,29 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     current_item.setText(str(value))
         self.messages_table.resizeColumnsToContents()
 
+    def clean_packets_treeview(self) -> None:
+        self.packets_treewidget.clear()
+        self.update_packets_treeview()
+
     def update_packets_treeview(self) -> None:
         # Example: Modify existing items or add new ones
         packets = self._store.get_mqttpackets() + self._store.get_radiopackets()
         alreading_existing_packets = [
             self.packets_treewidget.topLevelItem(i).text(0) for i in range(
                 self.packets_treewidget.topLevelItemCount())]
-        for packet in packets:
+
+        filtered_packets = packets
+        if self.packettype_combobox.currentText() != "All":
+            filtered_packets = list(
+                filter(
+                    lambda x: x.port_num == self.packettype_combobox.currentText(),
+                    packets))
+
+        for packet in filtered_packets:
+            if self.packettype_combobox.findText(packet.port_num) == -1:
+                self.packettype_combobox.insertItem(
+                    1000, packet.port_num)  # insert last
+
             if str(packet.date) in alreading_existing_packets:
                 continue
             category_item = QTreeWidgetItem([str(packet.date), ""])
