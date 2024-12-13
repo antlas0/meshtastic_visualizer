@@ -71,13 +71,6 @@ class MeshtasticManager(QObject, threading.Thread):
     def set_store(self, store: MeshtasticDataStore) -> None:
         self._data = store
 
-    def notify_traceroute(
-            self,
-            route: list,
-            snr_towards: list,
-            snr_back: list):
-        self.notify_traceroute_signal.emit(route, snr_towards, snr_back)
-
     def get_data_store(self) -> MeshtasticDataStore:
         return self._data
 
@@ -342,7 +335,7 @@ class MeshtasticManager(QObject, threading.Thread):
             except Exception:
                 pass
 
-            self.notify_traceroute(route, snr_towards, snr_back)
+            self.notify_traceroute_signal.emit(route, snr_towards, snr_back)
 
         if decoded["portnum"] == PacketInfoType.PCK_NEIGHBORINFO_APP.value:
             if "neighbors" in decoded["neighborinfo"]:
