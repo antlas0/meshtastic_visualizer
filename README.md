@@ -14,6 +14,7 @@ The objective is to provide a build on Linux (should work on Windows, compatibil
 | Display nodes configuration (with public key)|✅|✅|
 | Display map of nodes |✅|✅|
 | Display messages |✅|✅|
+| Display packets |✅|✅|
 | Send messages with acknowledgment|✅|❌|
 | Perform traceroute (with SNR)|✅|❌|
 | Export nodes (json) |✅|✅|
