@@ -216,28 +216,33 @@ class MeshtasticManager(QObject, threading.Thread):
                 hop_limit=packet["hopLimit"] if "hopLimit" in packet else None,
             ))
 
-        message = []
+        strl = []
         if 'fromId' in packet:
-            message.append(f"{packet['fromId']}")
+            strl.append(f"{packet['fromId']}")
+        else:
+            strl.append("?")
         if 'toId' in packet:
-            message.append(f"->{packet['toId']}")
-        if 'id' in packet:
-            message.append(f",pid:{packet['id']}")
+            strl.append(f"->{packet['toId']}")
+        else:
+            strl.append("->?")
 
-        message.append(f"pn:{packet['decoded']['portnum'].lower()}")
+        if 'id' in packet:
+            strl.append(f", pid:{packet['id']}")
+
+        strl.append(f", pn: {packet['decoded']['portnum'].lower()}")
         if 'rxSnr' in packet:
-            message.append(f",snr:{packet['rxSnr']}")
+            strl.append(f", snr: {packet['rxSnr']}")
         if 'rxRssi' in packet:
-            message.append(f",rssi: {packet['rxRssi']}")
+            strl.append(f", rssi: {packet['rxRssi']}")
         if 'hopLimit' in packet:
-            message.append(f",hoplimit: {packet['hopLimit']}")
+            strl.append(f", hoplimit: {packet['hopLimit']}")
         if "encrypted" in packet:
             if packet["encrypted"]:
-                message.append(f"|e|")
+                strl.append(f", |e|")
             else:
-                message.append(f"|!e|")
-
-        self.notify_radio_log_signal.emit(" ".join(message), "INFO")
+                strl.append(f", |!e|")
+        strl.append(f", {packet['decoded']}")
+        self.notify_radio_log_signal.emit("".join(strl), "INFO")
 
         node_from.rssi = str(
             round(
@@ -385,7 +390,6 @@ class MeshtasticManager(QObject, threading.Thread):
                 self.notify_message_signal.emit()
         if "payload" in packet["decoded"]:
             packet["decoded"].pop("payload")
-        self.notify_radio_log_signal.emit(str(packet["decoded"]), "INFO")
 
         nodes_to_update.append(node_from)
         self.update_nodes_info(nodes_to_update)
@@ -449,7 +453,6 @@ class MeshtasticManager(QObject, threading.Thread):
             )
         )
 
-        self.notify_radio_log_signal.emit("---------------", "INFO")
         trace = f"Message sent with ID: {message.to_id} with details {sent_packet}"
         self.notify_radio_log_signal.emit(trace, "INFO")
         message.mid = sent_packet.id
@@ -595,7 +598,6 @@ class MeshtasticManager(QObject, threading.Thread):
                 )
             )
 
-            self.notify_radio_log_signal.emit("---------------", "INFO")
             trace = f"Traceroute sent to {dest}."
             self.notify_radio_log_signal.emit(trace, "INFO")
 
