@@ -19,7 +19,7 @@ The objective is to provide a build on Linux (should work on Windows, compatibil
 | Perform traceroute (with SNR)|✅|❌|
 | Export nodes (json) |✅|✅|
 | Export messages and packets (json) |✅|✅|
-| Export events logs (json) |✅|✅|
+| Export events logs |✅|✅|
 | Metrics plotting (RF, power,...) |✅|✅|
 
 ## Installation 
