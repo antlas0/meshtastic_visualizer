@@ -13,7 +13,6 @@ from typing import List
 from PyQt6 import QtCore
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtGui import QTextCursor
-from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QTableWidgetItem, QListWidgetItem, QTreeWidgetItem
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtCore import pyqtSignal, QSettings
