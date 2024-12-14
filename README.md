@@ -39,6 +39,8 @@ $ python -m pip install -r requirements.txt
 $ python -m meshtastic_visualizer
 ```
 Note: If you rely on Wayland, you may experience Qt event not properly managed. To fall back on a `X11` session, provide the following environment variable when launching the application: `XDG_SESSION_TYPE=x11`.
+Otherwise, you can try `QT_QPA_PLATFORM=xcb`, by having previously installed `libxcb-cursor0` package.
+
 
 ## Todo
 A lot ! Please fill an issue to add ideas or raise bugs.
