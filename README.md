@@ -1,12 +1,11 @@
 # Meshtastic Visualizer
 Python PyQt graphical desktop app to interface with a local Meshtastic node using an USB connection. Possibility to subscribe to MQTT servers and retrieve nodes, messages,...
+Objective is to be able to use an already configured Meshtastic device, and be able to inspect messages, packets, metrics,...
+
+Initial work based on original repository of "Meshtastic Chat Desktop"
+
 Main framework used is PyQt6.
-
-Work based on original repository of "Meshtastic Chat Desktop"
-
-> Meshtastic Chat Desktop is a desktop application designed for Meshtastic device users who want to send and receive messages using their Meshtastic device via their desktop.
-
-The objective is to provide a build on Linux (should work on Windows, compatibility not ensured).
+Linux compatible, debian based testes (should work on Windows, compatibility not ensured).
 
 ## Features
 | Feature | Using local device | Using MQTT |
