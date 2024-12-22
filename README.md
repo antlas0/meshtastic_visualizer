@@ -5,7 +5,7 @@ Objective is to use an already configured Meshtastic device, and be able to insp
 Initial work based on original repository of "Meshtastic Chat Desktop"
 
 Main framework used is PyQt6.
-Linux compatible, debian based testes (should work on Windows, compatibility not ensured).
+Linux compatible, debian based tested (should work on Windows, compatibility not ensured).
 
 ## Features
 | Feature | Using local device | Using MQTT |
