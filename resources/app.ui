@@ -783,45 +783,19 @@
        </rect>
       </property>
       <property name="title">
-       <string>Radio logs</string>
+       <string>Device details</string>
       </property>
       <widget class="QTextEdit" name="output_textedit">
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>60</y>
+         <y>30</y>
          <width>691</width>
-         <height>251</height>
+         <height>281</height>
         </rect>
        </property>
        <property name="readOnly">
         <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="export_radio_button">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>30</y>
-         <width>31</width>
-         <height>25</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>⬇️</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="clear_radio_button">
-       <property name="geometry">
-        <rect>
-         <x>670</x>
-         <y>30</y>
-         <width>31</width>
-         <height>25</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>🗑️</string>
        </property>
       </widget>
      </widget>

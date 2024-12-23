@@ -79,8 +79,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.update_nodes_metrics)
         self._mqtt_manager.notify_nodes_metrics_signal.connect(
             self.update_nodes_metrics)
-        self._manager.notify_radio_log_signal.connect(self.update_radio_log)
-        self._manager.notify_radio_log_signal.connect(
+        self._manager.notify_local_device_configuration_signal.connect(self.update_device_details)
+        self._manager.notify_packet_received.connect(
             self.update_packets_treeview)
         self._manager.notify_message_signal.connect(
             self.update_received_message)
@@ -113,8 +113,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.export_chat_button.pressed.connect(self.export_chat)
         self.export_packets_button.pressed.connect(self.export_packets)
         self.export_nodes_button.pressed.connect(self.export_nodes)
-        self.export_radio_button.pressed.connect(self.export_radio)
-        self.clear_radio_button.pressed.connect(self.output_textedit.clear)
         self.clear_mqtt_button.pressed.connect(self.mqtt_output_textedit.clear)
         self.clear_messages_button.pressed.connect(self.clear_messages_table)
         self.clear_messages_button.pressed.connect(self._store.clear_messages)
@@ -177,9 +175,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.traceroute_button.clicked.connect(self.traceroute)
         self.nm_update_button.setEnabled(False)
         self.nm_update_button.pressed.connect(self.update_nodes_metrics)
-        self.nm_node_combobox.currentIndexChanged.connect(
+        self.nm_node_combobox.currentTextChanged.connect(
             self.update_metrics_buttons)
-        self.nm_metric_combobox.currentIndexChanged.connect(
+        self.nm_metric_combobox.currentTextChanged.connect(
             self.update_metrics_buttons)
         self.msg_node_list.itemClicked.connect(self.update_recipient)
         self.msg_channel_list.itemClicked.connect(self.update_dest_channel)
@@ -881,6 +879,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         cursor.setPosition(len(self.output_textedit.toPlainText()))
         self.output_textedit.setTextCursor(cursor)
 
+    def update_device_details(self, configuration: dict):
+        self.output_textedit.setText(configuration)
+        cursor = QTextCursor(self.output_textedit.textCursor())
+        cursor.setPosition(len(self.output_textedit.toPlainText()))
+        self.output_textedit.setTextCursor(cursor)
+
     def update_received_mqtt_log(self, log: str):
         self.mqtt_output_textedit.setReadOnly(True)
         tmp = [
@@ -917,17 +921,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._settings.setValue("mqtt_password", m.password)
         self._settings.setValue("mqtt_topic", m.topic)
         self._settings.setValue("mqtt_key", m.key)
-
-        self.mqtt_connect_event(m)
-
-    def export_radio(self) -> None:
-        nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
-        fpath = f"radio_{nnow}.log"
-        with open(fpath, "w") as text_file:
-            text_file.write(self.output_textedit.toPlainText())
-            absp = os.path.abspath(fpath)
-            trace = f"<a href='file://{absp}'>Exported radio to file: {fpath}</a>"
-            self.set_status(MessageLevel.INFO, trace)
 
     def export_mqtt_logs(self) -> None:
         nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")

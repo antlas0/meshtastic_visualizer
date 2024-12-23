@@ -126,9 +126,10 @@ class MeshtasticMQTT(QObject, threading.Thread):
                     self.notify_frontend_signal.emit(
                         MessageLevel.ERROR,
                         f"Could not subscribe to topic {self._mqtt_settings.topic}")
-                self.notify_frontend_signal.emit(
-                    MessageLevel.INFO,
-                    f"Subscribed to root topic {self._mqtt_settings.topic}")
+                else:
+                    self.notify_frontend_signal.emit(
+                        MessageLevel.INFO,
+                        f"Subscribed to root topic {self._mqtt_settings.topic}")
             else:
                 self.notify_frontend_signal.emit(
                     MessageLevel.ERROR,
