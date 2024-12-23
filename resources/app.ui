@@ -1085,9 +1085,9 @@
      <widget class="QComboBox" name="packettype_combobox">
       <property name="geometry">
        <rect>
-        <x>10</x>
+        <x>220</x>
         <y>80</y>
-        <width>191</width>
+        <width>171</width>
         <height>25</height>
        </rect>
       </property>
@@ -1095,7 +1095,7 @@
      <widget class="QPushButton" name="clear_packets_button">
       <property name="geometry">
        <rect>
-        <x>390</x>
+        <x>400</x>
         <y>80</y>
         <width>31</width>
         <height>25</height>
@@ -1108,7 +1108,7 @@
      <widget class="QPushButton" name="export_packets_button">
       <property name="geometry">
        <rect>
-        <x>210</x>
+        <x>10</x>
         <y>80</y>
         <width>31</width>
         <height>25</height>
@@ -1116,6 +1116,16 @@
       </property>
       <property name="text">
        <string>⬇️</string>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="packetsource_combobox">
+      <property name="geometry">
+       <rect>
+        <x>50</x>
+        <y>80</y>
+        <width>161</width>
+        <height>25</height>
+       </rect>
       </property>
      </widget>
     </widget>

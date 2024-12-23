@@ -240,6 +240,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packettype_combobox.insertItem(0, "All")
         self.packettype_combobox.currentIndexChanged.connect(
             self.clean_packets_treeview)
+        self.packetsource_combobox.insertItem(0, "All")
+        self.packetsource_combobox.currentIndexChanged.connect(
+            self.clean_packets_treeview)
         self.setStyleSheet(MAINWINDOW_STYLESHEET)
 
     def clear_messages_table(self) -> None:
@@ -262,6 +265,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packets_treewidget.clear()
         self.packettype_combobox.clear()
         self.packettype_combobox.insertItem(0, "All")
+        self.packetsource_combobox.clear()
+        self.packetsource_combobox.insertItem(0, "All")
         self.packets_total_lcd.display(0)
 
     def _get_meshtastic_message_header_fields(self) -> dict:
@@ -863,10 +868,20 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     lambda x: x.port_num == self.packettype_combobox.currentText(),
                     packets))
 
+        if self.packetsource_combobox.currentText() != "All":
+            filtered_packets = list(
+                filter(
+                    lambda x: x.from_id == self._store.get_id_from_long_name(self.packetsource_combobox.currentText()),
+                    filtered_packets))
+
         for packet in filtered_packets:
             if self.packettype_combobox.findText(packet.port_num) == -1:
                 self.packettype_combobox.insertItem(
                     1000, packet.port_num)  # insert last
+
+            if self.packetsource_combobox.findText(self._store.get_long_name_from_id(packet.from_id)) == -1:
+                self.packetsource_combobox.insertItem(
+                    100000, self._store.get_long_name_from_id(packet.from_id))  # insert last
 
             if str(packet.date) in alreading_existing_packets:
                 continue
