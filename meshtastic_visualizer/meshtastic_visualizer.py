@@ -179,8 +179,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.update_metrics_buttons)
         self.nm_metric_combobox.currentTextChanged.connect(
             self.update_metrics_buttons)
-        self.msg_node_list.itemClicked.connect(self.update_recipient)
-        self.msg_channel_list.itemClicked.connect(self.update_dest_channel)
         self.mesh_table.cellClicked.connect(self.mesh_table_is_clicked)
         self.message_textedit.textChanged.connect(
             self.update_text_message_length)
@@ -251,11 +249,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._store.clear_nodes()
         self._store.clear_nodes_metrics()
         self.mesh_table.setRowCount(0)
-        self.msg_node_list.clear()
         self.nm_node_combobox.clear()
         self.nodes_total_lcd.display(0)
         self.nodes_gps_lcd.display(0)
         self.nodes_recently_lcd.display(0)
+        self.messagerecipient_combobox.clear()
+        self.tr_dest_combobox.clear()
 
     def clear_packets(self) -> None:
         self._store.clear_radio_packets()
@@ -383,7 +382,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.message_textedit.blockSignals(False)
 
         remaining_chars = TEXT_MESSAGE_MAX_CHARS - \
-            len(self.message_textedit.toPlainText())
+            len(self.message_textedit.toPlainText().encode("utf-8"))
         self.remaining_chars_label.setText(
             f"{remaining_chars}/{TEXT_MESSAGE_MAX_CHARS}")
 
@@ -574,9 +573,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def send_message(self):
         message = self.message_textedit.toPlainText()
-        channel_name = self.msg_channel_label.text()
+        channel_name = self.messagechannel_combobox.currentText()
         recipient = self._store.get_id_from_long_name(
-            self.msg_to_label.text())
+            self.messagerecipient_combobox.currentText())
         channel_index = self._manager.get_data_store(
         ).get_channel_index_from_name(channel_name)
         # Update timeout before sending
@@ -630,27 +629,42 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                         lambda x: pattern.lower() in x.id.lower(),
                         nodes.values()))
 
-        # update table
-        current_row = None
-        if self.msg_node_list.currentRow():
-            current_row = self.msg_node_list.currentRow()
-        self.msg_node_list.clear()
+        # update multiples inputs
+        # TODO: create a dedicated signal for that
+        # messages nodes
+        current_recipient = None
+        if self.messagerecipient_combobox.currentText():
+            current_recipient = self.messagerecipient_combobox.currentText()
+        self.messagerecipient_combobox.clear()
+        self.messagerecipient_combobox.insertItem(0, "All")
+        # traceroute nodes
+        current_tr_dest = None
+        if self.tr_dest_combobox.currentText():
+            current_tr_dest = self.tr_dest_combobox.currentText()
+        self.tr_dest_combobox.clear()
+
+        # network metrics nodes
         current_nm_node = self.nm_node_combobox.currentText()
         self.nm_node_combobox.clear()
-        self.msg_node_list.insertItem(0, "All")
         self.nm_node_combobox.insertItem(
             0, "Me")
         for i, node in enumerate(filtered):
             if node.id == self._local_board_id:
                 continue
-            self.msg_node_list.insertItem(
+            self.messagerecipient_combobox.insertItem(
                 i + 1, node.long_name if node.long_name else node.id)
             self.nm_node_combobox.insertItem(
-                i + 2, node.long_name if node.long_name else node.id)
+                i, node.long_name if node.long_name else node.id)
+            self.tr_dest_combobox.insertItem(
+                i, node.long_name if node.long_name else node.id)
         self.nm_node_combobox.setCurrentText(current_nm_node)
-        if current_row:
-            self.msg_node_list.setCurrentRow(current_row)
+        if current_recipient:
+            self.messagerecipient_combobox.setCurrentText(current_recipient)
+        if current_tr_dest:
+            self.tr_dest_combobox.setCurrentText(current_tr_dest)
 
+
+        # update table
         rows: list[dict[str, any]] = []
         for node in filtered:
             row = {"Status": "", "User": "", "ID": ""}
@@ -736,7 +750,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         channels = config.get_channels()
         if not channels:
             return
-        for cb in ["msg_channel_list"]:
+        for cb in ["messagechannel_combobox", "tr_channel_combobox"]:
             getattr(self, cb).clear()
             for i, channel in enumerate(channels):
                 getattr(self, cb).insertItem(i, channel.name)
@@ -760,8 +774,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def traceroute(self):
         dest_id = self._store.get_id_from_long_name(
-            self.tr_dest_label.text())
-        channel_name = self.tr_channel_label.text()
+            self.tr_dest_combobox.currentText())
+        channel_name = self.tr_channel_combobox.currentText()
         maxhops = self.tr_maxhops_spinbox.value()
         channel_index = self._manager.get_data_store(
         ).get_channel_index_from_name(channel_name)
@@ -899,14 +913,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         cursor.setPosition(len(self.mqtt_output_textedit.toPlainText()))
         self.mqtt_output_textedit.setTextCursor(cursor)
 
-    def update_recipient(self, item: QListWidgetItem) -> None:
-        self.msg_to_label.setText(item.text())
-        self.tr_dest_label.setText(item.text())
-
-    def update_dest_channel(self, item: QListWidgetItem) -> None:
-        self.msg_channel_label.setText(item.text())
-        self.tr_channel_label.setText(item.text())
-
     def connect_mqtt(self) -> None:
         m = MeshtasticMQTTClientSettings()
         m.host = self.mqtt_host_linedit.text()
@@ -921,6 +927,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._settings.setValue("mqtt_password", m.password)
         self._settings.setValue("mqtt_topic", m.topic)
         self._settings.setValue("mqtt_key", m.key)
+        self.mqtt_connect_event(m)
 
     def export_mqtt_logs(self) -> None:
         nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")

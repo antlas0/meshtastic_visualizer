@@ -602,6 +602,7 @@ class MeshtasticManager(QObject, threading.Thread):
                     hop_limit=hopLimit,
                 )
             )
+        self.notify_packet_received.emit()
 
     def _node_id_from_num(self, nodeNum):
         """Convert node number to node ID"""
