@@ -929,8 +929,8 @@
      <widget class="QLCDNumber" name="nodes_total_lcd">
       <property name="geometry">
        <rect>
-        <x>10</x>
-        <y>20</y>
+        <x>750</x>
+        <y>10</y>
         <width>81</width>
         <height>31</height>
        </rect>
@@ -939,8 +939,8 @@
      <widget class="QLabel" name="label_15">
       <property name="geometry">
        <rect>
-        <x>100</x>
-        <y>50</y>
+        <x>840</x>
+        <y>40</y>
         <width>121</width>
         <height>17</height>
        </rect>
@@ -952,8 +952,8 @@
      <widget class="QLCDNumber" name="nodes_recently_lcd">
       <property name="geometry">
        <rect>
-        <x>240</x>
-        <y>20</y>
+        <x>980</x>
+        <y>10</y>
         <width>81</width>
         <height>31</height>
        </rect>
@@ -962,8 +962,8 @@
      <widget class="QLCDNumber" name="nodes_gps_lcd">
       <property name="geometry">
        <rect>
-        <x>120</x>
-        <y>20</y>
+        <x>860</x>
+        <y>10</y>
         <width>81</width>
         <height>31</height>
        </rect>
@@ -972,8 +972,8 @@
      <widget class="QLabel" name="label_19">
       <property name="geometry">
        <rect>
-        <x>230</x>
-        <y>50</y>
+        <x>970</x>
+        <y>40</y>
         <width>101</width>
         <height>17</height>
        </rect>
@@ -985,8 +985,8 @@
      <widget class="QLabel" name="label_20">
       <property name="geometry">
        <rect>
-        <x>10</x>
-        <y>50</y>
+        <x>750</x>
+        <y>40</y>
         <width>81</width>
         <height>17</height>
        </rect>
@@ -1012,7 +1012,7 @@
       <property name="geometry">
        <rect>
         <x>340</x>
-        <y>50</y>
+        <y>40</y>
         <width>91</width>
         <height>20</height>
        </rect>
@@ -1025,7 +1025,7 @@
       <property name="geometry">
        <rect>
         <x>350</x>
-        <y>20</y>
+        <y>10</y>
         <width>81</width>
         <height>31</height>
        </rect>
