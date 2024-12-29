@@ -25,7 +25,7 @@ Linux compatible, debian based tested (should work on Windows, compatibility not
 Using the `setup.py`:
 
 ```bash
-$ python -m pip install .
+$ git clone https://github.com/antlas0/meshtastic_visualizer.git
 ```
 
 ## How to start
