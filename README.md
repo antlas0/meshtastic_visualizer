@@ -22,7 +22,6 @@ Linux compatible, debian based tested (should work on Windows, compatibility not
 | Metrics plotting (RF, power,...) |✅|✅|
 
 ## Installation 
-Using the `setup.py`:
 
 ```bash
 $ git clone https://github.com/antlas0/meshtastic_visualizer.git
