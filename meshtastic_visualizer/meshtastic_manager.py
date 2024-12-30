@@ -68,6 +68,10 @@ class MeshtasticManager(QObject, threading.Thread):
         self.daemon = True
         self._store_lock = Lock()
         self._interface: Optional[meshtastic.serial_interface.SerialInterface] = None
+        self._is_connected = False
+
+    def is_connected(self) -> bool:
+        return self._is_connected
 
     def set_store(self, store: MeshtasticDataStore) -> None:
         self._data = store
@@ -92,14 +96,14 @@ class MeshtasticManager(QObject, threading.Thread):
                 devPath=self._data.device_path)
         except Exception as e:
             trace = f"Failed to connect to Meshtastic device {self._data.device_path}: {str(e)}"
-            self._data.connected = False
+            self._is_connected = False
             self.notify_frontend_signal.emit(MessageLevel.ERROR, trace)
             self.refresh_ui_signal.emit()
         else:
             # Subscribe to received message events
             pub.subscribe(self.on_receive, "meshtastic.receive")
             trace = f"Successfully connected to Meshtastic device {self._data.device_path}"
-            self._data.connected = True
+            self._is_connected = True
             self.retrieve_channels()
 
             node = self._interface.getMyNodeInfo()
@@ -132,7 +136,7 @@ class MeshtasticManager(QObject, threading.Thread):
             self.notify_frontend_signal.emit(MessageLevel.ERROR, trace)
         else:
             trace = f"Meshtastic device disconnected."
-            self._data.connected = False
+            self._is_connected.connected = False
             self.notify_frontend_signal.emit(MessageLevel.INFO, trace)
             res = True
         finally:

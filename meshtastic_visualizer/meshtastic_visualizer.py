@@ -259,8 +259,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def refresh_ui(self) -> None:
         self._lock.acquire()
-        data = self._store
-        if data.is_connected():
+        if self._manager.is_connected():
             self.connect_button.setEnabled(False)
             self.disconnect_button.setEnabled(True)
             for button in self._action_buttons:

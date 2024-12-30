@@ -21,7 +21,6 @@ class MeshtasticDataStore(Thread):
     device_path: Optional[str] = None
     channels: Optional[List[Channel]] = None
     local_node_config: Optional[MeshtasticNode] = None
-    connected: bool = False
     nodes: Dict[str, MeshtasticNode] = field(
         default_factory=dict)  # Dict[node_id, Node object]
     messages: Dict[str, MeshtasticMessage] = field(
@@ -37,9 +36,6 @@ class MeshtasticDataStore(Thread):
         self._lock = Lock()
         self._metrics_maxlength = 120
         self.task_queue = queue.Queue()
-
-    def is_connected(self) -> bool:
-        return self.connected
 
     def get_local_node_config(self) -> MeshtasticNode:
         self._lock.acquire()
