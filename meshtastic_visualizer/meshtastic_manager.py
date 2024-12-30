@@ -136,7 +136,7 @@ class MeshtasticManager(QObject, threading.Thread):
             self.notify_frontend_signal.emit(MessageLevel.ERROR, trace)
         else:
             trace = f"Meshtastic device disconnected."
-            self._is_connected.connected = False
+            self._is_connected = False
             self.notify_frontend_signal.emit(MessageLevel.INFO, trace)
             res = True
         finally:
