@@ -254,7 +254,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         }
 
     def remove_notification_badge(self, index):
-        if index == 1:
+        if index == 2:
             self.tabWidget.setTabText(2, "Messages")
 
     def refresh_ui(self) -> None:
@@ -768,7 +768,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def update_received_message(self) -> None:
         if self.tabWidget.currentIndex() != 2:
-            self.tabWidget.setTabText(2, "Messages ✉")
+            self.tabWidget.setTabText(2, "Messages 🔴")
 
         headers = self._get_meshtastic_message_header_fields()
         columns = list(headers.keys())
