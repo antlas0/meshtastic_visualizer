@@ -553,8 +553,15 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         channel_name = self.messagechannel_combobox.currentText()
         recipient = self._store.get_id_from_long_name(
             self.messagerecipient_combobox.currentText())
-        channel_index = self._manager.get_data_store(
-        ).get_channel_index_from_name(channel_name)
+        channel_index = -1
+        try:
+            channel_index = self._manager.get_data_store(
+            ).get_channel_index_from_name(channel_name)
+        except Exception:
+            channel_index = 0 # this is the default and seems to be standard before 2.5.X firmwares
+        finally:
+            pass
+
         # Update timeout before sending
         if channel_index != -1 and message:
             m = MeshtasticMessage(
