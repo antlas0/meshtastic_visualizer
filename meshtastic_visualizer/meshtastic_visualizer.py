@@ -37,7 +37,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     get_nodes_signal = pyqtSignal()
     send_message_signal = pyqtSignal(MeshtasticMessage)
     retrieve_channels_signal = pyqtSignal()
-    retrieve_local_node_config_signal = pyqtSignal()
     traceroute_signal = pyqtSignal(str, int, int)
     mqtt_connect_signal = pyqtSignal(MeshtasticMQTTClientSettings)
 
@@ -105,8 +104,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.send_message_signal.connect(self._manager.send_text_message)
         self.retrieve_channels_signal.connect(self._manager.retrieve_channels)
         self.get_nodes_signal.connect(self.update_nodes_map)
-        self.retrieve_local_node_config_signal.connect(
-            self._manager.load_local_node_configuration)
         self.traceroute_signal.connect(self._manager.send_traceroute)
         self.mqtt_connect_signal.connect(
             self._mqtt_manager.configure_and_start)
@@ -127,30 +124,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.mqtt_connect_button.pressed.connect(self.connect_mqtt)
         self.mqtt_disconnect_button.pressed.connect(
             self._mqtt_manager.disconnect_mqtt)
-
-    def connect_device_event(self, resetDB: bool):
-        self.connect_device_signal.emit(resetDB)
-
-    def disconnect_device_event(self):
-        self.disconnect_device_signal.emit()
-
-    def get_nodes_event(self):
-        self.get_nodes_signal.emit()
-
-    def retrieve_channels_event(self):
-        self.retrieve_channels_signal.emit()
-
-    def traceroute_event(self, dest_id: str, maxhops: int, channel_index: int):
-        self.traceroute_signal.emit(dest_id, maxhops, channel_index)
-
-    def mqtt_connect_event(self, settings: MeshtasticMQTTClientSettings):
-        self.mqtt_connect_signal.emit(settings)
-
-    def retrieve_local_node_config_event(self):
-        self.retrieve_local_node_config_signal.emit()
-
-    def send_message_event(self, message: MeshtasticMessage):
-        self.send_message_signal.emit(message)
 
     def set_status(self, loglevel: MessageLevel, message: str) -> None:
         if loglevel.value == MessageLevel.ERROR.value:
@@ -335,7 +308,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if device_path:
             self._manager.set_meshtastic_device(device_path)
             self.set_status(MessageLevel.INFO, f"Connecting to {device_path}.")
-            self.connect_device_event(self.reset_nodedb_checkbox.isChecked())
+            self.connect_device_signal.emit(self.reset_nodedb_checkbox.isChecked())
         else:
             self.set_status(MessageLevel.ERROR,
                             f"Cannot connect. Please specify a device path.")
@@ -344,7 +317,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         for i, device in enumerate(self._manager.get_meshtastic_devices()):
             self.device_combobox.clear()
             self.device_combobox.insertItem(i, device)
-        self.disconnect_device_event()
+        self.disconnect_device_signal.emit()
 
     def update_traceroute(
             self,
@@ -593,7 +566,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 want_ack=True,
                 channel_index=channel_index,
             )
-            self.send_message_event(m)
+            self.send_message_signal.emit(m)
             self.message_textedit.clear()
 
     def update_nodes_table(self) -> None:
@@ -740,7 +713,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.mesh_table.resizeColumnsToContents()
 
     def get_nodes(self):
-        self.get_nodes_event()
+        self.get_nodes_signal.emit()
 
     def get_channel_names(self) -> List[str]:
         config = self._store
@@ -760,7 +733,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 getattr(self, cb).insertItem(i, channel.name)
 
     def retrieve_channels(self):
-        self.retrieve_channels_event()
+        self.retrieve_channels_signal.emit()
 
     def update_local_node_config(self):
         cfg = self._store.get_local_node_config()
@@ -787,7 +760,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.traceroute_table.setColumnCount(3)
         self.traceroute_table.setHorizontalHeaderLabels(
             ["Id", "SNR To", "SNR Back"])
-        self.traceroute_event(
+        self.traceroute_signal.emit(
             dest_id=dest_id,
             maxhops=maxhops,
             channel_index=channel_index,
@@ -941,7 +914,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._settings.setValue("mqtt_password", m.password)
         self._settings.setValue("mqtt_topic", m.topic)
         self._settings.setValue("mqtt_key", m.key)
-        self.mqtt_connect_event(m)
+        self.mqtt_connect_signal.emit(m)
 
     def export_mqtt_logs(self) -> None:
         nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
