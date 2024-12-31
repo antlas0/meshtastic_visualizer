@@ -420,7 +420,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             if node.lat is None or node.lon is None:
                 continue
             strl = []
-            strl.append(f"<b>👤 Name:</b> {node.long_name}</br>")
+            if node.long_name:
+                strl.append(f"<b>👤 Name:</b> {node.long_name}</br>")
             strl.append(f"<b>🆔 id:</b> {node.id}</br>")
             if node.hardware:
                 strl.append(f"<b>🚲 Hardware:</b> {node.hardware}</br>")
