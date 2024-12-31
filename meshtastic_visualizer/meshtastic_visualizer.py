@@ -420,25 +420,21 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             if node.lat is None or node.lon is None:
                 continue
             strl = []
-            strl.append(f"<b>Name:</b> {node.long_name}</br>")
-            strl.append(f"<b>id:</b> {node.id}</br>")
+            strl.append(f"<b>👤 Name:</b> {node.long_name}</br>")
+            strl.append(f"<b>🆔 id:</b> {node.id}</br>")
             if node.hardware:
-                strl.append(f"<b>Hardware:</b> {node.hardware}</br>")
+                strl.append(f"<b>🚲 Hardware:</b> {node.hardware}</br>")
             if node.battery_level:
                 strl.append(
-                    f"<b>Battery Level:</b> {node.battery_level} %</br>")
+                    f"<b>⚡ Battery Level:</b> {node.battery_level} %</br>")
             if node.role:
-                strl.append(f"<b>Role:</b> {node.role}</br>")
+                strl.append(f"<b>⚙️ Role:</b> {node.role}</br>")
             if node.hopsaway:
-                strl.append(f"<b>Hops Away:</b> {node.hopsaway}</br>")
+                strl.append(f"<b>📍 Hops Away:</b> {node.hopsaway}</br>")
             if node.txairutil:
-                strl.append(f"<b>Air Util. Tx:</b> {node.txairutil} %</br>")
-            if node.rssi:
-                strl.append(f"<b>RSSI:</b> {node.rssi} dBm</br>")
-            if node.snr:
-                strl.append(f"<b>SNR:</b> {node.snr}</br>")
+                strl.append(f"<b>🔊 Air Util. Tx:</b> {node.txairutil} %</br>")
             if node.lastseen:
-                strl.append(f"<b>Last seen:</b> {node.lastseen}</br>")
+                strl.append(f"<b>⌛ Last seen:</b> {node.lastseen}</br>")
             popup_content = "".join(strl)
             popup = folium.Popup(
                 popup_content, max_width=300, min_width=250)
