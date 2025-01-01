@@ -7,7 +7,7 @@ from typing import List, Optional
 
 
 TEXT_MESSAGE_MAX_CHARS = 237
-
+TIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 
 class MessageLevel(enum.Enum):
     """
@@ -151,7 +151,7 @@ class MeshtasticMQTTClientSettings:
 
 @dataclass
 class MQTTPacket:
-    date: str  # datetime.datetime.strftime("%Y-%m-%d %H:%M:%S")
+    date: str  # datetime.datetime.strftime(TIME_FORMAT)
     pid: str
     from_id: str
     to_id: str
@@ -168,7 +168,7 @@ class MQTTPacket:
 
 @dataclass
 class RadioPacket:
-    date: str  # datetime.datetime.strftime("%Y-%m-%d %H:%M:%S")
+    date: str  # datetime.datetime.strftime(TIME_FORMAT)
     pid: str
     from_id: str
     to_id: str

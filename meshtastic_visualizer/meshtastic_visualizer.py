@@ -25,7 +25,8 @@ from .resources import MessageLevel, \
     MeshtasticMessage, \
     TEXT_MESSAGE_MAX_CHARS, \
     MeshtasticMQTTClientSettings, \
-    MAINWINDOW_STYLESHEET
+    MAINWINDOW_STYLESHEET, \
+    TIME_FORMAT
 
 from .meshtastic_mqtt import MeshtasticMQTT
 from .meshtastic_datastore import MeshtasticDataStore
@@ -566,7 +567,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if channel_index != -1 and message:
             m = MeshtasticMessage(
                 mid=-1,
-                date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                date=datetime.now().strftime(TIME_FORMAT),
                 from_id=self._local_board_id,
                 to_id=recipient,
                 content=message,
@@ -594,7 +595,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             filter(
                 lambda x: datetime.strptime(
                     x.lastseen,
-                    "%Y-%m-%d %H:%M:%S") > datetime.now() -
+                    TIME_FORMAT) > datetime.now() -
                 timedelta(
                     minutes=30) if x.lastseen is not None else False,
                 nodes.values()))
@@ -657,7 +658,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
             if node.lastseen:
                 recently_seen = datetime.strptime(
-                    node.lastseen, "%Y-%m-%d %H:%M:%S") > datetime.now() - timedelta(minutes=30)
+                    node.lastseen, TIME_FORMAT) > datetime.now() - timedelta(minutes=30)
                 if recently_seen:
                     status_line.append("📶")
             if node.rx_counter > 0:
@@ -880,7 +881,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         ]
         if self.output_textedit.toPlainText() != "":
             tmp.append("\n")
-        nnow = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        nnow = datetime.now().strftime(TIME_FORMAT)
         tmp.append(f"[{nnow}] {message}")
         self.output_textedit.setText("".join(tmp))
         cursor = QTextCursor(self.output_textedit.textCursor())
@@ -900,7 +901,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         ]
         if self.mqtt_output_textedit.toPlainText() != "":
             tmp.append("\n")
-        nnow = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        nnow = datetime.now().strftime(TIME_FORMAT)
         tmp.append(f"[{nnow}] {log}")
         self.mqtt_output_textedit.setText("".join(tmp))
         cursor = QTextCursor(self.mqtt_output_textedit.textCursor())
