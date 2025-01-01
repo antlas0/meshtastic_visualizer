@@ -253,6 +253,8 @@ class MeshtasticMQTT(QObject, threading.Thread):
                     payload=mp.decoded.payload,
                     port_num=portnums_pb2.PortNum.Name(
                         se.packet.decoded.portnum),
+                    rssi=mp.rx_rssi,
+                    snr=mp.rx_snr,
                 ))
 
             if mp.decoded.portnum == portnums_pb2.TEXT_MESSAGE_APP:

@@ -162,6 +162,8 @@ class MQTTPacket:
     gateway_id: str = ""
     is_decrypted: bool = False
     source: str = "mqtt"
+    snr: Optional[float] = None
+    rssi: Optional[float] = None
 
 
 @dataclass
