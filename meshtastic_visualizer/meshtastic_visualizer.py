@@ -426,8 +426,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             if node.hardware:
                 strl.append(f"<b>🚲 Hardware:</b> {node.hardware}</br>")
             if node.battery_level:
-                strl.append(
-                    f"<b>⚡ Battery Level:</b> {node.battery_level} %</br>")
+                if node.battery_level > 100:
+                    strl.append(
+                        f"<b>🔌 Battery Level:</b> 100 %</br>")
+                else:
+                    strl.append(
+                        f"<b>⚡ Battery Level:</b> {node.battery_level} %</br>")
             if node.role:
                 strl.append(f"<b>⚙️ Role:</b> {node.role}</br>")
             if node.hopsaway:
