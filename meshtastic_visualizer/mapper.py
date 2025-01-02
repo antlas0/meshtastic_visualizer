@@ -39,7 +39,7 @@ class Mapper:
         del data
         return html
 
-    def _link_color(node_id: str) -> str:
+    def _link_color(self, node_id: str) -> str:
         """returns a color from node condition
 
         Args:
