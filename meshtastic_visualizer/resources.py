@@ -2,7 +2,7 @@
 
 import enum
 import datetime
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from typing import List, Optional
 
 
@@ -41,8 +41,6 @@ def create_getter(field_name):
     getter.__name__ = f"get_{field_name}"
     return getter
 
-# Function to create a setter method
-
 
 def create_setter(field_name):
     def setter(self, value):
@@ -62,9 +60,21 @@ def run_in_thread(method):
 
     return wrapper
 
+@dataclass
+class JsonExporter:
+    def date2str(self) -> None:
+        """convert all fields of class to json-convertible format
+
+        Returns:
+            None
+        """
+        for f in fields(self):
+            if isinstance(getattr(self, f.name), datetime.datetime):
+                setattr(self, f.name, getattr(self, f.name).strftime(TIME_FORMAT))
+
 
 @dataclass
-class MeshtasticMessage:
+class MeshtasticMessage(JsonExporter):
     mid: int
     date: Optional[datetime.datetime] = None
     from_id: Optional[str] = None
@@ -82,7 +92,7 @@ class MeshtasticMessage:
 
 
 @dataclass
-class MeshtasticNode:
+class MeshtasticNode(JsonExporter):
     long_name: Optional[str] = None
     short_name: Optional[str] = None
     id: Optional[str] = None
@@ -99,8 +109,8 @@ class MeshtasticNode:
     snr: Optional[str] = None
     neighbors: List[str] = field(default_factory=list)
     hopsaway: Optional[str] = None
-    firstseen: Optional[str] = None
-    lastseen: Optional[str] = None
+    firstseen: Optional[datetime.datetime] = None
+    lastseen: Optional[datetime.datetime] = None
     uptime: Optional[int] = None
     is_local: Optional[bool] = None
     public_key: str = ""
@@ -150,8 +160,8 @@ class MeshtasticMQTTClientSettings:
 
 
 @dataclass
-class MQTTPacket:
-    date: str  # datetime.datetime.strftime(TIME_FORMAT)
+class MQTTPacket(JsonExporter):
+    date: datetime.datetime
     pid: str
     from_id: str
     to_id: str
@@ -167,8 +177,8 @@ class MQTTPacket:
 
 
 @dataclass
-class RadioPacket:
-    date: str  # datetime.datetime.strftime(TIME_FORMAT)
+class RadioPacket(JsonExporter):
+    date: datetime.datetime
     pid: str
     from_id: str
     to_id: str

@@ -28,8 +28,7 @@ from .resources import run_in_thread, \
     MeshtasticMessage, \
     PacketInfoType, \
     NodeMetrics, \
-    RadioPacket, \
-    TIME_FORMAT
+    RadioPacket
 
 
 from .meshtastic_datastore import MeshtasticDataStore
@@ -180,7 +179,7 @@ class MeshtasticManager(QObject, threading.Thread):
             role=node["user"]["role"] if "role" in node["user"] else None,
             lat=str(node["position"]["latitude"]) if "position" in node and "latitude" in node["position"] else None,
             lon=str(node["position"]["longitude"] if "position" in node and "longitude" in node["position"] else None),
-            lastseen=datetime.datetime.fromtimestamp(node["lastHeard"]).strftime(TIME_FORMAT) if "lastHeard" in node and node["lastHeard"] is not None else None,
+            lastseen=datetime.datetime.fromtimestamp(node["lastHeard"]) if "lastHeard" in node and node["lastHeard"] is not None else None,
             battery_level=batlevel,
             hopsaway=str(node["hopsAway"]) if "hopsAway" in node else None,
             snr=str(round(node["snr"], 2)) if "snr" in node else None,
@@ -218,7 +217,7 @@ class MeshtasticManager(QObject, threading.Thread):
 
         self._data.store_radiopacket(
             RadioPacket(
-                date=datetime.datetime.now().strftime(TIME_FORMAT),
+                date=datetime.datetime.now(),
                 pid=packet["id"],
                 from_id=packet['fromId'],
                 to_id=packet['toId'],
@@ -269,7 +268,7 @@ class MeshtasticManager(QObject, threading.Thread):
                 2)) if "rxSnr" in packet else None
         node_from.hopsaway = str(
             packet["hopsAway"]) if "hopsAway" in packet else None
-        node_from.lastseen = datetime.datetime.now().strftime(TIME_FORMAT)
+        node_from.lastseen = datetime.datetime.now()
 
         if decoded["portnum"] == PacketInfoType.PCK_TELEMETRY_APP.value:
             node_from.battery_level = decoded["telemetry"]["deviceMetrics"]["batteryLevel"] if "deviceMetrics" in packet[
@@ -377,7 +376,7 @@ class MeshtasticManager(QObject, threading.Thread):
 
                 m = MeshtasticMessage(
                     mid=packet["id"],
-                    date=datetime.datetime.now().strftime(TIME_FORMAT),
+                    date=datetime.datetime.now(),
                     content=current_message,
                     rx_rssi=packet['rxRssi'] if 'rxRssi' in packet else None,
                     rx_snr=packet['rxSnr'] if 'rxSnr' in packet else None,
@@ -451,7 +450,7 @@ class MeshtasticManager(QObject, threading.Thread):
 
         self._data.store_radiopacket(
             RadioPacket(
-                date=datetime.datetime.now().strftime(TIME_FORMAT),
+                date=datetime.datetime.now(),
                 pid=sent_packet.id,
                 from_id=self._local_board_id,
                 to_id=message.to_id,
@@ -520,7 +519,7 @@ class MeshtasticManager(QObject, threading.Thread):
                     lon=str(
                         node["position"]["longitude"] if "position" in node and "longitude" in node["position"] else None),
                     lastseen=datetime.datetime.fromtimestamp(
-                        node["lastHeard"]).strftime(TIME_FORMAT) if "lastHeard" in node and node["lastHeard"] is not None else None,
+                        node["lastHeard"]) if "lastHeard" in node and node["lastHeard"] is not None else None,
                     id=node["user"]["id"],
                     battery_level=batlevel,
                     hopsaway=str(
@@ -594,7 +593,7 @@ class MeshtasticManager(QObject, threading.Thread):
         else:
             self._data.store_radiopacket(
                 RadioPacket(
-                    date=datetime.datetime.now().strftime(TIME_FORMAT),
+                    date=datetime.datetime.now(),
                     pid=str(-1),
                     from_id=self._local_board_id,
                     to_id=dest,

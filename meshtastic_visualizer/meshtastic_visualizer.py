@@ -460,7 +460,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if channel_index != -1 and message:
             m = MeshtasticMessage(
                 mid=-1,
-                date=datetime.now().strftime(TIME_FORMAT),
+                date=datetime.now(),
                 from_id=self._local_board_id,
                 to_id=recipient,
                 content=message,
@@ -486,9 +486,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.nodes_gps_lcd.display(len(positioned_nodes))
         recently_seen = list(
             filter(
-                lambda x: datetime.strptime(
-                    x.lastseen,
-                    TIME_FORMAT) > datetime.now() -
+                lambda x: x.lastseen > datetime.now() -
                 timedelta(
                     minutes=30) if x.lastseen is not None else False,
                 nodes.values()))
@@ -550,8 +548,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             status_line = []
 
             if node.lastseen:
-                recently_seen = datetime.strptime(
-                    node.lastseen, TIME_FORMAT) > datetime.now() - timedelta(minutes=30)
+                recently_seen = node.lastseen > datetime.now() - timedelta(minutes=30)
                 if recently_seen:
                     status_line.append("📶")
             if node.rx_counter > 0:
@@ -570,6 +567,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     "Hardware": node.hardware,
                 }
             )
+            node.date2str()
             row.update(
                 {
                     "Latitude": node.lat,
@@ -682,6 +680,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         rows: list[dict[str, any]] = []
 
         for message in messages:
+            message.date2str()
             data = {}
             for column in columns:
                 if column == "from_id" or column == "to_id":
@@ -748,6 +747,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     filtered_packets))
 
         for packet in filtered_packets:
+            packet.date2str()
             if self.packettype_combobox.findText(packet.port_num) == -1:
                 self.packettype_combobox.insertItem(
                     1000, packet.port_num)  # insert last
@@ -828,6 +828,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def export_packets(self) -> None:
         packets = self._store.get_mqtt_packets() + self._store.get_radio_packets()
+        [x.date2str() for x in packets]
         packets_list = [asdict(x) for x in packets]
         for p in packets_list:
             try:
@@ -844,7 +845,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.set_status(MessageLevel.INFO, trace)
 
     def export_chat(self) -> None:
-        messages = [asdict(x) for x in self._store.get_messages()]
+        messages = self._store.get_messages()
+        [x.date2str() for x in messages]
+        messages = [asdict(x) for x in messages]
         data_json = json.dumps(messages, indent=4)
         nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
         fpath = f"messages_{nnow}.json"
@@ -855,8 +858,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.set_status(MessageLevel.INFO, trace)
 
     def export_nodes(self) -> None:
-        messages = [asdict(x) for x in self._store.get_nodes().values()]
-        data_json = json.dumps(messages, indent=4)
+        nodes = self._store.get_nodes().values()
+        [x.date2str() for x in nodes]
+        nodes = [asdict(x) for x in nodes]
+        data_json = json.dumps(nodes, indent=4)
         nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
         fpath = f"nodes_{nnow}.json"
         with open(fpath, "w") as json_file:

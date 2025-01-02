@@ -237,7 +237,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
 
             self._store.store_mqtt_packet(
                 MQTTPacket(
-                    date=datetime.datetime.now().strftime(TIME_FORMAT),
+                    date=datetime.datetime.now(),
                     pid=se.packet.id,
                     from_id=self.node_number_to_id(
                         getattr(
@@ -280,13 +280,13 @@ class MeshtasticMQTT(QObject, threading.Thread):
                         hop_start=mp.hop_start,
                         channel_index=mp.channel,
                         date=datetime.datetime.fromtimestamp(
-                            mp.rx_time).strftime(TIME_FORMAT),
+                            mp.rx_time),
                     )
                     n = MeshtasticNode(
                         id=self.node_number_to_id(
                             getattr(
                                 mp, "from")),
-                        lastseen=datetime.datetime.now().strftime(TIME_FORMAT),
+                        lastseen=datetime.datetime.now(),
                     )
                     nm = NodeMetrics(
                         node_id=self.node_number_to_id(getattr(mp, "from")),
@@ -312,7 +312,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                         id=self.node_number_to_id(
                             getattr(
                                 mp, "from")),
-                        lastseen=datetime.datetime.now().strftime(TIME_FORMAT),
+                        lastseen=datetime.datetime.now(),
                     )
                     if getattr(mp, "from") != neigh.last_sent_by_id:
                         n.neighbors = [
@@ -347,7 +347,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                         rssi=mp.rx_rssi,
                         role=config_pb2.Config.DeviceConfig.Role.Name(
                             info.role),
-                        lastseen=datetime.datetime.now().strftime(TIME_FORMAT),
+                        lastseen=datetime.datetime.now(),
                         public_key=str(
                             info.public_key),
                     )
@@ -377,7 +377,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                         alt=mapreport.altitude,
                         hardware=mesh_pb2.HardwareModel.Name(mapreport.hw_model),
                         role=config_pb2.Config.DeviceConfig.Role.Name(mapreport.role),
-                        lastseen=datetime.datetime.now().strftime(TIME_FORMAT),
+                        lastseen=datetime.datetime.now(),
                     )
                     nm = NodeMetrics(
                         node_id=self.node_number_to_id(getattr(mp, 'from')),
@@ -408,7 +408,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                             alt=str(position.altitude),
                             rssi=mp.rx_rssi,
                             snr=mp.rx_snr,
-                            lastseen=datetime.datetime.now().strftime(TIME_FORMAT),
+                            lastseen=datetime.datetime.now(),
                         )
                         nm = NodeMetrics(
                             node_id=self.node_number_to_id(
@@ -442,7 +442,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 else:
                     n = MeshtasticNode(
                         id=self.node_number_to_id(getattr(mp, "from")),
-                        lastseen=datetime.datetime.now().strftime(TIME_FORMAT),
+                        lastseen=datetime.datetime.now(),
                         chutil=round(env.device_metrics.channel_utilization, 2),
                         txairutil=round(env.device_metrics.air_util_tx, 2),
                         battery_level=env.device_metrics.battery_level,

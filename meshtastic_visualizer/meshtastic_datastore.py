@@ -13,8 +13,7 @@ from .resources import run_in_thread, \
     MeshtasticMessage, \
     NodeMetrics, \
     MQTTPacket, \
-    RadioPacket, \
-    TIME_FORMAT
+    RadioPacket
 
 
 @dataclass
@@ -173,7 +172,7 @@ class MeshtasticDataStore(Thread):
 
     def get_nodes(self) -> dict:
         self._lock.acquire()
-        res = copy.copy(self.nodes)
+        res = copy.deepcopy(self.nodes)
         self._lock.release()
         return res
 
@@ -215,7 +214,7 @@ class MeshtasticDataStore(Thread):
             # not previously in nodedb and discovering at runtime
             # meaning we got a packet from this node
             self.nodes[str(node.id)] = node
-            node.firstseen = datetime.datetime.now().strftime(TIME_FORMAT)
+            node.firstseen = datetime.datetime.now()
             node.lastseen = node.firstseen
             node.rx_counter = 1
         else:
@@ -228,7 +227,7 @@ class MeshtasticDataStore(Thread):
 
             # if in nodedb previously but unseen so far (rx_counter == 0)
             if getattr(self.nodes[str(node.id)], "rx_counter") == 0:
-                node.firstseen = datetime.datetime.now().strftime(TIME_FORMAT)
+                node.firstseen = datetime.datetime.now()
                 node.lastseen = node.firstseen
 
             rx_counter = getattr(self.nodes[str(node.id)], "rx_counter") + 1
