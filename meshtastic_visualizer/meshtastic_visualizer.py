@@ -30,6 +30,7 @@ from .resources import MessageLevel, \
 
 from .meshtastic_mqtt import MeshtasticMQTT
 from .meshtastic_datastore import MeshtasticDataStore
+from .mapper import Mapper
 
 
 class MeshtasticQtApp(QtWidgets.QMainWindow):
@@ -372,122 +373,14 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.nm_node_combobox.setCurrentText(long_name)
 
     def init_map(self):
-        self._map = folium.Map(zoom_start=7)
-        MousePosition().add_to(self._map)
-        MeasureControl().add_to(self._map)
+        self._map = Mapper()
         self.update_map_in_widget()
 
     def update_map_in_widget(self):
-        data = io.BytesIO()
-        self._map.save(data, close_file=False)
-        data.seek(0)
-        html = data.getvalue().decode()
-        data.close()
-        del data
-        self.nodes_map.setHtml(html)
+        self.nodes_map.setHtml(self._map.convert2html())
 
     def update_nodes_map(self):
-        # we re-create from scratch every time
-        # using this method we od have easy access to the Dom anyway
-        def __link_color(node_id: str) -> str:
-            hash_object = hashlib.md5(node_id.encode())
-            color = '#' + hash_object.hexdigest()[:6]
-            return color
-
-        del self._map
-        self._map = None
-        self._map = folium.Map(zoom_start=7, control_scale=True, no_touch=True)
-        MousePosition().add_to(self._map)
-        MeasureControl().add_to(self._map)
-
-        # Add a new marker
-        nodes = self._store.get_nodes()
-        if nodes is None:
-            return
-
-        markers_group = folium.FeatureGroup(name="Stations")
-        links_group = folium.FeatureGroup(name="Links")
-        markers: list = []
-        links: list = []
-
-        # in case of links tracing, pre-create a dict(node_id, [lat, lon])
-        nodes_coords = {
-            x.id: [
-                float(
-                    x.lat), float(
-                    x.lon)] for __, x in nodes.items() if x.lat is not None and x.lon is not None}
-
-        for node_id, node in nodes.items():
-            if node.lat is None or node.lon is None:
-                continue
-            strl = []
-            if node.long_name:
-                strl.append(f"<b>👤 Name:</b> {node.long_name}</br>")
-            strl.append(f"<b>🆔 id:</b> {node.id}</br>")
-            if node.hardware:
-                strl.append(f"<b>🚲 Hardware:</b> {node.hardware}</br>")
-            if node.battery_level:
-                if node.battery_level > 100:
-                    strl.append(
-                        f"<b>🔌 Battery Level:</b> 100 %</br>")
-                else:
-                    strl.append(
-                        f"<b>⚡ Battery Level:</b> {node.battery_level} %</br>")
-            if node.role:
-                strl.append(f"<b>⚙️ Role:</b> {node.role}</br>")
-            if node.hopsaway:
-                strl.append(f"<b>📍 Hops Away:</b> {node.hopsaway}</br>")
-            if node.txairutil:
-                strl.append(f"<b>🔊 Air Util. Tx:</b> {node.txairutil} %</br>")
-            if node.lastseen:
-                strl.append(f"<b>⌛ Last seen:</b> {node.lastseen}</br>")
-            popup_content = "".join(strl)
-            popup = folium.Popup(
-                popup_content, max_width=300, min_width=250)
-            color = "blue"
-            if node.rx_counter > 0:
-                color = "green"
-            if node.id == self._local_board_id:
-                color = "orange"
-
-            marker = folium.Marker(
-                location=[
-                    node.lat,
-                    node.lon],
-                tooltip=popup_content,
-                popup=popup,
-                icon=folium.Icon(color=color),
-            )
-            marker.add_to(markers_group)
-            markers.append(marker)
-
-            # neighbors
-            if node.neighbors is not None:
-                for neighbor in node.neighbors:
-                    # we can trace a link
-                    if neighbor in nodes_coords.keys():
-                        link_coords = [
-                            nodes_coords[node.id],
-                            nodes_coords[neighbor],
-                        ]
-                        if link_coords[0][0] is not None \
-                                and link_coords[0][1] is not None \
-                                and link_coords[1][0] is not None\
-                                and link_coords[1][1] is not None:
-                            link = folium.PolyLine(
-                                link_coords, color=__link_color(node.id))
-                            link.add_to(links_group)
-                            links.append(link)
-        if markers:
-            markers_group.add_to(self._map)
-            markers_lat = [x.location[0] for x in markers]
-            markers_lon = [x.location[1] for x in markers]
-            self._map.fit_bounds([[min(markers_lat), min(markers_lon)], [
-                                 max(markers_lat), max(markers_lon)]])
-        if links:
-            links_group.add_to(self._map)
-            folium.LayerControl().add_to(self._map)
-        del nodes
+        self._map.update(self._store.get_nodes())
         self.update_map_in_widget()
 
     def clean_plot(self) -> None:
