@@ -7,6 +7,8 @@ import folium
 from folium.plugins import MousePosition, MeasureControl
 
 
+from .resources import CHARGING_TRESHOLD
+
 class Mapper:
     """class that manages the map
     """
@@ -76,6 +78,7 @@ class Mapper:
         for node_id, node in nodes.items():
             if node.lat is None or node.lon is None:
                 continue
+            icon_name:str = "tower-cell"
             strl = []
             if node.long_name:
                 strl.append(f"<b>👤 Name:</b> {node.long_name}</br>")
@@ -83,12 +86,11 @@ class Mapper:
             if node.hardware:
                 strl.append(f"<b>🚲 Hardware:</b> {node.hardware}</br>")
             if node.battery_level:
-                if node.battery_level > 100:
-                    strl.append(
-                        f"<b>🔌 Battery Level:</b> 100 %</br>")
-                else:
-                    strl.append(
-                        f"<b>⚡ Battery Level:</b> {node.battery_level} %</br>")
+                icon = "⚡"
+                if node.voltage and node.voltage > CHARGING_TRESHOLD:
+                    icon = "🔌"
+                strl.append(
+                    f"<b>{icon} Battery Level:</b> {node.battery_level} %</br>")
             if node.role:
                 strl.append(f"<b>⚙️ Role:</b> {node.role}</br>")
             if node.hopsaway:
@@ -105,6 +107,9 @@ class Mapper:
                 color = "green"
             if node.is_local:
                 color = "orange"
+                icon_name = "walkie-talkie"
+            if node.is_mqtt_gateway:
+                icon_name = "network-wired"
 
             marker = folium.Marker(
                 location=[
@@ -112,7 +117,7 @@ class Mapper:
                     node.lon],
                 tooltip=popup_content,
                 popup=popup,
-                icon=folium.Icon(color=color),
+                icon=folium.Icon(color=color, icon=icon_name, prefix="fa"),
             )
             marker.add_to(markers_group)
             markers.append(marker)

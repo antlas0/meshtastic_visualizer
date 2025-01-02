@@ -182,9 +182,9 @@ class MeshtasticManager(QObject, threading.Thread):
             lastseen=datetime.datetime.fromtimestamp(node["lastHeard"]) if "lastHeard" in node and node["lastHeard"] is not None else None,
             battery_level=batlevel,
             hopsaway=str(node["hopsAway"]) if "hopsAway" in node else None,
-            snr=str(round(node["snr"], 2)) if "snr" in node else None,
-            txairutil=str(round(node["deviceMetrics"]["airUtilTx"], 2)) if "deviceMetrics" in node and "airUtilTx" in node["deviceMetrics"] else None,
-            chutil=str(round(node["deviceMetrics"]["channelUtilization"], 2)) if "deviceMetrics" in node and "channelUtilization" in node["deviceMetrics"] else None,
+            snr=round(node["snr"], 2) if "snr" in node else None,
+            txairutil=round(node["deviceMetrics"]["airUtilTx"], 2) if "deviceMetrics" in node and "airUtilTx" in node["deviceMetrics"] else None,
+            chutil=round(node["deviceMetrics"]["channelUtilization"], 2) if "deviceMetrics" in node and "channelUtilization" in node["deviceMetrics"] else None,
             uptime=node["deviceMetrics"]["uptimeSeconds"] if "deviceMetrics" in node and "uptimeSeconds" in node["deviceMetrics"] else None,
             is_local=True,
             public_key=node["user"]["publicKey"]
@@ -258,14 +258,12 @@ class MeshtasticManager(QObject, threading.Thread):
                 strl.append(f", |!e|")
         strl.append(f", {packet['decoded']}")
 
-        node_from.rssi = str(
-            round(
+        node_from.rssi = round(
                 packet["rxRssi"],
-                2)) if "rxRssi" in packet else None
-        node_from.snr = str(
-            round(
+                2) if "rxRssi" in packet else None
+        node_from.snr = round(
                 packet["rxSnr"],
-                2)) if "rxSnr" in packet else None
+                2) if "rxSnr" in packet else None
         node_from.hopsaway = str(
             packet["hopsAway"]) if "hopsAway" in packet else None
         node_from.lastseen = datetime.datetime.now()
@@ -273,20 +271,28 @@ class MeshtasticManager(QObject, threading.Thread):
         if decoded["portnum"] == PacketInfoType.PCK_TELEMETRY_APP.value:
             node_from.battery_level = decoded["telemetry"]["deviceMetrics"]["batteryLevel"] if "deviceMetrics" in packet[
                 "decoded"]["telemetry"] and "batteryLevel" in decoded["telemetry"]["deviceMetrics"] else None
-            node_from.txairutil = str(
-                round(
+            node_from.txairutil = round(
                     decoded["telemetry"]["deviceMetrics"]["airUtilTx"],
-                    2)) if "deviceMetrics" in decoded["telemetry"] and "airUtilTx" in decoded["telemetry"]["deviceMetrics"] else None
-            node_from.chutil = str(
-                round(
+                    2) if "deviceMetrics" in decoded["telemetry"] and "airUtilTx" in decoded["telemetry"]["deviceMetrics"] else None
+            node_from.chutil = round(
                     decoded["telemetry"]["deviceMetrics"]["channelUtilization"],
-                    2)) if "deviceMetrics" in decoded["telemetry"] and "channelUtilization" in decoded["telemetry"]["deviceMetrics"] else None
-            node_from.voltage = str(
-                round(
+                    2) if "deviceMetrics" in decoded["telemetry"] and "channelUtilization" in decoded["telemetry"]["deviceMetrics"] else None
+            node_from.voltage = round(
                     decoded["telemetry"]["deviceMetrics"]["voltage"],
-                    2)) if "deviceMetrics" in decoded["telemetry"] and "voltage" in decoded["telemetry"]["deviceMetrics"] else None
+                    2) if "deviceMetrics" in decoded["telemetry"] and "voltage" in decoded["telemetry"]["deviceMetrics"] else None
             node_from.uptime = decoded["telemetry"]["deviceMetrics"]["uptimeSeconds"] if "deviceMetrics" in packet[
                 "decoded"]["telemetry"] and "uptimeSeconds" in decoded["telemetry"]["deviceMetrics"] else None
+            nm = NodeMetrics(
+                node_id=node_from.id,
+                timestamp=int(round(datetime.datetime.now().timestamp())),
+                uptime=int(node_from.uptime) if node_from.uptime is not None else None,
+                air_util_tx=float(node_from.txairutil) if node_from.txairutil is not None else None,
+                channel_utilization=float(node_from.chutil) if node_from.chutil is not None else None,
+                battery_level=float(node_from.battery_level) if node_from.battery_level is not None else None,
+                voltage=float(node_from.voltage) if node_from.voltage is not None else None,
+            )
+            self._data.store_or_update_metrics(nm)
+            self.notify_nodes_metrics_signal.emit()
 
         if decoded["portnum"] == PacketInfoType.PCK_POSITION_APP.value:
             node_from.lat = decoded["position"]["latitude"] if "latitude" in decoded["position"] else None
@@ -294,26 +300,18 @@ class MeshtasticManager(QObject, threading.Thread):
             node_from.alt = decoded["position"]["altitude"] if "altitude" in decoded["position"] else None
 
         if decoded["portnum"] == PacketInfoType.PCK_ROUTING_APP.value:
-            ack_status = decoded["routing"]["errorReason"]
-            trace = f"Ack packet from {packet['fromId']} for packet id {packet['decoded']['requestId']}: {ack_status}"
-
+            ack_label = decoded["routing"]["errorReason"]
             acked_message_id = decoded["requestId"]
 
-            ack_label = {
+            ack_status = {
                 "MAX_RETRANSMIT": False,
                 "NONE": True,
             }
 
             m = MeshtasticMessage(
                 mid=acked_message_id,
-                rx_rssi=packet['rxRssi'] if 'rxRssi' in packet else None,
-                rx_snr=packet['rxSnr'] if 'rxSnr' in packet else None,
-                channel_index=packet["channel"] if "channel" in packet else None,
-                hop_limit=packet['hopLimit'] if 'hopLimit' in packet else None,
-                hop_start=packet['hopStart'] if 'hopStart' in packet else None,
-                want_ack=False,
-                ack=ack_label[ack_status],
-                public_key=packet["publicKey"] if "publicKey" in packet else "")
+                ack_status=ack_status[ack_label],
+                ack_by=packet['fromId'])
             self._data.store_or_update_messages(m, only_update=True)
             self.notify_message_signal.emit()
 
@@ -388,10 +386,12 @@ class MeshtasticManager(QObject, threading.Thread):
                     hop_limit=packet['hopLimit'] if 'hopLimit' in packet else None,
                     hop_start=packet['hopStart'] if 'hopStart' in packet else None,
                     want_ack=packet['wantAck'] if 'wantAck' in packet else None,
-                    ack="✅",
                     public_key=packet["publicKey"] if "publicKey" in packet else "",
                     pki_encrypted=packet["pkiEncrypted"] if "pkiEncrypted" in packet else False,
                 )
+
+                if m.to_id == self._local_board_id:
+                    m.ack_status = True
 
                 self._data.store_or_update_messages(m)
                 print(
@@ -473,22 +473,6 @@ class MeshtasticManager(QObject, threading.Thread):
 
         for n in nodes:
             self._data.store_or_update_node(n)
-
-            nm = NodeMetrics(
-                node_id=n.id,
-                timestamp=int(round(datetime.datetime.now().timestamp())),
-                rssi=float(n.rssi) if n.rssi is not None else None,
-                snr=float(n.snr) if n.snr is not None else None,
-                hopsaway=int(n.hopsaway) if n.hopsaway is not None else None,
-                uptime=int(n.uptime) if n.uptime is not None else None,
-                air_util_tx=float(n.txairutil) if n.txairutil is not None else None,
-                channel_utilization=float(n.chutil) if n.chutil is not None else None,
-                battery_level=float(n.battery_level) if n.battery_level is not None else None,
-                voltage=float(n.voltage) if n.voltage is not None else None,
-            )
-            self._data.store_or_update_metrics(nm)
-            self.notify_nodes_metrics_signal.emit()
-
             self.notify_nodes_table_signal.emit()
 
     @run_in_thread
@@ -524,18 +508,15 @@ class MeshtasticManager(QObject, threading.Thread):
                     battery_level=batlevel,
                     hopsaway=str(
                         node["hopsAway"]) if "hopsAway" in node else None,
-                    snr=str(
-                        round(
+                    snr=round(
                             node["snr"],
-                            2)) if "snr" in node else None,
-                    txairutil=str(
-                        round(
+                            2) if "snr" in node else None,
+                    txairutil=round(
                             node["deviceMetrics"]["airUtilTx"],
-                            2)) if "deviceMetrics" in node and "airUtilTx" in node["deviceMetrics"] else None,
-                    chutil=str(
-                        round(
+                            2) if "deviceMetrics" in node and "airUtilTx" in node["deviceMetrics"] else None,
+                    chutil=round(
                             node["deviceMetrics"]["channelUtilization"],
-                            2)) if "deviceMetrics" in node and "channelUtilization" in node["deviceMetrics"] else None,
+                            2) if "deviceMetrics" in node and "channelUtilization" in node["deviceMetrics"] else None,
                     uptime=node["deviceMetrics"]["uptimeSeconds"] if "deviceMetrics" in node and "uptimeSeconds" in node["deviceMetrics"] else None,
                     rx_counter=0,
                 )

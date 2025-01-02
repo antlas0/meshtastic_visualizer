@@ -659,11 +659,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.traceroute_table.setColumnCount(3)
         self.traceroute_table.setHorizontalHeaderLabels(
             ["Id", "SNR To", "SNR Back"])
-        self.traceroute_signal.emit(
-            dest_id=dest_id,
-            maxhops=maxhops,
-            channel_index=channel_index,
-        )
+        self.traceroute_signal.emit(dest_id, maxhops, channel_index)
 
     def update_received_message(self) -> None:
         if self.tabWidget.currentIndex() != 2:
@@ -680,7 +676,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         rows: list[dict[str, any]] = []
 
         for message in messages:
-            message.date2str()
+            message.date2str("%Y-%m-%d %H:%M:%S")
             data = {}
             for column in columns:
                 if column == "from_id" or column == "to_id":
@@ -698,11 +694,16 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     data[headers[column]] = name
                 elif column == "ack":
                     label = "❔"
-                    if getattr(message, column) is True:
-                        label = "✅"
-                    if getattr(message, column) is False:
-                        label = "❌"
-                    data[headers[column]] = label
+                    if getattr(message, "ack_status") is not None:
+                        if getattr(message, "ack_status") is True:
+                            if getattr(message, "ack_by") is not None:
+                                if getattr(message, "ack_by") != getattr(message, "to_id"):
+                                    label = "☁️"
+                                else:
+                                    label = "✅"
+                        else:
+                            label = "❌"
+                    data[headers["ack"]] = label
                 elif column == "pki_encrypted":
                     label = "⚠️"
                     if getattr(message, column) is True:

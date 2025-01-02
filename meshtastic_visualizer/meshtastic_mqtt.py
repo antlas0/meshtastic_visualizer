@@ -257,6 +257,10 @@ class MeshtasticMQTT(QObject, threading.Thread):
                     rssi=mp.rx_rssi,
                     snr=mp.rx_snr,
                 ))
+            self._store.store_or_update_node(MeshtasticNode(
+                id=se.gateway_id,
+                is_mqtt_gateway=True,
+            ))
 
             if mp.decoded.portnum == portnums_pb2.TEXT_MESSAGE_APP:
                 text_payload = ""
@@ -288,15 +292,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                                 mp, "from")),
                         lastseen=datetime.datetime.now(),
                     )
-                    nm = NodeMetrics(
-                        node_id=self.node_number_to_id(getattr(mp, "from")),
-                        snr=mp.rx_snr,
-                        rssi=mp.rx_rssi,
-                        timestamp=mp.rx_time,
-                    )
                     self._store.store_or_update_node(n)
-                    self._store.store_or_update_metrics(nm)
-                    self.notify_nodes_metrics_signal.emit()
                     self.notify_nodes_table_signal.emit()
                     self._store.store_or_update_messages(m)
                     self.notify_message_signal.emit()
@@ -319,15 +315,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                             self.node_number_to_id(
                                 neigh.last_sent_by_id)]
 
-                    nm = NodeMetrics(
-                        node_id=self.node_number_to_id(getattr(mp, "from")),
-                        snr=mp.rx_snr,
-                        rssi=mp.rx_rssi,
-                        timestamp=mp.rx_time,
-                    )
                     self._store.store_or_update_node(n)
-                    self._store.store_or_update_metrics(nm)
-                    self.notify_nodes_metrics_signal.emit()
                     self.notify_nodes_table_signal.emit()
 
             elif mp.decoded.portnum == portnums_pb2.NODEINFO_APP:
@@ -351,15 +339,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                         public_key=str(
                             info.public_key),
                     )
-                    nm = NodeMetrics(
-                        node_id=info.id,
-                        snr=mp.rx_snr,
-                        rssi=mp.rx_rssi,
-                        timestamp=mp.rx_time,
-                    )
                     self._store.store_or_update_node(n)
-                    self._store.store_or_update_metrics(nm)
-                    self.notify_nodes_metrics_signal.emit()
                     self.notify_nodes_table_signal.emit()
 
             elif mp.decoded.portnum == portnums_pb2.MAP_REPORT_APP:
@@ -379,16 +359,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                         role=config_pb2.Config.DeviceConfig.Role.Name(mapreport.role),
                         lastseen=datetime.datetime.now(),
                     )
-                    nm = NodeMetrics(
-                        node_id=self.node_number_to_id(getattr(mp, 'from')),
-                        timestamp=mp.rx_time,
-                        latitude=round(mapreport.latitude_i * 1e-7, 7),
-                        longitude=round(mapreport.longitude_i * 1e-7, 7),
-                        altitude=mapreport.altitude,
-                    )
                     self._store.store_or_update_node(n)
-                    self._store.store_or_update_metrics(nm)
-                    self.notify_nodes_metrics_signal.emit()
                     self.notify_nodes_table_signal.emit()
 
             elif mp.decoded.portnum == portnums_pb2.POSITION_APP:
@@ -410,27 +381,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                             snr=mp.rx_snr,
                             lastseen=datetime.datetime.now(),
                         )
-                        nm = NodeMetrics(
-                            node_id=self.node_number_to_id(
-                                getattr(
-                                    mp,
-                                    "from")),
-                            rssi=mp.rx_rssi,
-                            timestamp=position.time,
-                            latitude=round(
-                                position.latitude_i *
-                                1e-7,
-                                7),
-                            longitude=round(
-                                position.longitude_i *
-                                1e-7,
-                                7),
-                            altitude=position.altitude,
-                            snr=mp.rx_snr,
-                        )
                         self._store.store_or_update_node(n)
-                        self._store.store_or_update_metrics(nm)
-                        self.notify_nodes_metrics_signal.emit()
                         self.notify_nodes_table_signal.emit()
 
             elif mp.decoded.portnum == portnums_pb2.TELEMETRY_APP:
@@ -446,6 +397,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                         chutil=round(env.device_metrics.channel_utilization, 2),
                         txairutil=round(env.device_metrics.air_util_tx, 2),
                         battery_level=env.device_metrics.battery_level,
+                        voltage=round(env.device_metrics.voltage, 2),
                     )
                     nm = NodeMetrics(
                         node_id=self.node_number_to_id(
@@ -453,7 +405,8 @@ class MeshtasticMQTT(QObject, threading.Thread):
                                 mp, "from")), battery_level=env.device_metrics.battery_level, voltage=round(
                             env.device_metrics.voltage, 2), channel_utilization=round(
                             env.device_metrics.channel_utilization, 2), air_util_tx=round(
-                            env.device_metrics.air_util_tx, 2), timestamp=env.time, )
+                            env.device_metrics.air_util_tx, 2), timestamp=env.time,
+                        )
 
                     device_metrics_dict = {
                         'Battery Level': env.device_metrics.battery_level, 'Voltage': round(

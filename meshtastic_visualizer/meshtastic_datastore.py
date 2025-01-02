@@ -266,18 +266,11 @@ class MeshtasticDataStore(Thread):
 
     def get_node_metrics_fields(self) -> list:
         return [
-            "rssi",
-            "snr",
-            "hopsaway",
             "uptime",
             "voltage",
             "air_util_tx",
             "channel_utilization",
             "battery_level",
-            "latitude",
-            "longitude",
-            "altitude",
-            "speed",
         ]
 
     def store_or_update_metrics(self, new_metric: NodeMetrics) -> None:

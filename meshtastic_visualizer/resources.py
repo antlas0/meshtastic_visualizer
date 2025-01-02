@@ -8,6 +8,7 @@ from typing import List, Optional
 
 TEXT_MESSAGE_MAX_CHARS = 237
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
+CHARGING_TRESHOLD = 4.2
 
 class MessageLevel(enum.Enum):
     """
@@ -62,7 +63,7 @@ def run_in_thread(method):
 
 @dataclass
 class JsonExporter:
-    def date2str(self) -> None:
+    def date2str(self, time_format:str=TIME_FORMAT) -> None:
         """convert all fields of class to json-convertible format
 
         Returns:
@@ -70,7 +71,7 @@ class JsonExporter:
         """
         for f in fields(self):
             if isinstance(getattr(self, f.name), datetime.datetime):
-                setattr(self, f.name, getattr(self, f.name).strftime(TIME_FORMAT))
+                setattr(self, f.name, getattr(self, f.name).strftime(time_format))
 
 
 @dataclass
@@ -86,7 +87,8 @@ class MeshtasticMessage(JsonExporter):
     rx_rssi: Optional[int] = None
     hop_start: Optional[int] = None
     channel_index: Optional[int] = None
-    ack: Optional[bool] = None
+    ack_status: Optional[bool] = None
+    ack_by: Optional[str] = None
     public_key: str = ""
     pki_encrypted: bool = False
 
@@ -103,10 +105,10 @@ class MeshtasticNode(JsonExporter):
     alt: Optional[str] = None
     battery_level: Optional[int] = None
     voltage: Optional[float] = None
-    chutil: Optional[str] = None
-    txairutil: Optional[str] = None
-    rssi: Optional[str] = None
-    snr: Optional[str] = None
+    chutil: Optional[float] = None
+    txairutil: Optional[float] = None
+    rssi: Optional[float] = None
+    snr: Optional[float] = None
     neighbors: List[str] = field(default_factory=list)
     hopsaway: Optional[str] = None
     firstseen: Optional[datetime.datetime] = None
@@ -115,6 +117,7 @@ class MeshtasticNode(JsonExporter):
     is_local: Optional[bool] = None
     public_key: str = ""
     rx_counter: int = 0  # number of packets received from this node
+    is_mqtt_gateway: Optional[bool] = None
 
     def has_location(self) -> bool:
         return (self.lat is not None and self.lon is not None)
@@ -132,18 +135,11 @@ class Channel:
 class NodeMetrics:
     node_id: str
     timestamp: int
-    snr: Optional[float] = None
-    rssi: Optional[float] = None
     uptime: Optional[int] = None
-    hopsaway: Optional[int] = None
-    voltage: Optional[int] = None
+    voltage: Optional[float] = None
     air_util_tx: Optional[float] = None
     channel_utilization: Optional[float] = None
     battery_level: Optional[float] = None
-    latitude: Optional[str] = None
-    longitude: Optional[str] = None
-    altitude: Optional[str] = None
-    speed: Optional[str] = None
 
 
 @dataclass
