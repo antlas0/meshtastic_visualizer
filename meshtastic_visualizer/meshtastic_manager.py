@@ -306,6 +306,7 @@ class MeshtasticManager(QObject, threading.Thread):
             ack_status = {
                 "MAX_RETRANSMIT": False,
                 "NONE": True,
+                "NO_RESPONSE": False,
             }
 
             m = MeshtasticMessage(
