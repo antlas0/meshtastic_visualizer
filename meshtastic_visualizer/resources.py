@@ -90,7 +90,7 @@ class MeshtasticMessage(JsonExporter):
     ack_status: Optional[bool] = None
     ack_by: Optional[str] = None
     public_key: str = ""
-    pki_encrypted: bool = False
+    pki_encrypted: Optional[bool] = None
 
 
 @dataclass
