@@ -392,6 +392,7 @@ class MeshtasticManager(QObject, threading.Thread):
 
                 if m.to_id == self._local_board_id:
                     m.ack_status = True
+                    m.ack_by = self._local_board_id
 
                 self._data.store_or_update_messages(m)
                 print(
