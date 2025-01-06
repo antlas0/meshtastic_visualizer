@@ -546,6 +546,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 status_line.append("📍")
             if node.public_key:
                 status_line.append("🔑")
+            if node.is_mqtt_gateway:
+                status_line.append("🖥️")
             row.update(
                 {
                     "Status": " ".join(status_line),
