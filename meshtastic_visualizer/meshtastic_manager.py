@@ -311,7 +311,7 @@ class MeshtasticManager(QObject, threading.Thread):
 
             m = MeshtasticMessage(
                 mid=acked_message_id,
-                ack_status=ack_status[ack_label],
+                ack_status=ack_status[ack_label] if ack_label in ack_status else None,
                 ack_by=packet['fromId'])
             self._data.store_or_update_messages(m, only_update=True)
             self.notify_message_signal.emit()
