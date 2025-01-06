@@ -9,6 +9,7 @@ from typing import List, Optional
 TEXT_MESSAGE_MAX_CHARS = 237
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 CHARGING_TRESHOLD = 4.2
+DEFAULT_TRACEROUTE_CHANNEL = 0
 
 class MessageLevel(enum.Enum):
     """

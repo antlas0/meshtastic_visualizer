@@ -100,13 +100,13 @@ class MeshtasticDataStore(Thread):
 
     def get_channel_index_from_name(self, name: str) -> int:
         self._lock.acquire()
-        res: int = ""
+        res: int = -1
         if self.channels is None:
-            res = -1
+            pass
         else:
             channel = list(filter(lambda x: x.name == name, self.channels))
             if len(channel) != 1:
-                res = -1
+                pass
             else:
                 res = channel[0].index
         self._lock.release()

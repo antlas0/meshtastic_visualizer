@@ -7,7 +7,6 @@ import base64
 import logging
 import datetime
 from pubsub import pub
-from colorama import Fore, init
 from dataclasses import asdict
 from typing import Union, Optional
 import google.protobuf.json_format
@@ -32,10 +31,6 @@ from .resources import run_in_thread, \
 
 
 from .meshtastic_datastore import MeshtasticDataStore
-
-
-# Initialize colorama
-init(autoreset=True)
 
 
 # Enable logging but set to ERROR level to suppress debug/info messages
@@ -365,9 +360,7 @@ class MeshtasticManager(QObject, threading.Thread):
             try:
                 current_message = data.decode('utf-8').strip()
             except UnicodeDecodeError:
-                print(
-                    Fore.LIGHTBLACK_EX +
-                    f"Received non-text payload: {decoded['payload']}")
+                print(f"Received non-text payload: {decoded['payload']}")
                 return
             else:
                 if len(current_message) == 0:
@@ -396,8 +389,7 @@ class MeshtasticManager(QObject, threading.Thread):
                     m.ack_by = self._local_board_id
 
                 self._data.store_or_update_messages(m)
-                print(
-                    Fore.GREEN + f"Received message: {m}")
+                print(f"Received message: {m}")
 
                 self.notify_message_signal.emit()
         if "payload" in packet["decoded"]:
@@ -556,8 +548,8 @@ class MeshtasticManager(QObject, threading.Thread):
     def send_traceroute(self,
                         dest: Union[int,
                                     str],
-                        hopLimit: int,
-                        channelIndex: int = 0):
+                        channelIndex: int = 0,
+                        hopLimit: int = 5):
         """Send the trace route"""
         if self._interface is None or not dest:
             return
@@ -574,6 +566,9 @@ class MeshtasticManager(QObject, threading.Thread):
         except Exception as e:
             print(f"Could not send traceroute: {e}")
         else:
+            self.notify_frontend_signal.emit(
+                MessageLevel.INFO,
+                f"Traceroute sent to {dest}")
             self._data.store_radiopacket(
                 RadioPacket(
                     date=datetime.datetime.now(),

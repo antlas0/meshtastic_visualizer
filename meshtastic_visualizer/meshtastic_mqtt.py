@@ -144,7 +144,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
 
     def on_disconnect(self, client, userdata, flags, reason_code, properties):
         self.notify_frontend_signal.emit(
-            MessageLevel.ERROR,
+            MessageLevel.INFO,
             f"Disconnected from {self._mqtt_settings.host}:{self._mqtt_settings.port}")
         self.refresh_ui_signal.emit()
 

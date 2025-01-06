@@ -5,15 +5,16 @@ import hashlib
 import os
 import io
 import json
+import copy
 import folium
 from folium.plugins import MousePosition, MeasureControl
 from threading import Lock
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Optional
 from PyQt6 import QtCore
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtGui import QTextCursor
-from PyQt6.QtWidgets import QTableWidgetItem, QListWidgetItem, QTreeWidgetItem
+from PyQt6.QtWidgets import QTableWidgetItem, QListWidgetItem, QTreeWidgetItem, QPushButton
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtCore import pyqtSignal, QSettings
 import pyqtgraph as pg
@@ -26,7 +27,8 @@ from .resources import MessageLevel, \
     TEXT_MESSAGE_MAX_CHARS, \
     MeshtasticMQTTClientSettings, \
     MAINWINDOW_STYLESHEET, \
-    TIME_FORMAT
+    TIME_FORMAT, \
+    DEFAULT_TRACEROUTE_CHANNEL
 
 from .meshtastic_mqtt import MeshtasticMQTT
 from .meshtastic_datastore import MeshtasticDataStore
@@ -59,6 +61,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.status_var: str = ""
         self._local_board_id: str = ""
         self._action_buttons = []
+        self._traceroute_buttons = []
         self.setup_ui()
 
         self._store = MeshtasticDataStore()
@@ -147,7 +150,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.disconnect_button.clicked.connect(self.disconnect_device)
         self.refresh_map_button.clicked.connect(self.get_nodes)
         self.send_button.clicked.connect(self.send_message)
-        self.traceroute_button.clicked.connect(self.traceroute)
         self.nm_update_button.setEnabled(False)
         self.nm_update_button.pressed.connect(self.update_nodes_metrics)
         self.nm_node_combobox.currentTextChanged.connect(
@@ -172,7 +174,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.connect_button.setEnabled(True)
         self.disconnect_button.setEnabled(False)
         self._action_buttons = [
-            self.traceroute_button,
             self.send_button,
             self.message_textedit,
         ]
@@ -232,7 +233,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.nodes_gps_lcd.display(0)
         self.nodes_recently_lcd.display(0)
         self.messagerecipient_combobox.clear()
-        self.tr_dest_combobox.clear()
 
     def clear_packets(self) -> None:
         self._store.clear_radio_packets()
@@ -266,10 +266,14 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.disconnect_button.setEnabled(True)
             for button in self._action_buttons:
                 button.setEnabled(True)
+            for button in self._traceroute_buttons:
+                button.setEnabled(True)
         else:
             self.connect_button.setEnabled(True)
             self.disconnect_button.setEnabled(False)
             for button in self._action_buttons:
+                button.setEnabled(False)
+            for button in self._traceroute_buttons:
                 button.setEnabled(False)
 
         if self._mqtt_manager.is_connected():
@@ -513,11 +517,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             current_recipient = self.messagerecipient_combobox.currentText()
         self.messagerecipient_combobox.clear()
         self.messagerecipient_combobox.insertItem(0, "All")
-        # traceroute nodes
-        current_tr_dest = None
-        if self.tr_dest_combobox.currentText():
-            current_tr_dest = self.tr_dest_combobox.currentText()
-        self.tr_dest_combobox.clear()
 
         # network metrics nodes
         current_nm_node = self.nm_node_combobox.currentText()
@@ -531,14 +530,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 i + 1, node.long_name if node.long_name else node.id)
             self.nm_node_combobox.insertItem(
                 i, node.long_name if node.long_name else node.id)
-            self.tr_dest_combobox.insertItem(
-                i, node.long_name if node.long_name else node.id)
         self.nm_node_combobox.setCurrentText(current_nm_node)
         if current_recipient:
             self.messagerecipient_combobox.setCurrentText(current_recipient)
-        if current_tr_dest:
-            self.tr_dest_combobox.setCurrentText(current_tr_dest)
-
 
         # update table
         rows: list[dict[str, any]] = []
@@ -563,6 +557,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     "User": node.long_name,
                     "AKA": node.short_name,
                     "ID": node.id,
+                    "Action": None,
                     "Role": node.role,
                     "Hardware": node.hardware,
                 }
@@ -585,6 +580,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             "User",
             "AKA",
             "ID",
+            "Action",
             "Role",
             "Hardware",
             "Latitude",
@@ -601,14 +597,25 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         for row_idx, row_data in enumerate(rows):
             for col_idx, value in enumerate(row_data.values()):
                 current_item = self.mesh_table.item(row_idx, col_idx)
-                data = str(value)
-                if data == "None":
-                    data = ""
-                if current_item is None:
-                    self.mesh_table.setItem(
-                        row_idx, col_idx, QTableWidgetItem(data))
-                elif current_item.text() != value:
-                    current_item.setText(data)
+                current_widget = self.mesh_table.cellWidget(row_idx, col_idx)
+                if current_item is None and current_widget is None:
+                    if col_idx == 4: # insert widget in cell
+                        btn = QPushButton("Traceroute")
+                        btn.setEnabled(self._manager.is_connected())
+                        self.mesh_table.setCellWidget(row_idx, col_idx, btn)
+                        self._traceroute_buttons.append(btn)
+                        btn.clicked.connect(lambda: self.traceroute(self.mesh_table.item(self.mesh_table.indexAt(self.sender().pos()).row(), 2).text()))
+                    else:
+                        data = str(value)
+                        if data == "None":
+                            data = ""
+                        self.mesh_table.setItem(row_idx, col_idx, QTableWidgetItem(data))
+                if current_item is not None:
+                    if current_item.text() != str(value):
+                        data = str(value)
+                        if data == "None":
+                            data = ""
+                        current_item.setText(data)
         self.mesh_table.resizeColumnsToContents()
 
     def get_nodes(self):
@@ -626,7 +633,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         channels = config.get_channels()
         if not channels:
             return
-        for cb in ["messagechannel_combobox", "tr_channel_combobox"]:
+        for cb in ["messagechannel_combobox"]:
             getattr(self, cb).clear()
             for i, channel in enumerate(channels):
                 getattr(self, cb).insertItem(i, channel.name)
@@ -648,18 +655,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.batterylevel_progressbar.show()
         self.id_label.setText(str(cfg.id))
 
-    def traceroute(self):
-        dest_id = self._store.get_id_from_long_name(
-            self.tr_dest_combobox.currentText())
-        channel_name = self.tr_channel_combobox.currentText()
-        maxhops = self.tr_maxhops_spinbox.value()
-        channel_index = self._manager.get_data_store(
-        ).get_channel_index_from_name(channel_name)
+    def traceroute(self, dest_id:str="", maxhops:int=5, dummy:bool=False):
         self.traceroute_table.setRowCount(0)
         self.traceroute_table.setColumnCount(3)
         self.traceroute_table.setHorizontalHeaderLabels(
             ["Id", "SNR To", "SNR Back"])
-        self.traceroute_signal.emit(dest_id, maxhops, channel_index)
+        self.traceroute_signal.emit(dest_id, DEFAULT_TRACEROUTE_CHANNEL, maxhops)
 
     def update_received_message(self) -> None:
         if self.tabWidget.currentIndex() != 2:
