@@ -543,7 +543,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             if node.rx_counter > 0:
                 status_line.append(f"{node.rx_counter}✉️")
             if node.has_location():
-                status_line.append("🌐")
+                status_line.append("📍")
             if node.public_key:
                 status_line.append("🔑")
             row.update(
