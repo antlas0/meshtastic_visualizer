@@ -840,7 +840,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         with open(fpath, "w") as json_file:
             json_file.write(data_json)
             absp = os.path.abspath(fpath)
-            trace = f"<a href='file://{absp}'>Exported chat to file: {fpath}</a>"
+            trace = f"<a href='file://{absp}'>Exported packets to file: {fpath}</a>"
             self.set_status(MessageLevel.INFO, trace)
 
     def export_chat(self) -> None:
