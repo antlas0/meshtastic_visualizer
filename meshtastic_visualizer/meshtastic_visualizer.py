@@ -1,16 +1,11 @@
 #!/usr/bin/env python3
 
 
-import hashlib
 import os
-import io
 import json
-import copy
-import folium
-from folium.plugins import MousePosition, MeasureControl
 from threading import Lock
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List
 from PyQt6 import QtCore
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtGui import QTextCursor
