@@ -49,7 +49,22 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.show()
 
         self._map = None
-        self._plot_widget = None
+        self._telemetry_plot_widget = pg.PlotWidget()
+        self._packets_plot_widget = pg.PlotWidget()
+        self._telemetry_plot_item = self._telemetry_plot_widget.plot(
+                pen=pg.mkPen(
+                    '#007aff',
+                    width=1),
+                symbol='o',
+                symbolPen='b',
+                symbolSize=8)
+        self._packets_plot_item = self._packets_plot_widget.plot(
+                pen=pg.mkPen(
+                    '#007aff',
+                    width=1),
+                symbol='o',
+                symbolPen='b',
+                symbolSize=8)
         self._settings = QSettings("antlas0", "meshtastic_visualizer")
 
         # Variables
@@ -120,7 +135,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 self._store.get_node_metrics_fields()):
             self.nm_metric_combobox.insertItem(
                 i + 1, metric)
+        for i, metric in enumerate(
+                self._store.get_packet_metrics_fields()):
+            self.pm_metric_combobox.insertItem(
+                i + 1, metric)
         self.nodes_filter_linedit.textChanged.connect(self.update_nodes_table)
+        self.shortcut_filter_combobox.currentTextChanged.connect(self.update_nodes_table)
         self.mqtt_connect_button.pressed.connect(self.connect_mqtt)
         self.mqtt_disconnect_button.pressed.connect(
             self._mqtt_manager.disconnect_mqtt)
@@ -146,11 +166,18 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.refresh_map_button.clicked.connect(self.get_nodes)
         self.send_button.clicked.connect(self.send_message)
         self.nm_update_button.setEnabled(False)
+        self.pm_update_button.setEnabled(False)
         self.nm_update_button.pressed.connect(self.update_nodes_metrics)
         self.nm_node_combobox.currentTextChanged.connect(
-            self.update_metrics_buttons)
+            self.update_node_metrics_buttons)
         self.nm_metric_combobox.currentTextChanged.connect(
-            self.update_metrics_buttons)
+            self.update_node_metrics_buttons)
+        self.pm_update_button.pressed.connect(self.update_packets_metrics)
+        self.pm_node_combobox.currentTextChanged.connect(
+            self.update_packets_metrics_buttons)
+        self.pm_metric_combobox.currentTextChanged.connect(
+            self.update_packets_metrics_buttons
+        )
         self.mesh_table.cellClicked.connect(self.mesh_table_is_clicked)
         self.message_textedit.textChanged.connect(
             self.update_text_message_length)
@@ -174,24 +201,40 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         ]
         for button in self._action_buttons:
             button.setEnabled(False)
-        self._plot_widget = pg.PlotWidget()
-        self._plot_widget.setBackground('w')
-        self._plot_widget.getPlotItem().getAxis('left').setPen(pg.mkPen(color='k'))
-        self._plot_widget.getPlotItem().getAxis('bottom').setPen(pg.mkPen(color='k'))
-        self._plot_widget.getPlotItem().getAxis('left').setTextPen(pg.mkPen(color='k'))
-        self._plot_widget.getPlotItem().getAxis(
-            'bottom').setTextPen(pg.mkPen(color='k'))
-        self._plot_widget.addLegend()
-        self._plot_widget.setMouseEnabled(x=False, y=False)
-        self._plot_widget.setAxisItems({'bottom': DateAxisItem()})
-        self.plot_layout.addWidget(self._plot_widget)
-        self._plot_item = self._plot_widget.plot(
-            pen=pg.mkPen(
-                '#007aff',
-                width=1),
-            symbol='o',
-            symbolPen='b',
-            symbolSize=8)
+
+        for i, f in enumerate(["All", "Recently seen", "Neighbors", "1-hop", "2-hops", "3-hops", "4-hops", "5-hops", "6-hops", "7-hops"]):
+            self.shortcut_filter_combobox.insertItem(i , f)
+
+        for p in ["telemetry", "packets"]:
+            widget = {
+                "telemetry": self._telemetry_plot_widget,
+                "packets": self._packets_plot_widget,
+            }
+            layout = {
+                "telemetry": self.telemetry_plot_layout,
+                "packets": self.packets_plot_layout,
+            }
+            plot_item = {
+                "telemetry": self._telemetry_plot_item,
+                "packets": self._packets_plot_item,
+            }
+            widget[p].setBackground('w')
+            widget[p].getPlotItem().getAxis('left').setPen(pg.mkPen(color='k'))
+            widget[p].getPlotItem().getAxis('bottom').setPen(pg.mkPen(color='k'))
+            widget[p].getPlotItem().getAxis('left').setTextPen(pg.mkPen(color='k'))
+            widget[p].getPlotItem().getAxis(
+                'bottom').setTextPen(pg.mkPen(color='k'))
+            widget[p].addLegend()
+            widget[p].setMouseEnabled(x=False, y=False)
+            widget[p].setAxisItems({'bottom': DateAxisItem()})
+            layout[p].addWidget(widget[p])
+            plot_item[p] = widget[p].plot(
+                pen=pg.mkPen(
+                    '#007aff',
+                    width=1),
+                symbol='o',
+                symbolPen='b',
+                symbolSize=8)
 
         self.mqtt_disconnect_button.setEnabled(False)
         self.nodes_total_lcd.setDecMode()
@@ -228,6 +271,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.nodes_gps_lcd.display(0)
         self.nodes_recently_lcd.display(0)
         self.messagerecipient_combobox.clear()
+        self._telemetry_plot_item.setData(
+                x=None,
+                y=None)
+        self._telemetry_plot_widget.setTitle("No data")
 
     def clear_packets(self) -> None:
         self._store.clear_radio_packets()
@@ -238,6 +285,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packetsource_combobox.clear()
         self.packetsource_combobox.insertItem(0, "All")
         self.packets_total_lcd.display(0)
+        self.pm_node_combobox.clear()
+        self._packets_plot_item.setData(
+                x=None,
+                y=None)
+        self._packets_plot_widget.setTitle("No data")
 
     def _get_meshtastic_message_header_fields(self) -> dict:
         return {
@@ -252,7 +304,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def remove_notification_badge(self, index):
         if index == 2:
-            self.tabWidget.setTabText(2, "Messages")
+            self.tabWidget.setTabText(3, "Messages")
 
     def refresh_ui(self) -> None:
         self._lock.acquire()
@@ -382,14 +434,29 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._map.update(self._store.get_nodes())
         self.update_map_in_widget()
 
-    def clean_plot(self) -> None:
-        self._plot_item.setData(
-            x=None,
-            y=None)
-        self._plot_widget.setTitle("No data")
+    def clean_plot(self, kind:str="") -> None:
+        to_clean = [kind]
+        if not kind:
+            to_clean = ["telemetry", "packets"]
+        for p in to_clean:
+            widget = {
+                "telemetry": self._telemetry_plot_widget,
+                "packets": self._packets_plot_widget,
+            }
+            plot_item = {
+                "telemetry": self._telemetry_plot_item,
+                "packets": self._packets_plot_item,
+            }
+            plot_item[p].setData(
+                x=None,
+                y=None)
+            widget[p].setTitle("No data")
 
-    def update_metrics_buttons(self) -> None:
+    def update_node_metrics_buttons(self) -> None:
         self.nm_update_button.setEnabled(True)
+
+    def update_packets_metrics_buttons(self) -> None:
+        self.pm_update_button.setEnabled(True)
 
     def update_nodes_metrics(self) -> str:
         self.nm_update_button.setEnabled(False)
@@ -397,15 +464,33 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.nm_node_combobox.currentText())
         metric_name = self.nm_metric_combobox.currentText()
         if not node_id or not metric_name:
-            self.clean_plot()
+            self.clean_plot(kind="telemetry")
             return
-        self.refresh_metrics_plot(node_id=node_id, metric_name=metric_name)
+        self.refresh_plot(node_id=node_id, metric_name=metric_name, kind="telemetry")
 
-    def refresh_metrics_plot(self, node_id: str, metric_name: str) -> None:
+    def update_packets_metrics(self) -> str:
+        self.pm_update_button.setEnabled(False)
+        node_id = self._store.get_id_from_long_name(
+            self.pm_node_combobox.currentText())
+        metric_name = self.pm_metric_combobox.currentText()
+        if not node_id or not metric_name:
+            self.clean_plot(kind="packets")
+            return
+        self.refresh_plot(node_id=node_id, metric_name=metric_name, kind="packets")
+
+    def refresh_plot(self, node_id: str, metric_name: str, kind:str) -> None:
         self._lock.acquire()
-        metric = self._store.get_node_metrics(node_id, metric_name)
+        metric = None
+        if kind == "telemetry":
+            metric = self._store.get_node_metrics(node_id, metric_name)
+        elif kind == "packets":
+            metric = self._store.get_packet_metrics(node_id, metric_name)
+        else:
+            self.clean_plot(kind=kind)
+            self._lock.release()
+            return
         if "timestamp" not in metric or metric_name not in metric:
-            self.clean_plot()
+            self.clean_plot(kind=kind)
             self._lock.release()
             return
         if len(
@@ -413,7 +498,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     filter(
                 lambda x: x is not None,
                 metric[metric_name]))) == 0:
-            self.clean_plot()
+            self.clean_plot(kind=kind)
             self._lock.release()
             return
 
@@ -421,6 +506,15 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             metric["timestamp"]) == len(
             metric[metric_name]) and len(
                 metric[metric_name]) > 0:
+
+            target_widget = {
+                "telemetry": self._telemetry_plot_widget,
+                "packets": self._packets_plot_widget,
+            }
+            target_item = {
+                "telemetry": self._telemetry_plot_item,
+                "packets": self._packets_plot_item,
+            }
             none_indexes = [
                 i for i, v in enumerate(
                     metric[metric_name]) if v is None]
@@ -428,16 +522,16 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 metric["timestamp"].pop(i)
                 metric[metric_name].pop(i)
 
-            self._plot_item.setData(
+            target_item[kind].setData(
                 x=metric["timestamp"],
                 y=metric[metric_name])
-            self._plot_widget.getPlotItem().getViewBox().setRange(
+            target_widget[kind].getPlotItem().getViewBox().setRange(
                 xRange=(min(metric["timestamp"]), max(metric["timestamp"])),
                 yRange=(min(metric[metric_name]), max(metric[metric_name])),
             )
-            self._plot_widget.setLabel('left', metric_name, units='')
-            self._plot_widget.setLabel('bottom', 'Timestamp', units='')
-            self._plot_widget.setTitle(
+            target_widget[kind].setLabel('left', metric_name, units='')
+            target_widget[kind].setLabel('bottom', 'Timestamp', units='')
+            target_widget[kind].setTitle(
                 f'{metric_name} vs time for node {self._store.get_long_name_from_id(node_id)}')
         self._lock.release()
 
@@ -483,16 +577,27 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 lambda x: x.lat is not None and x.lon is not None and x.lat and x.lon,
                 nodes.values()))
         self.nodes_gps_lcd.display(len(positioned_nodes))
-        recently_seen = list(
-            filter(
-                lambda x: x.lastseen > datetime.now() -
-                timedelta(
-                    minutes=30) if x.lastseen is not None else False,
-                nodes.values()))
+        recently_seen = list(filter(lambda x: x.rx_counter > 0, nodes.values()))
         self.nodes_recently_lcd.display(len(recently_seen))
 
         # filter by nodes_filter
         filtered = nodes.values()  # nofilter
+        hopfilter = {
+            "1-hop":1,
+            "2-hops":2,
+            "3-hops":3,
+            "4-hops":4,
+            "5-hops":5,
+            "6-hops":6,
+            "7-hops":7,
+        }
+        if self.shortcut_filter_combobox.currentText() == "Recently seen":
+            filtered = recently_seen
+        elif self.shortcut_filter_combobox.currentText() == "Neighbors":
+            filtered = list(filter(lambda x: x.hopsaway == 0, nodes.values()))
+        elif self.shortcut_filter_combobox.currentText() in hopfilter.keys():
+            filtered = list(filter(lambda x: x.hopsaway == hopfilter[self.shortcut_filter_combobox.currentText()], nodes.values()))
+
         if len(self.nodes_filter_linedit.text()) != 0:
             # first search in long_name, then in id
             pattern = self.nodes_filter_linedit.text()
@@ -538,16 +643,13 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
             if node.lastseen:
                 recently_seen = node.lastseen > datetime.now() - timedelta(minutes=30)
-                if recently_seen:
-                    status_line.append("📶")
-            if node.rx_counter > 0:
-                status_line.append(f"{node.rx_counter}✉️")
-            if node.has_location():
-                status_line.append("📍")
-            if node.public_key:
-                status_line.append("🔑")
-            if node.is_mqtt_gateway:
-                status_line.append("🖥️")
+                if recently_seen: status_line.append("📶")
+            if node.rx_counter > 0: status_line.append(f"{node.rx_counter}✉️")
+            if node.has_location(): status_line.append("📍")
+            if node.public_key: status_line.append("🔑")
+            if node.is_mqtt_gateway: status_line.append("🖥️")
+            if node.hopsaway is not None: status_line.append(f"{node.hopsaway}✈️")
+
             row.update(
                 {
                     "Status": " ".join(status_line),
@@ -660,8 +762,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.traceroute_signal.emit(dest_id, DEFAULT_TRACEROUTE_CHANNEL, maxhops)
 
     def update_received_message(self) -> None:
-        if self.tabWidget.currentIndex() != 2:
-            self.tabWidget.setTabText(2, "Messages 🔴")
+        if self.tabWidget.currentIndex() != 3:
+            self.tabWidget.setTabText(3, "Messages 🔴")
 
         headers = self._get_meshtastic_message_header_fields()
         columns = list(headers.keys())
@@ -727,10 +829,20 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def update_packets_treeview(self) -> None:
         # Example: Modify existing items or add new ones
-        packets = self._store.get_mqtt_packets() + self._store.get_radio_packets()
+        packets = self._store.get_radio_packets()
         alreading_existing_packets = [
             self.packets_treewidget.topLevelItem(i).text(0) for i in range(
                 self.packets_treewidget.topLevelItemCount())]
+
+        current_pm_node = self.pm_node_combobox.currentText()
+        self.pm_node_combobox.clear()
+        inserted = []
+        for i, packet in enumerate(packets):
+            name = self._store.get_long_name_from_id(packet.from_id)
+            if name not in inserted:
+                self.pm_node_combobox.insertItem(i, name)
+                inserted.append(name)
+        self.pm_node_combobox.setCurrentText(current_pm_node)
 
         filtered_packets = packets
         if self.packettype_combobox.currentText() != "All":
@@ -826,7 +938,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.set_status(MessageLevel.INFO, trace)
 
     def export_packets(self) -> None:
-        packets = self._store.get_mqtt_packets() + self._store.get_radio_packets()
+        packets = self._store.get_radio_packets()
         [x.date2str() for x in packets]
         packets_list = [asdict(x) for x in packets]
         for p in packets_list:

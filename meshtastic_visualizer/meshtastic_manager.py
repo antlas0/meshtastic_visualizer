@@ -174,7 +174,7 @@ class MeshtasticManager(QObject, threading.Thread):
             lon=str(node["position"]["longitude"] if "position" in node and "longitude" in node["position"] else None),
             lastseen=datetime.datetime.fromtimestamp(node["lastHeard"]) if "lastHeard" in node and node["lastHeard"] is not None else None,
             battery_level=batlevel,
-            hopsaway=str(node["hopsAway"]) if "hopsAway" in node else None,
+            hopsaway=int(node["hopsAway"]) if "hopsAway" in node else None,
             snr=round(node["snr"], 2) if "snr" in node else None,
             txairutil=round(node["deviceMetrics"]["airUtilTx"], 2) if "deviceMetrics" in node and "airUtilTx" in node["deviceMetrics"] else None,
             chutil=round(node["deviceMetrics"]["channelUtilization"], 2) if "deviceMetrics" in node and "channelUtilization" in node["deviceMetrics"] else None,
@@ -208,8 +208,7 @@ class MeshtasticManager(QObject, threading.Thread):
         )
         node_from.is_local = node_from.id == self._local_board_id
 
-        self._data.store_radiopacket(
-            RadioPacket(
+        received_packet = RadioPacket(
                 date=datetime.datetime.now(),
                 pid=packet["id"],
                 from_id=packet['fromId'],
@@ -222,7 +221,10 @@ class MeshtasticManager(QObject, threading.Thread):
                 snr=packet["rxSnr"] if "rxSnr" in packet else None,
                 rssi=packet["rxRssi"] if "rxRssi" in packet else None,
                 hop_limit=packet["hopLimit"] if "hopLimit" in packet else None,
-            ))
+                hop_start=packet["hopStart"] if "hopStart" in packet else None,
+                priority=packet["priority"] if "priority" in packet else None,
+            )
+        self._data.store_radiopacket(received_packet)
 
         strl = []
         if 'fromId' in packet:
@@ -257,8 +259,11 @@ class MeshtasticManager(QObject, threading.Thread):
         node_from.snr = round(
                 packet["rxSnr"],
                 2) if "rxSnr" in packet else None
-        node_from.hopsaway = str(
-            packet["hopsAway"]) if "hopsAway" in packet else None
+        if "hopsAway" in packet:
+            node_from.hopsaway = int(packet["hopsAway"])
+        elif ("hopLimit" in packet and "hopStart" in packet):
+            node_from.hopsaway = (int(packet["hopStart"]) - int(packet["hopLimit"]))
+
         node_from.lastseen = datetime.datetime.now()
 
         if decoded["portnum"] == PacketInfoType.PCK_TELEMETRY_APP.value:
@@ -284,7 +289,7 @@ class MeshtasticManager(QObject, threading.Thread):
                 battery_level=float(node_from.battery_level) if node_from.battery_level is not None else None,
                 voltage=float(node_from.voltage) if node_from.voltage is not None else None,
             )
-            self._data.store_or_update_metrics(nm)
+            self._data.store_or_update_node_metrics(nm)
             self.notify_nodes_metrics_signal.emit()
 
         if decoded["portnum"] == PacketInfoType.PCK_POSITION_APP.value:
@@ -314,6 +319,7 @@ class MeshtasticManager(QObject, threading.Thread):
             neighbors = self._extract_route_neighbors(route)
 
             for k, v in neighbors.items():
+                if node_from.neighbors is None: node_from.neighbors = []
                 if k == node_from.id:
                     if not neighbors[node_from.id] in node_from.neighbors:
                         node_from.neighbors.append(neighbors[node_from.id])
@@ -321,6 +327,7 @@ class MeshtasticManager(QObject, threading.Thread):
                     n = self._data.get_node_from_id(k)
                     if n is None:
                         continue
+                    if n.neighbors is None: n.neighbors = []
                     updated_node = MeshtasticNode(
                         id=n.id, neighbors=n.neighbors)
                     if not neighbors[updated_node.id] in updated_node.neighbors:
@@ -345,6 +352,12 @@ class MeshtasticManager(QObject, threading.Thread):
             except Exception:
                 pass
 
+            nodes_to_update.append(
+                    MeshtasticNode(
+                        id=neighbors[self._local_board_id],
+                        hopsaway=0,
+                    )
+            )
             self.notify_traceroute_signal.emit(route, snr_towards, snr_back)
 
         if decoded["portnum"] == PacketInfoType.PCK_NEIGHBORINFO_APP.value:
@@ -387,13 +400,13 @@ class MeshtasticManager(QObject, threading.Thread):
                     m.ack_by = self._local_board_id
 
                 self._data.store_or_update_messages(m)
-                print(f"Received message: {m}")
-
                 self.notify_message_signal.emit()
-        if "payload" in packet["decoded"]:
-            packet["decoded"].pop("payload")
 
-        nodes_to_update.append(node_from)
+        # update node whose packet was received
+        self._data.store_or_update_node(node_from)
+        self._data.update_node_rx_counter(node_from)
+
+        # update nodes consequent to received info
         self.update_nodes_info(nodes_to_update)
         self.notify_packet_received.emit()
 
@@ -452,7 +465,8 @@ class MeshtasticManager(QObject, threading.Thread):
                 port_num=PacketInfoType.PCK_TEXT_MESSAGE_APP.value,
                 snr=None,
                 rssi=None,
-                hop_limit=sent_packet.hop_limit
+                hop_limit=sent_packet.hop_limit,
+                priority=sent_packet.priority,
             )
         )
 
@@ -462,10 +476,9 @@ class MeshtasticManager(QObject, threading.Thread):
 
     @run_in_thread
     def update_nodes_info(self, nodes: List[MeshtasticNode]) -> None:
-
         for n in nodes:
             self._data.store_or_update_node(n)
-            self.notify_nodes_table_signal.emit()
+        self.notify_nodes_table_signal.emit()
 
     @run_in_thread
     def load_local_nodedb(self, include_self: bool = True) -> list:
@@ -498,7 +511,7 @@ class MeshtasticManager(QObject, threading.Thread):
                         node["lastHeard"]) if "lastHeard" in node and node["lastHeard"] is not None else None,
                     id=node["user"]["id"],
                     battery_level=batlevel,
-                    hopsaway=str(
+                    hopsaway=int(
                         node["hopsAway"]) if "hopsAway" in node else None,
                     snr=round(
                             node["snr"],

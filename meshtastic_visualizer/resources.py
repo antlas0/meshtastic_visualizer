@@ -110,14 +110,14 @@ class MeshtasticNode(JsonExporter):
     txairutil: Optional[float] = None
     rssi: Optional[float] = None
     snr: Optional[float] = None
-    neighbors: List[str] = field(default_factory=list)
-    hopsaway: Optional[str] = None
+    neighbors: Optional[List[str]] = None
+    hopsaway: Optional[int] = None
     firstseen: Optional[datetime.datetime] = None
     lastseen: Optional[datetime.datetime] = None
     uptime: Optional[int] = None
     is_local: Optional[bool] = None
-    public_key: str = ""
-    rx_counter: int = 0  # number of packets received from this node
+    public_key: Optional[str] = None
+    rx_counter: Optional[int] = None  # number of packets received from this node
     is_mqtt_gateway: Optional[bool] = None
 
     def has_location(self) -> bool:
@@ -164,7 +164,7 @@ class MQTTPacket(JsonExporter):
     to_id: str
     channel_id: str
     is_encrypted: bool
-    payload: bytes
+    payload: str
     port_num: str
     gateway_id: str = ""
     is_decrypted: bool = False
@@ -187,9 +187,11 @@ class RadioPacket(JsonExporter):
     snr: Optional[float] = None
     rssi: Optional[float] = None
     hop_limit: Optional[int] = None
+    hop_start: Optional[int] = None
     source: str = "radio"
+    priority: Optional[str] = None
 
-
+#67ea94
 MAINWINDOW_STYLESHEET = """
 
 """

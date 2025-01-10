@@ -415,7 +415,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                             env.device_metrics.air_util_tx, 1)}
 
                     self._store.store_or_update_node(n)
-                    self._store.store_or_update_metrics(nm)
+                    self._store.store_or_update_node_metrics(nm)
                     self.notify_nodes_metrics_signal.emit()
                     self.notify_nodes_table_signal.emit()
 

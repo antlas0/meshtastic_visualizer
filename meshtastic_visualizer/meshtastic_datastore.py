@@ -29,7 +29,7 @@ class MeshtasticDataStore(Thread):
         default_factory=dict)  # Dict[node_id, Dict[metric_name, List[value]]]
     mqttpackets: Dict[str, MQTTPacket] = field(
         default_factory=dict)
-    radiopackets: Dict[str, MQTTPacket] = field(
+    radiopackets: Dict[str, RadioPacket] = field(
         default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -72,12 +72,13 @@ class MeshtasticDataStore(Thread):
 
     def store_radiopacket(self, packet: RadioPacket) -> None:
         self._lock.acquire()
-        self.radiopackets[str(packet.date)] = packet
+        key = str(packet.date)
+        self.radiopackets[key] = packet
         self._lock.release()
 
     def get_radio_packets(self) -> List:
         self._lock.acquire()
-        packets = list(self.radiopackets.values())
+        packets = copy.deepcopy(list(self.radiopackets.values()))
         self._lock.release()
         return packets
 
@@ -200,6 +201,11 @@ class MeshtasticDataStore(Thread):
         self.metrics = {}
         self._lock.release()
 
+    def update_node_rx_counter(self, node:MeshtasticNode) -> None:
+        rx_counter = getattr(self.nodes[str(node.id)], "rx_counter") + 1
+        # update the received packet counter
+        setattr(self.nodes[str(node.id)], "rx_counter", rx_counter)
+
     def store_or_update_node(
             self,
             node: MeshtasticNode,
@@ -216,7 +222,7 @@ class MeshtasticDataStore(Thread):
             self.nodes[str(node.id)] = node
             node.firstseen = datetime.datetime.now()
             node.lastseen = node.firstseen
-            node.rx_counter = 1
+            node.rx_counter = 0
         else:
             # update already known node
             # either it was in nodedb and it is the first packet we get
@@ -230,19 +236,14 @@ class MeshtasticDataStore(Thread):
                 node.firstseen = datetime.datetime.now()
                 node.lastseen = node.firstseen
 
-            rx_counter = getattr(self.nodes[str(node.id)], "rx_counter") + 1
             for f in __get_nodes_fields():
                 if getattr(self.nodes[str(node.id)],
                            f.name) != getattr(node, f.name):
                     if getattr(
                             node,
-                            f.name) is not None and getattr(
-                            node,
-                            f.name):
+                            f.name) is not None:
                         setattr(self.nodes[str(node.id)], f.name,
                                 getattr(node, f.name))
-            # update the received packet conuter
-            setattr(self.nodes[str(node.id)], "rx_counter", rx_counter)
         self._lock.release()
 
     def store_or_update_messages(
@@ -273,7 +274,13 @@ class MeshtasticDataStore(Thread):
             "battery_level",
         ]
 
-    def store_or_update_metrics(self, new_metric: NodeMetrics) -> None:
+    def get_packet_metrics_fields(self) -> list:
+        return [
+            "snr",
+            "rssi",
+        ]
+
+    def store_or_update_node_metrics(self, new_metric: NodeMetrics) -> None:
         self._lock.acquire()
         if new_metric.node_id not in self.metrics.keys():
             self.metrics[new_metric.node_id] = []
@@ -293,6 +300,25 @@ class MeshtasticDataStore(Thread):
             else:
                 timestamp = [x.timestamp for x in self.metrics[node_id]]
                 values = [getattr(x, metric) for x in self.metrics[node_id]]
+                res["timestamp"] = timestamp
+                res[metric] = values
+        self._lock.release()
+        return res.copy()
+
+    def get_packet_metrics(self, node_id: str, metric: str) -> Dict:
+        self._lock.acquire()
+        res: Dict[str, List[Any]] = {}
+
+        filtered = list(filter(lambda x: x.from_id == node_id, self.radiopackets.values()))
+
+        if len(filtered) == 0:
+            res = {}
+        else:
+            if metric not in self.get_packet_metrics_fields():
+                res = {}
+            else:
+                timestamp = [x.date.timestamp() for x in filtered]
+                values = [getattr(x, metric) for x in filtered]
                 res["timestamp"] = timestamp
                 res[metric] = values
         self._lock.release()

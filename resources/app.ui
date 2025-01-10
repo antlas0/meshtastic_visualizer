@@ -802,7 +802,7 @@
     </widget>
     <widget class="QWidget" name="tab">
      <attribute name="title">
-      <string>Stats</string>
+      <string>Nodes</string>
      </attribute>
      <widget class="QGroupBox" name="plot_groupbox">
       <property name="geometry">
@@ -810,11 +810,11 @@
         <x>450</x>
         <y>320</y>
         <width>691</width>
-        <height>231</height>
+        <height>241</height>
        </rect>
       </property>
       <property name="title">
-       <string>Metrics</string>
+       <string>Telemetry metrics</string>
       </property>
       <widget class="QWidget" name="horizontalLayoutWidget_2">
        <property name="geometry">
@@ -893,38 +893,11 @@
          <x>10</x>
          <y>80</y>
          <width>671</width>
-         <height>141</height>
+         <height>151</height>
         </rect>
        </property>
-       <layout class="QHBoxLayout" name="plot_layout"/>
+       <layout class="QHBoxLayout" name="telemetry_plot_layout"/>
       </widget>
-     </widget>
-     <widget class="QTreeWidget" name="packets_treewidget">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>120</y>
-        <width>421</width>
-        <height>431</height>
-       </rect>
-      </property>
-      <property name="selectionBehavior">
-       <enum>QAbstractItemView::SelectItems</enum>
-      </property>
-      <property name="horizontalScrollMode">
-       <enum>QAbstractItemView::ScrollPerItem</enum>
-      </property>
-      <property name="uniformRowHeights">
-       <bool>true</bool>
-      </property>
-      <property name="wordWrap">
-       <bool>true</bool>
-      </property>
-      <column>
-       <property name="text">
-        <string notr="true">1</string>
-       </property>
-      </column>
      </widget>
      <widget class="QLCDNumber" name="nodes_total_lcd">
       <property name="geometry">
@@ -995,54 +968,28 @@
        <string>Total nodes</string>
       </property>
      </widget>
-     <widget class="Line" name="line_2">
-      <property name="geometry">
-       <rect>
-        <x>430</x>
-        <y>10</y>
-        <width>16</width>
-        <height>541</height>
-       </rect>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_23">
-      <property name="geometry">
-       <rect>
-        <x>340</x>
-        <y>40</y>
-        <width>91</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Total packets</string>
-      </property>
-     </widget>
-     <widget class="QLCDNumber" name="packets_total_lcd">
-      <property name="geometry">
-       <rect>
-        <x>350</x>
-        <y>10</y>
-        <width>81</width>
-        <height>31</height>
-       </rect>
-      </property>
-     </widget>
      <widget class="QWidget" name="horizontalLayoutWidget_5">
       <property name="geometry">
        <rect>
-        <x>450</x>
+        <x>60</x>
         <y>20</y>
-        <width>231</width>
+        <width>381</width>
         <height>31</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_7">
        <item>
         <widget class="QLineEdit" name="nodes_filter_linedit"/>
+       </item>
+       <item>
+        <widget class="QComboBox" name="shortcut_filter_combobox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -1062,9 +1009,9 @@
      <widget class="QTableWidget" name="mesh_table">
       <property name="geometry">
        <rect>
-        <x>450</x>
+        <x>10</x>
         <y>60</y>
-        <width>691</width>
+        <width>1131</width>
         <height>261</height>
        </rect>
       </property>
@@ -1072,8 +1019,99 @@
      <widget class="QPushButton" name="export_nodes_button">
       <property name="geometry">
        <rect>
-        <x>690</x>
+        <x>10</x>
         <y>20</y>
+        <width>31</width>
+        <height>25</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>⬇️</string>
+      </property>
+     </widget>
+     <widget class="QGroupBox" name="groupBox_2">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>320</y>
+        <width>431</width>
+        <height>241</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>Traceroute results</string>
+      </property>
+      <widget class="QTableWidget" name="traceroute_table">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>30</y>
+         <width>411</width>
+         <height>201</height>
+        </rect>
+       </property>
+      </widget>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_2">
+     <attribute name="title">
+      <string>Radio packets</string>
+     </attribute>
+     <widget class="QTreeWidget" name="packets_treewidget">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>130</y>
+        <width>421</width>
+        <height>431</height>
+       </rect>
+      </property>
+      <property name="selectionBehavior">
+       <enum>QAbstractItemView::SelectItems</enum>
+      </property>
+      <property name="horizontalScrollMode">
+       <enum>QAbstractItemView::ScrollPerItem</enum>
+      </property>
+      <property name="uniformRowHeights">
+       <bool>true</bool>
+      </property>
+      <property name="wordWrap">
+       <bool>true</bool>
+      </property>
+      <column>
+       <property name="text">
+        <string notr="true">1</string>
+       </property>
+      </column>
+     </widget>
+     <widget class="QLabel" name="label_23">
+      <property name="geometry">
+       <rect>
+        <x>340</x>
+        <y>50</y>
+        <width>91</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Total packets</string>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="packetsource_combobox">
+      <property name="geometry">
+       <rect>
+        <x>50</x>
+        <y>90</y>
+        <width>161</width>
+        <height>25</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="export_packets_button">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>90</y>
         <width>31</width>
         <height>25</height>
        </rect>
@@ -1086,9 +1124,19 @@
       <property name="geometry">
        <rect>
         <x>220</x>
-        <y>80</y>
+        <y>90</y>
         <width>171</width>
         <height>25</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLCDNumber" name="packets_total_lcd">
+      <property name="geometry">
+       <rect>
+        <x>350</x>
+        <y>20</y>
+        <width>81</width>
+        <height>31</height>
        </rect>
       </property>
      </widget>
@@ -1096,7 +1144,7 @@
       <property name="geometry">
        <rect>
         <x>400</x>
-        <y>80</y>
+        <y>90</y>
         <width>31</width>
         <height>25</height>
        </rect>
@@ -1105,28 +1153,100 @@
        <string>🗑️</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="export_packets_button">
+     <widget class="QGroupBox" name="plot_groupbox_2">
       <property name="geometry">
        <rect>
-        <x>10</x>
-        <y>80</y>
-        <width>31</width>
-        <height>25</height>
+        <x>440</x>
+        <y>90</y>
+        <width>691</width>
+        <height>471</height>
        </rect>
       </property>
-      <property name="text">
-       <string>⬇️</string>
+      <property name="title">
+       <string>Packets metrics</string>
       </property>
-     </widget>
-     <widget class="QComboBox" name="packetsource_combobox">
-      <property name="geometry">
-       <rect>
-        <x>50</x>
-        <y>80</y>
-        <width>161</width>
-        <height>25</height>
-       </rect>
-      </property>
+      <widget class="QWidget" name="horizontalLayoutWidget_8">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>30</y>
+         <width>671</width>
+         <height>28</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_13">
+        <item>
+         <widget class="QLabel" name="label_21">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Source node</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="pm_node_combobox">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>120</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="editable">
+           <bool>false</bool>
+          </property>
+          <property name="currentText">
+           <string/>
+          </property>
+          <property name="placeholderText">
+           <string>Node Id</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_24">
+          <property name="text">
+           <string>Metric</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="pm_metric_combobox">
+          <property name="placeholderText">
+           <string>Metric</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pm_update_button">
+          <property name="text">
+           <string>⟳ Update</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="horizontalLayoutWidget_9">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>70</y>
+         <width>671</width>
+         <height>391</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="packets_plot_layout"/>
+      </widget>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_messages">
@@ -1136,9 +1256,9 @@
      <widget class="QTextEdit" name="message_textedit">
       <property name="geometry">
        <rect>
-        <x>420</x>
+        <x>200</x>
         <y>460</y>
-        <width>571</width>
+        <width>731</width>
         <height>91</height>
        </rect>
       </property>
@@ -1146,7 +1266,7 @@
      <widget class="QPushButton" name="send_button">
       <property name="geometry">
        <rect>
-        <x>1000</x>
+        <x>940</x>
         <y>420</y>
         <width>51</width>
         <height>131</height>
@@ -1159,9 +1279,9 @@
      <widget class="QTableWidget" name="messages_table">
       <property name="geometry">
        <rect>
-        <x>350</x>
+        <x>10</x>
         <y>10</y>
-        <width>791</width>
+        <width>1131</width>
         <height>401</height>
        </rect>
       </property>
@@ -1169,9 +1289,9 @@
      <widget class="QWidget" name="horizontalLayoutWidget_4">
       <property name="geometry">
        <rect>
-        <x>420</x>
+        <x>200</x>
         <y>420</y>
-        <width>571</width>
+        <width>731</width>
         <height>31</height>
        </rect>
       </property>
@@ -1272,23 +1392,10 @@
        </item>
       </layout>
      </widget>
-     <widget class="Line" name="line">
-      <property name="geometry">
-       <rect>
-        <x>330</x>
-        <y>10</y>
-        <width>20</width>
-        <height>661</height>
-       </rect>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Vertical</enum>
-      </property>
-     </widget>
      <widget class="QPushButton" name="export_chat_button">
       <property name="geometry">
        <rect>
-        <x>350</x>
+        <x>10</x>
         <y>420</y>
         <width>31</width>
         <height>25</height>
@@ -1310,29 +1417,6 @@
       <property name="text">
        <string>🗑️</string>
       </property>
-     </widget>
-     <widget class="QGroupBox" name="groupBox_2">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>10</y>
-        <width>321</width>
-        <height>551</height>
-       </rect>
-      </property>
-      <property name="title">
-       <string>Traceroute results</string>
-      </property>
-      <widget class="QTableWidget" name="traceroute_table">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>30</y>
-         <width>301</width>
-         <height>231</height>
-        </rect>
-       </property>
-      </widget>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_nodes">
