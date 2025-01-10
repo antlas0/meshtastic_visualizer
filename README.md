@@ -13,7 +13,7 @@ Linux compatible, debian based tested (should work on Windows, compatibility not
 | Display nodes configuration (with public key)|✅|✅|
 | Display map of nodes |✅|✅|
 | Display messages |✅|✅|
-| Display packets |✅|✅|
+| Display packets |✅|❌|
 | Send messages with acknowledgment|✅|❌|
 | Perform traceroute (with SNR)|✅|❌|
 | Export nodes (json) |✅|✅|
@@ -23,7 +23,7 @@ Linux compatible, debian based tested (should work on Windows, compatibility not
 
 ## How to run 
 
-Based on X11, bBuild the dockerfile and run the docker container. This example assumes your node is accessible at `/dev/ttyACM0`.
+Based on X11, build the dockerfile and run the docker container. This example assumes your node is accessible at `/dev/ttyACM0`.
 ```bash
 $ export DISPLAY=:0.0
 $ xhost +local:docker
