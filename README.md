@@ -21,15 +21,24 @@ Linux compatible, debian based tested (should work on Windows, compatibility not
 | Export events logs |✅|✅|
 | Metrics plotting (RF, power,...) |✅|✅|
 
-## Installation 
+## How to run 
 
+Based on X11, bBuild the dockerfile and run the docker container. This example assumes your node is accessible at `/dev/ttyACM0`.
 ```bash
-$ git clone https://github.com/antlas0/meshtastic_visualizer.git
+$ export DISPLAY=:0.0
+$ xhost +local:docker
+$ docker build . -t meshtastic_visualizer:latest
+$ docker run -it \
+    --env="DISPLAY=$DISPLAY" \
+    --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+    --device=/dev/ttyACM0 \
+    meshtastic_visualizer:latest \
+    python -m meshtastic_visualizer
 ```
 
-## How to start
+## How to install
 
-To run :
+To install on your computer:
 ```bash
 $ python3 -m venv .venv
 $ source .venv/bin/activate
