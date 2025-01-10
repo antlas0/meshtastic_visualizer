@@ -57,6 +57,7 @@ Please open a Pull Request.
 Automatic lintering is done with `autopep8` in a `pre-commit` hook. You will need to ensure `requirements_dev.txt` are installed.
 
 ## Overview
+(currently outdated)
 ![Capture d’écran du 2024-12-15 13-45-37](https://github.com/user-attachments/assets/e1ecdbcc-2dc6-4ca4-841a-75abf75f3c97)
 ![Capture d’écran du 2024-12-15 13-45-21](https://github.com/user-attachments/assets/85d23338-3edc-4cb2-8240-0652767fc23c)
 ![Capture d’écran du 2024-12-15 13-45-03](https://github.com/user-attachments/assets/4d2a605c-72ee-4431-9306-dfa5f92323ad)
