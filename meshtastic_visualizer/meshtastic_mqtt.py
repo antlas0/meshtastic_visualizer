@@ -129,8 +129,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                         f"Could not subscribe to topic {self._mqtt_settings.topic}")
                 else:
                     self.notify_frontend_signal.emit(
-                        MessageLevel.INFO,
-                        f"Subscribed to root topic {self._mqtt_settings.topic}")
+                        MessageLevel.INFO, f"Subscribed to root topic {self._mqtt_settings.topic}")
             else:
                 self.notify_frontend_signal.emit(
                     MessageLevel.ERROR,
@@ -256,7 +255,14 @@ class MeshtasticMQTT(QObject, threading.Thread):
                         se.packet.decoded.portnum),
                     rssi=mp.rx_rssi,
                     snr=mp.rx_snr,
+                    hop_limit=se.packet.hop_limit,
+                    hop_start=se.packet.hop_start,
                 ))
+            node_from = MeshtasticNode(
+                id=self.node_number_to_id(getattr(se.packet, 'from')),
+                lastseen=datetime.datetime.now(),
+            )
+
             self._store.store_or_update_node(MeshtasticNode(
                 id=se.gateway_id,
                 is_mqtt_gateway=True,
@@ -286,14 +292,6 @@ class MeshtasticMQTT(QObject, threading.Thread):
                         date=datetime.datetime.fromtimestamp(
                             mp.rx_time),
                     )
-                    n = MeshtasticNode(
-                        id=self.node_number_to_id(
-                            getattr(
-                                mp, "from")),
-                        lastseen=datetime.datetime.now(),
-                    )
-                    self._store.store_or_update_node(n)
-                    self.notify_nodes_table_signal.emit()
                     self._store.store_or_update_messages(m)
                     self.notify_message_signal.emit()
 
@@ -304,19 +302,10 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 except Exception as e:
                     pass
                 else:
-                    n = MeshtasticNode(
-                        id=self.node_number_to_id(
-                            getattr(
-                                mp, "from")),
-                        lastseen=datetime.datetime.now(),
-                    )
                     if getattr(mp, "from") != neigh.last_sent_by_id:
-                        n.neighbors = [
+                        node_from.neighbors = [
                             self.node_number_to_id(
                                 neigh.last_sent_by_id)]
-
-                    self._store.store_or_update_node(n)
-                    self.notify_nodes_table_signal.emit()
 
             elif mp.decoded.portnum == portnums_pb2.NODEINFO_APP:
                 info = mesh_pb2.User()
@@ -325,22 +314,15 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 except Exception as e:
                     pass
                 else:
-                    n = MeshtasticNode(
-                        id=info.id,
-                        long_name=info.long_name,
-                        short_name=info.short_name,
-                        hardware=mesh_pb2.HardwareModel.Name(
-                            info.hw_model),
-                        snr=mp.rx_snr,
-                        rssi=mp.rx_rssi,
-                        role=config_pb2.Config.DeviceConfig.Role.Name(
-                            info.role),
-                        lastseen=datetime.datetime.now(),
-                        public_key=str(
-                            info.public_key),
-                    )
-                    self._store.store_or_update_node(n)
-                    self.notify_nodes_table_signal.emit()
+                    node_from.long_name = info.long_name
+                    node_from.short_name = info.short_name
+                    node_from.hardware = mesh_pb2.HardwareModel.Name(
+                        info.hw_model)
+                    node_from.snr = mp.rx_snr
+                    node_from.rssi = mp.rx_rssi
+                    node_from.role = config_pb2.Config.DeviceConfig.Role.Name(
+                        info.role)
+                    node_from.public_key = str(info.public_key)
 
             elif mp.decoded.portnum == portnums_pb2.MAP_REPORT_APP:
                 mapreport = mqtt_pb2.MapReport()
@@ -349,18 +331,14 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 except Exception as e:
                     pass
                 else:
-                    n = MeshtasticNode(
-                        id=self.node_number_to_id(getattr(mp, 'from')),
-                        long_name=mapreport.long_name,
-                        lat=str(round(mapreport.latitude_i * 1e-7, 7)),
-                        lon=str(round(mapreport.longitude_i * 1e-7, 7)),
-                        alt=mapreport.altitude,
-                        hardware=mesh_pb2.HardwareModel.Name(mapreport.hw_model),
-                        role=config_pb2.Config.DeviceConfig.Role.Name(mapreport.role),
-                        lastseen=datetime.datetime.now(),
-                    )
-                    self._store.store_or_update_node(n)
-                    self.notify_nodes_table_signal.emit()
+                    node_from.long_name = mapreport.long_name
+                    node_from.lat = str(round(mapreport.latitude_i * 1e-7, 7))
+                    node_from.lon = str(round(mapreport.longitude_i * 1e-7, 7))
+                    node_from.alt = mapreport.altitude
+                    node_from.hardware = mesh_pb2.HardwareModel.Name(
+                        mapreport.hw_model)
+                    node_from.role = config_pb2.Config.DeviceConfig.Role.Name(
+                        mapreport.role)
 
             elif mp.decoded.portnum == portnums_pb2.POSITION_APP:
                 position = mesh_pb2.Position()
@@ -371,18 +349,13 @@ class MeshtasticMQTT(QObject, threading.Thread):
                     pass
                 else:
                     if position.latitude_i != 0 and position.longitude_i != 0:
-
-                        n = MeshtasticNode(
-                            id=self.node_number_to_id(getattr(mp, "from")),
-                            lat=str(round(position.latitude_i * 1e-7, 7)),
-                            lon=str(round(position.longitude_i * 1e-7, 7)),
-                            alt=str(position.altitude),
-                            rssi=mp.rx_rssi,
-                            snr=mp.rx_snr,
-                            lastseen=datetime.datetime.now(),
-                        )
-                        self._store.store_or_update_node(n)
-                        self.notify_nodes_table_signal.emit()
+                        node_from.lat = str(
+                            round(position.latitude_i * 1e-7, 7))
+                        node_from.lon = str(
+                            round(position.longitude_i * 1e-7, 7))
+                        node_from.alt = str(position.altitude)
+                        node_from.rssi = mp.rx_rssi
+                        node_from.snr = mp.rx_snr
 
             elif mp.decoded.portnum == portnums_pb2.TELEMETRY_APP:
                 env = telemetry_pb2.Telemetry()
@@ -391,33 +364,23 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 except Exception as e:
                     pass
                 else:
-                    n = MeshtasticNode(
-                        id=self.node_number_to_id(getattr(mp, "from")),
-                        lastseen=datetime.datetime.now(),
-                        chutil=round(env.device_metrics.channel_utilization, 2),
-                        txairutil=round(env.device_metrics.air_util_tx, 2),
-                        battery_level=env.device_metrics.battery_level,
-                        voltage=round(env.device_metrics.voltage, 2),
-                    )
+                    node_from.lastseen = datetime.datetime.now()
+                    node_from.chutil = round(
+                        env.device_metrics.channel_utilization, 2)
+                    node_from.txairutil = round(
+                        env.device_metrics.air_util_tx, 2)
+                    node_from.battery_level = env.device_metrics.battery_level
+                    node_from.voltage = round(env.device_metrics.voltage, 2)
+
                     nm = NodeMetrics(
                         node_id=self.node_number_to_id(
                             getattr(
                                 mp, "from")), battery_level=env.device_metrics.battery_level, voltage=round(
                             env.device_metrics.voltage, 2), channel_utilization=round(
                             env.device_metrics.channel_utilization, 2), air_util_tx=round(
-                            env.device_metrics.air_util_tx, 2), timestamp=env.time,
-                        )
-
-                    device_metrics_dict = {
-                        'Battery Level': env.device_metrics.battery_level, 'Voltage': round(
-                            env.device_metrics.voltage, 2), 'Channel Utilization': round(
-                            env.device_metrics.channel_utilization, 1), 'Air Utilization': round(
-                            env.device_metrics.air_util_tx, 1)}
-
-                    self._store.store_or_update_node(n)
+                            env.device_metrics.air_util_tx, 2), timestamp=env.time, )
                     self._store.store_or_update_node_metrics(nm)
                     self.notify_nodes_metrics_signal.emit()
-                    self.notify_nodes_table_signal.emit()
 
             elif mp.decoded.portnum == portnums_pb2.TRACEROUTE_APP:
                 if mp.decoded.payload:
@@ -427,6 +390,13 @@ class MeshtasticMQTT(QObject, threading.Thread):
                     asDict = google.protobuf.json_format.MessageToDict(
                         routeDiscovery)
                     print(asDict)
+
+            self._store.store_or_update_node(node_from)
+            node_from.hopsaway = (
+                int(se.packet.hop_start) - int(se.packet.hop_limit))
+            if node_from.hopsaway is not None and node_from.hopsaway == 0:
+                self._store.add_neighbor(node_from.id, se.gateway_id)
+            self.notify_nodes_table_signal.emit()
 
     def enqueue_task(self, task, *args, **kwargs):
         self.task_queue.put((task, args, kwargs))
