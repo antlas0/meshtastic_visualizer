@@ -52,19 +52,19 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._telemetry_plot_widget = pg.PlotWidget()
         self._packets_plot_widget = pg.PlotWidget()
         self._telemetry_plot_item = self._telemetry_plot_widget.plot(
-                pen=pg.mkPen(
-                    '#007aff',
-                    width=1),
-                symbol='o',
-                symbolPen='b',
-                symbolSize=8)
+            pen=pg.mkPen(
+                '#007aff',
+                width=1),
+            symbol='o',
+            symbolPen='b',
+            symbolSize=8)
         self._packets_plot_item = self._packets_plot_widget.plot(
-                pen=pg.mkPen(
-                    '#007aff',
-                    width=1),
-                symbol='o',
-                symbolPen='b',
-                symbolSize=8)
+            pen=pg.mkPen(
+                '#007aff',
+                width=1),
+            symbol='o',
+            symbolPen='b',
+            symbolSize=8)
         self._settings = QSettings("antlas0", "meshtastic_visualizer")
 
         # Variables
@@ -93,7 +93,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.update_nodes_metrics)
         self._mqtt_manager.notify_nodes_metrics_signal.connect(
             self.update_nodes_metrics)
-        self._manager.notify_local_device_configuration_signal.connect(self.update_device_details)
+        self._manager.notify_local_device_configuration_signal.connect(
+            self.update_device_details)
         self._manager.notify_packet_received.connect(
             self.update_packets_treeview)
         self._manager.notify_message_signal.connect(
@@ -140,7 +141,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.pm_metric_combobox.insertItem(
                 i + 1, metric)
         self.nodes_filter_linedit.textChanged.connect(self.update_nodes_table)
-        self.shortcut_filter_combobox.currentTextChanged.connect(self.update_nodes_table)
+        self.shortcut_filter_combobox.currentTextChanged.connect(
+            self.update_nodes_table)
         self.mqtt_connect_button.pressed.connect(self.connect_mqtt)
         self.mqtt_disconnect_button.pressed.connect(
             self._mqtt_manager.disconnect_mqtt)
@@ -202,8 +204,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         for button in self._action_buttons:
             button.setEnabled(False)
 
-        for i, f in enumerate(["All", "Recently seen", "Neighbors", "1-hop", "2-hops", "3-hops", "4-hops", "5-hops", "6-hops", "7-hops"]):
-            self.shortcut_filter_combobox.insertItem(i , f)
+        for i, f in enumerate(["All", "Recently seen", "Neighbors", "1-hop",
+                              "2-hops", "3-hops", "4-hops", "5-hops", "6-hops", "7-hops"]):
+            self.shortcut_filter_combobox.insertItem(i, f)
 
         for p in ["telemetry", "packets"]:
             widget = {
@@ -220,8 +223,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             }
             widget[p].setBackground('w')
             widget[p].getPlotItem().getAxis('left').setPen(pg.mkPen(color='k'))
-            widget[p].getPlotItem().getAxis('bottom').setPen(pg.mkPen(color='k'))
-            widget[p].getPlotItem().getAxis('left').setTextPen(pg.mkPen(color='k'))
+            widget[p].getPlotItem().getAxis(
+                'bottom').setPen(pg.mkPen(color='k'))
+            widget[p].getPlotItem().getAxis(
+                'left').setTextPen(pg.mkPen(color='k'))
             widget[p].getPlotItem().getAxis(
                 'bottom').setTextPen(pg.mkPen(color='k'))
             widget[p].addLegend()
@@ -272,8 +277,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.nodes_recently_lcd.display(0)
         self.messagerecipient_combobox.clear()
         self._telemetry_plot_item.setData(
-                x=None,
-                y=None)
+            x=None,
+            y=None)
         self._telemetry_plot_widget.setTitle("No data")
 
     def clear_packets(self) -> None:
@@ -287,8 +292,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packets_total_lcd.display(0)
         self.pm_node_combobox.clear()
         self._packets_plot_item.setData(
-                x=None,
-                y=None)
+            x=None,
+            y=None)
         self._packets_plot_widget.setTitle("No data")
 
     def _get_meshtastic_message_header_fields(self) -> dict:
@@ -303,7 +308,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         }
 
     def remove_notification_badge(self, index):
-        if index == 2:
+        if index == 3:
             self.tabWidget.setTabText(3, "Messages")
 
     def refresh_ui(self) -> None:
@@ -360,7 +365,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if device_path:
             self._manager.set_meshtastic_device(device_path)
             self.set_status(MessageLevel.INFO, f"Connecting to {device_path}.")
-            self.connect_device_signal.emit(self.reset_nodedb_checkbox.isChecked())
+            self.connect_device_signal.emit(
+                self.reset_nodedb_checkbox.isChecked())
         else:
             self.set_status(MessageLevel.ERROR,
                             f"Cannot connect. Please specify a device path.")
@@ -434,7 +440,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._map.update(self._store.get_nodes())
         self.update_map_in_widget()
 
-    def clean_plot(self, kind:str="") -> None:
+    def clean_plot(self, kind: str = "") -> None:
         to_clean = [kind]
         if not kind:
             to_clean = ["telemetry", "packets"]
@@ -466,7 +472,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if not node_id or not metric_name:
             self.clean_plot(kind="telemetry")
             return
-        self.refresh_plot(node_id=node_id, metric_name=metric_name, kind="telemetry")
+        self.refresh_plot(
+            node_id=node_id,
+            metric_name=metric_name,
+            kind="telemetry")
 
     def update_packets_metrics(self) -> str:
         self.pm_update_button.setEnabled(False)
@@ -476,9 +485,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if not node_id or not metric_name:
             self.clean_plot(kind="packets")
             return
-        self.refresh_plot(node_id=node_id, metric_name=metric_name, kind="packets")
+        self.refresh_plot(
+            node_id=node_id,
+            metric_name=metric_name,
+            kind="packets")
 
-    def refresh_plot(self, node_id: str, metric_name: str, kind:str) -> None:
+    def refresh_plot(self, node_id: str, metric_name: str, kind: str) -> None:
         self._lock.acquire()
         metric = None
         if kind == "telemetry":
@@ -545,7 +557,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             channel_index = self._manager.get_data_store(
             ).get_channel_index_from_name(channel_name)
         except Exception:
-            channel_index = 0 # this is the default and seems to be standard before 2.5.X firmwares
+            channel_index = 0  # this is the default and seems to be standard before 2.5.X firmwares
         finally:
             pass
 
@@ -577,26 +589,30 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 lambda x: x.lat is not None and x.lon is not None and x.lat and x.lon,
                 nodes.values()))
         self.nodes_gps_lcd.display(len(positioned_nodes))
-        recently_seen = list(filter(lambda x: x.rx_counter > 0, nodes.values()))
+        recently_seen = list(
+            filter(
+                lambda x: x.rx_counter > 0,
+                nodes.values()))
         self.nodes_recently_lcd.display(len(recently_seen))
 
         # filter by nodes_filter
         filtered = nodes.values()  # nofilter
         hopfilter = {
-            "1-hop":1,
-            "2-hops":2,
-            "3-hops":3,
-            "4-hops":4,
-            "5-hops":5,
-            "6-hops":6,
-            "7-hops":7,
+            "1-hop": 1,
+            "2-hops": 2,
+            "3-hops": 3,
+            "4-hops": 4,
+            "5-hops": 5,
+            "6-hops": 6,
+            "7-hops": 7,
         }
         if self.shortcut_filter_combobox.currentText() == "Recently seen":
             filtered = recently_seen
         elif self.shortcut_filter_combobox.currentText() == "Neighbors":
             filtered = list(filter(lambda x: x.hopsaway == 0, nodes.values()))
         elif self.shortcut_filter_combobox.currentText() in hopfilter.keys():
-            filtered = list(filter(lambda x: x.hopsaway == hopfilter[self.shortcut_filter_combobox.currentText()], nodes.values()))
+            filtered = list(filter(
+                lambda x: x.hopsaway == hopfilter[self.shortcut_filter_combobox.currentText()], nodes.values()))
 
         if len(self.nodes_filter_linedit.text()) != 0:
             # first search in long_name, then in id
@@ -643,12 +659,18 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
             if node.lastseen:
                 recently_seen = node.lastseen > datetime.now() - timedelta(minutes=30)
-                if recently_seen: status_line.append("📶")
-            if node.rx_counter > 0: status_line.append(f"{node.rx_counter}✉️")
-            if node.has_location(): status_line.append("📍")
-            if node.public_key: status_line.append("🔑")
-            if node.is_mqtt_gateway: status_line.append("🖥️")
-            if node.hopsaway is not None: status_line.append(f"{node.hopsaway}✈️")
+                if recently_seen:
+                    status_line.append("📶")
+            if node.rx_counter > 0:
+                status_line.append(f"{node.rx_counter}✉️")
+            if node.has_location():
+                status_line.append("📍")
+            if node.public_key:
+                status_line.append("🔑")
+            if node.is_mqtt_gateway:
+                status_line.append("🖥️")
+            if node.hopsaway is not None:
+                status_line.append(f"{node.hopsaway}✈️")
 
             row.update(
                 {
@@ -698,17 +720,23 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 current_item = self.mesh_table.item(row_idx, col_idx)
                 current_widget = self.mesh_table.cellWidget(row_idx, col_idx)
                 if current_item is None and current_widget is None:
-                    if col_idx == 4: # insert widget in cell
+                    if col_idx == 4:  # insert widget in cell
                         btn = QPushButton("Traceroute")
                         btn.setEnabled(self._manager.is_connected())
                         self.mesh_table.setCellWidget(row_idx, col_idx, btn)
                         self._traceroute_buttons.append(btn)
-                        btn.clicked.connect(lambda: self.traceroute(self.mesh_table.item(self.mesh_table.indexAt(self.sender().pos()).row(), 2).text()))
+                        btn.clicked.connect(
+                            lambda: self.traceroute(
+                                self.mesh_table.item(
+                                    self.mesh_table.indexAt(
+                                        self.sender().pos()).row(),
+                                    2).text()))
                     else:
                         data = str(value)
                         if data == "None":
                             data = ""
-                        self.mesh_table.setItem(row_idx, col_idx, QTableWidgetItem(data))
+                        self.mesh_table.setItem(
+                            row_idx, col_idx, QTableWidgetItem(data))
                 if current_item is not None:
                     if current_item.text() != str(value):
                         data = str(value)
@@ -754,12 +782,17 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.batterylevel_progressbar.show()
         self.id_label.setText(str(cfg.id))
 
-    def traceroute(self, dest_id:str="", maxhops:int=5, dummy:bool=False):
+    def traceroute(
+            self,
+            dest_id: str = "",
+            maxhops: int = 5,
+            dummy: bool = False):
         self.traceroute_table.setRowCount(0)
         self.traceroute_table.setColumnCount(3)
         self.traceroute_table.setHorizontalHeaderLabels(
             ["Id", "SNR To", "SNR Back"])
-        self.traceroute_signal.emit(dest_id, DEFAULT_TRACEROUTE_CHANNEL, maxhops)
+        self.traceroute_signal.emit(
+            dest_id, DEFAULT_TRACEROUTE_CHANNEL, maxhops)
 
     def update_received_message(self) -> None:
         if self.tabWidget.currentIndex() != 3:
@@ -797,7 +830,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     if getattr(message, "ack_status") is not None:
                         if getattr(message, "ack_status") is True:
                             if getattr(message, "ack_by") is not None:
-                                if getattr(message, "ack_by") != getattr(message, "to_id"):
+                                if getattr(
+                                        message,
+                                        "ack_by") != getattr(
+                                        message,
+                                        "to_id"):
                                     label = "☁️"
                                 else:
                                     label = "✅"
@@ -854,7 +891,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if self.packetsource_combobox.currentText() != "All":
             filtered_packets = list(
                 filter(
-                    lambda x: x.from_id == self._store.get_id_from_long_name(self.packetsource_combobox.currentText()),
+                    lambda x: x.from_id == self._store.get_id_from_long_name(
+                        self.packetsource_combobox.currentText()),
                     filtered_packets))
 
         for packet in filtered_packets:
@@ -863,9 +901,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 self.packettype_combobox.insertItem(
                     1000, packet.port_num)  # insert last
 
-            if self.packetsource_combobox.findText(self._store.get_long_name_from_id(packet.from_id)) == -1:
+            if self.packetsource_combobox.findText(
+                self._store.get_long_name_from_id(
+                    packet.from_id)) == -1:
                 self.packetsource_combobox.insertItem(
-                    100000, self._store.get_long_name_from_id(packet.from_id))  # insert last
+                    100000, self._store.get_long_name_from_id(
+                        packet.from_id))  # insert last
 
             if str(packet.date) in alreading_existing_packets:
                 continue
