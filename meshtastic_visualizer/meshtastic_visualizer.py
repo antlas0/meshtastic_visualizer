@@ -639,7 +639,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.nm_node_combobox.clear()
         self.nm_node_combobox.insertItem(
             0, "Me")
-        for i, node in enumerate(filtered):
+        for i, node in enumerate(nodes.values()):
             if node.id == self._local_board_id:
                 continue
             self.messagerecipient_combobox.insertItem(
