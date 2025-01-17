@@ -167,6 +167,16 @@ class MeshtasticDataStore(Thread):
         self._lock.release()
         return res
 
+    def add_neighbor(self, me: str, my_neighbor: str) -> None:
+        self._lock.acquire()
+        for k, v in {me: my_neighbor, my_neighbor: me}.items():
+            if self.nodes[k].neighbors is None:
+                self.nodes[k].neighbors = []
+
+            if v not in self.nodes[k].neighbors:
+                self.nodes[k].neighbors.append(v)
+        self._lock.release()
+
     def get_nodes(self) -> dict:
         self._lock.acquire()
         res = copy.deepcopy(self.nodes)
