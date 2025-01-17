@@ -170,18 +170,27 @@ class MeshtasticManager(QObject, threading.Thread):
             short_name=node["user"]["shortName"],
             hardware=node["user"]["hwModel"],
             role=node["user"]["role"] if "role" in node["user"] else None,
-            lat=str(node["position"]["latitude"]) if "position" in node and "latitude" in node["position"] else None,
-            lon=str(node["position"]["longitude"] if "position" in node and "longitude" in node["position"] else None),
-            lastseen=datetime.datetime.fromtimestamp(node["lastHeard"]) if "lastHeard" in node and node["lastHeard"] is not None else None,
+            lat=str(
+                node["position"]["latitude"]) if "position" in node and "latitude" in node["position"] else None,
+            lon=str(
+                node["position"]["longitude"] if "position" in node and "longitude" in node["position"] else None),
+            lastseen=datetime.datetime.fromtimestamp(
+                node["lastHeard"]) if "lastHeard" in node and node["lastHeard"] is not None else None,
             battery_level=batlevel,
-            hopsaway=int(node["hopsAway"]) if "hopsAway" in node else None,
-            snr=round(node["snr"], 2) if "snr" in node else None,
-            txairutil=round(node["deviceMetrics"]["airUtilTx"], 2) if "deviceMetrics" in node and "airUtilTx" in node["deviceMetrics"] else None,
-            chutil=round(node["deviceMetrics"]["channelUtilization"], 2) if "deviceMetrics" in node and "channelUtilization" in node["deviceMetrics"] else None,
+            hopsaway=int(
+                    node["hopsAway"]) if "hopsAway" in node else None,
+            snr=round(
+                node["snr"],
+                2) if "snr" in node else None,
+            txairutil=round(
+                node["deviceMetrics"]["airUtilTx"],
+                2) if "deviceMetrics" in node and "airUtilTx" in node["deviceMetrics"] else None,
+            chutil=round(
+                node["deviceMetrics"]["channelUtilization"],
+                2) if "deviceMetrics" in node and "channelUtilization" in node["deviceMetrics"] else None,
             uptime=node["deviceMetrics"]["uptimeSeconds"] if "deviceMetrics" in node and "uptimeSeconds" in node["deviceMetrics"] else None,
             is_local=True,
-            public_key=node["user"]["publicKey"]
-        )
+            public_key=node["user"]["publicKey"])
 
         self._local_board_id = node["user"]["id"]
 
@@ -209,21 +218,21 @@ class MeshtasticManager(QObject, threading.Thread):
         node_from.is_local = node_from.id == self._local_board_id
 
         received_packet = RadioPacket(
-                date=datetime.datetime.now(),
-                pid=packet["id"],
-                from_id=packet['fromId'],
-                to_id=packet['toId'],
-                channel_id=packet["channel"] if "channel" in packet else None,
-                is_encrypted=packet["pkiEncrypted"] if "pkiEncrypted" in packet else False,
-                payload=decoded['payload'],
-                decoded=str(decoded),
-                port_num=decoded["portnum"],
-                snr=packet["rxSnr"] if "rxSnr" in packet else None,
-                rssi=packet["rxRssi"] if "rxRssi" in packet else None,
-                hop_limit=packet["hopLimit"] if "hopLimit" in packet else None,
-                hop_start=packet["hopStart"] if "hopStart" in packet else None,
-                priority=packet["priority"] if "priority" in packet else None,
-            )
+            date=datetime.datetime.now(),
+            pid=packet["id"],
+            from_id=packet['fromId'],
+            to_id=packet['toId'],
+            channel_id=packet["channel"] if "channel" in packet else None,
+            is_encrypted=packet["pkiEncrypted"] if "pkiEncrypted" in packet else False,
+            payload=decoded['payload'],
+            decoded=str(decoded),
+            port_num=decoded["portnum"],
+            snr=packet["rxSnr"] if "rxSnr" in packet else None,
+            rssi=packet["rxRssi"] if "rxRssi" in packet else None,
+            hop_limit=packet["hopLimit"] if "hopLimit" in packet else None,
+            hop_start=packet["hopStart"] if "hopStart" in packet else None,
+            priority=packet["priority"] if "priority" in packet else None,
+        )
         self._data.store_radiopacket(received_packet)
 
         strl = []
@@ -254,15 +263,18 @@ class MeshtasticManager(QObject, threading.Thread):
         strl.append(f", {packet['decoded']}")
 
         node_from.rssi = round(
-                packet["rxRssi"],
-                2) if "rxRssi" in packet else None
+            packet["rxRssi"],
+            2) if "rxRssi" in packet else None
         node_from.snr = round(
-                packet["rxSnr"],
-                2) if "rxSnr" in packet else None
+            packet["rxSnr"],
+            2) if "rxSnr" in packet else None
         if "hopsAway" in packet:
             node_from.hopsaway = int(packet["hopsAway"])
         elif ("hopLimit" in packet and "hopStart" in packet):
-            node_from.hopsaway = (int(packet["hopStart"]) - int(packet["hopLimit"]))
+            node_from.hopsaway = (
+                int(packet["hopStart"]) - int(packet["hopLimit"]))
+        if node_from.hopsaway is not None and node_from.hopsaway == 0:
+            self._data.add_neighbor(self._local_board_id, node_from.id)
 
         node_from.lastseen = datetime.datetime.now()
 
@@ -270,14 +282,14 @@ class MeshtasticManager(QObject, threading.Thread):
             node_from.battery_level = decoded["telemetry"]["deviceMetrics"]["batteryLevel"] if "deviceMetrics" in packet[
                 "decoded"]["telemetry"] and "batteryLevel" in decoded["telemetry"]["deviceMetrics"] else None
             node_from.txairutil = round(
-                    decoded["telemetry"]["deviceMetrics"]["airUtilTx"],
-                    2) if "deviceMetrics" in decoded["telemetry"] and "airUtilTx" in decoded["telemetry"]["deviceMetrics"] else None
+                decoded["telemetry"]["deviceMetrics"]["airUtilTx"],
+                2) if "deviceMetrics" in decoded["telemetry"] and "airUtilTx" in decoded["telemetry"]["deviceMetrics"] else None
             node_from.chutil = round(
-                    decoded["telemetry"]["deviceMetrics"]["channelUtilization"],
-                    2) if "deviceMetrics" in decoded["telemetry"] and "channelUtilization" in decoded["telemetry"]["deviceMetrics"] else None
+                decoded["telemetry"]["deviceMetrics"]["channelUtilization"],
+                2) if "deviceMetrics" in decoded["telemetry"] and "channelUtilization" in decoded["telemetry"]["deviceMetrics"] else None
             node_from.voltage = round(
-                    decoded["telemetry"]["deviceMetrics"]["voltage"],
-                    2) if "deviceMetrics" in decoded["telemetry"] and "voltage" in decoded["telemetry"]["deviceMetrics"] else None
+                decoded["telemetry"]["deviceMetrics"]["voltage"],
+                2) if "deviceMetrics" in decoded["telemetry"] and "voltage" in decoded["telemetry"]["deviceMetrics"] else None
             node_from.uptime = decoded["telemetry"]["deviceMetrics"]["uptimeSeconds"] if "deviceMetrics" in packet[
                 "decoded"]["telemetry"] and "uptimeSeconds" in decoded["telemetry"]["deviceMetrics"] else None
             nm = NodeMetrics(
@@ -319,21 +331,7 @@ class MeshtasticManager(QObject, threading.Thread):
             neighbors = self._extract_route_neighbors(route)
 
             for k, v in neighbors.items():
-                if node_from.neighbors is None: node_from.neighbors = []
-                if k == node_from.id:
-                    if not neighbors[node_from.id] in node_from.neighbors:
-                        node_from.neighbors.append(neighbors[node_from.id])
-                else:
-                    n = self._data.get_node_from_id(k)
-                    if n is None:
-                        continue
-                    if n.neighbors is None: n.neighbors = []
-                    updated_node = MeshtasticNode(
-                        id=n.id, neighbors=n.neighbors)
-                    if not neighbors[updated_node.id] in updated_node.neighbors:
-                        updated_node.neighbors.append(
-                            neighbors[updated_node.id])
-                        nodes_to_update.append(updated_node)
+                self._data.add_neighbor(k, v)
 
             snr_towards: list = []
             snr_back: list = []
@@ -353,18 +351,19 @@ class MeshtasticManager(QObject, threading.Thread):
                 pass
 
             nodes_to_update.append(
-                    MeshtasticNode(
-                        id=neighbors[self._local_board_id],
-                        hopsaway=0,
-                    )
+                MeshtasticNode(
+                    id=neighbors[self._local_board_id],
+                    hopsaway=0,
+                )
             )
             self.notify_traceroute_signal.emit(route, snr_towards, snr_back)
 
         if decoded["portnum"] == PacketInfoType.PCK_NEIGHBORINFO_APP.value:
             if "neighbors" in decoded["neighborinfo"]:
-                node_from.neighbors = [
-                    self._node_id_from_num(
-                        x["nodeId"]) for x in decoded["neighborinfo"]["neighbors"]]
+                for x in decoded["neighborinfo"]["neighbors"]:
+                    self._data.add_neighbor(
+                        node_from.id, self._node_id_from_num(
+                            x["nodeId"]))
 
         if decoded["portnum"] == PacketInfoType.PCK_TEXT_MESSAGE_APP.value:
             data = decoded['payload']
