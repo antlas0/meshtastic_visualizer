@@ -160,14 +160,10 @@ class MeshtasticDataStore(Thread):
     def get_node_from_id(self, node_id: str) -> Optional[MeshtasticNode]:
         self._lock.acquire()
         res = None
-        nodes = list(
-            filter(
-                lambda x: x.id == node_id,
-                self.nodes.values()))
-        if len(nodes) != 1:
-            res = None
-        else:
-            res = nodes[0]
+        try:
+            res = copy.deepcopy(self.nodes[node_id])
+        except Exception:
+            pass
         self._lock.release()
         return res
 
@@ -201,7 +197,7 @@ class MeshtasticDataStore(Thread):
         self.metrics = {}
         self._lock.release()
 
-    def update_node_rx_counter(self, node:MeshtasticNode) -> None:
+    def update_node_rx_counter(self, node: MeshtasticNode) -> None:
         rx_counter = getattr(self.nodes[str(node.id)], "rx_counter") + 1
         # update the received packet counter
         setattr(self.nodes[str(node.id)], "rx_counter", rx_counter)
@@ -261,8 +257,13 @@ class MeshtasticDataStore(Thread):
         else:
             key = key[0]
             for field in fields(MeshtasticMessage):
-                if getattr(message, field.name)is not None:
-                    setattr(self.messages[key], field.name, getattr(message, field.name))
+                if getattr(message, field.name) is not None:
+                    setattr(
+                        self.messages[key],
+                        field.name,
+                        getattr(
+                            message,
+                            field.name))
         self._lock.release()
 
     def get_node_metrics_fields(self) -> list:
@@ -309,7 +310,10 @@ class MeshtasticDataStore(Thread):
         self._lock.acquire()
         res: Dict[str, List[Any]] = {}
 
-        filtered = list(filter(lambda x: x.from_id == node_id, self.radiopackets.values()))
+        filtered = list(
+            filter(
+                lambda x: x.from_id == node_id,
+                self.radiopackets.values()))
 
         if len(filtered) == 0:
             res = {}
