@@ -11,6 +11,7 @@ TIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 CHARGING_TRESHOLD = 4.2
 DEFAULT_TRACEROUTE_CHANNEL = 0
 
+
 class MessageLevel(enum.Enum):
     """
     Message criticality level
@@ -62,9 +63,10 @@ def run_in_thread(method):
 
     return wrapper
 
+
 @dataclass
 class JsonExporter:
-    def date2str(self, time_format:str=TIME_FORMAT) -> None:
+    def date2str(self, time_format: str = TIME_FORMAT) -> None:
         """convert all fields of class to json-convertible format
 
         Returns:
@@ -72,7 +74,9 @@ class JsonExporter:
         """
         for f in fields(self):
             if isinstance(getattr(self, f.name), datetime.datetime):
-                setattr(self, f.name, getattr(self, f.name).strftime(time_format))
+                setattr(
+                    self, f.name, getattr(
+                        self, f.name).strftime(time_format))
 
 
 @dataclass
@@ -117,7 +121,8 @@ class MeshtasticNode(JsonExporter):
     uptime: Optional[int] = None
     is_local: Optional[bool] = None
     public_key: Optional[str] = None
-    rx_counter: Optional[int] = None  # number of packets received from this node
+    # number of packets received from this node
+    rx_counter: Optional[int] = None
     is_mqtt_gateway: Optional[bool] = None
 
     def has_location(self) -> bool:
@@ -171,6 +176,8 @@ class MQTTPacket(JsonExporter):
     source: str = "mqtt"
     snr: Optional[float] = None
     rssi: Optional[float] = None
+    hop_limit: Optional[int] = None
+    hop_start: Optional[int] = None
 
 
 @dataclass
@@ -191,7 +198,8 @@ class RadioPacket(JsonExporter):
     source: str = "radio"
     priority: Optional[str] = None
 
-#67ea94
+
+# 67ea94
 MAINWINDOW_STYLESHEET = """
 
 """
