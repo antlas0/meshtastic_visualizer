@@ -20,7 +20,7 @@ Linux compatible, debian based tested (should work on Windows, compatibility not
 | Export messages and packets (json) |✅|✅|
 | Export events logs |✅|✅|
 | Nodes telemetry metrics plotting (CHutil, power,...) |✅|✅|
-| Packets RF metrics plotting (RSSI, SNR,...) |✅|❌|
+| Packets RF metrics plotting (RSSI, SNR,...) |✅|✅|
 ## How to run 
 
 Based on X11, build the dockerfile and run the docker container. This example assumes your node is accessible at `/dev/ttyACM0`.
