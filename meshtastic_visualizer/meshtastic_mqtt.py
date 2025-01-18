@@ -392,6 +392,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                     print(asDict)
 
             self._store.store_or_update_node(node_from)
+            self._store.update_node_rx_counter(node_from)
             node_from.hopsaway = (
                 int(se.packet.hop_start) - int(se.packet.hop_limit))
             if node_from.hopsaway is not None and node_from.hopsaway == 0:

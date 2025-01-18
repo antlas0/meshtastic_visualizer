@@ -61,12 +61,13 @@ class MeshtasticDataStore(Thread):
 
     def store_mqtt_packet(self, packet: MQTTPacket) -> None:
         self._lock.acquire()
-        self.mqttpackets[str(packet.date)] = packet
+        key = str(packet.date)
+        self.mqttpackets[key] = packet
         self._lock.release()
 
     def get_mqtt_packets(self) -> List:
         self._lock.acquire()
-        packets = list(self.mqttpackets.values())
+        packets = copy.deepcopy(list(self.mqttpackets.values()))
         self._lock.release()
         return packets
 
@@ -320,10 +321,12 @@ class MeshtasticDataStore(Thread):
         self._lock.acquire()
         res: Dict[str, List[Any]] = {}
 
+        packets: list = list(copy.deepcopy(self.radiopackets).values(
+        )) + list(copy.deepcopy(self.mqttpackets).values())
         filtered = list(
             filter(
                 lambda x: x.from_id == node_id,
-                self.radiopackets.values()))
+                packets))
 
         if len(filtered) == 0:
             res = {}

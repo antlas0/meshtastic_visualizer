@@ -262,6 +262,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packetsource_combobox.insertItem(0, "All")
         self.packetsource_combobox.currentIndexChanged.connect(
             self.clean_packets_treeview)
+        self.packetmedium_combobox.insertItem(0, "All")
+        self.packetmedium_combobox.insertItem(1, "Radio")
+        self.packetmedium_combobox.insertItem(2, "MQTT")
+        self.packetmedium_combobox.currentIndexChanged.connect(
+            self.clean_packets_treeview)
         self.setStyleSheet(MAINWINDOW_STYLESHEET)
 
     def clear_messages_table(self) -> None:
@@ -866,7 +871,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def update_packets_treeview(self) -> None:
         # Example: Modify existing items or add new ones
-        packets = self._store.get_radio_packets()
+        packets = self._store.get_radio_packets() + self._store.get_mqtt_packets()
         alreading_existing_packets = [
             self.packets_treewidget.topLevelItem(i).text(0) for i in range(
                 self.packets_treewidget.topLevelItemCount())]
@@ -882,17 +887,24 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.pm_node_combobox.setCurrentText(current_pm_node)
 
         filtered_packets = packets
-        if self.packettype_combobox.currentText() != "All":
+
+        if self.packetmedium_combobox.currentText() != "All":
             filtered_packets = list(
                 filter(
-                    lambda x: x.port_num == self.packettype_combobox.currentText(),
-                    packets))
+                    lambda x: x.source.lower() == self.packetmedium_combobox.currentText().lower(),
+                    filtered_packets))
 
         if self.packetsource_combobox.currentText() != "All":
             filtered_packets = list(
                 filter(
                     lambda x: x.from_id == self._store.get_id_from_long_name(
                         self.packetsource_combobox.currentText()),
+                    filtered_packets))
+
+        if self.packettype_combobox.currentText() != "All":
+            filtered_packets = list(
+                filter(
+                    lambda x: x.port_num == self.packettype_combobox.currentText(),
                     filtered_packets))
 
         for packet in filtered_packets:

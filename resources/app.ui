@@ -1055,7 +1055,7 @@
     </widget>
     <widget class="QWidget" name="tab_2">
      <attribute name="title">
-      <string>Radio packets</string>
+      <string>Packets</string>
      </attribute>
      <widget class="QTreeWidget" name="packets_treewidget">
       <property name="geometry">
@@ -1100,9 +1100,9 @@
      <widget class="QComboBox" name="packetsource_combobox">
       <property name="geometry">
        <rect>
-        <x>50</x>
+        <x>160</x>
         <y>90</y>
-        <width>161</width>
+        <width>131</width>
         <height>25</height>
        </rect>
       </property>
@@ -1111,9 +1111,9 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>90</y>
+        <y>94</y>
         <width>31</width>
-        <height>25</height>
+        <height>21</height>
        </rect>
       </property>
       <property name="text">
@@ -1123,9 +1123,9 @@
      <widget class="QComboBox" name="packettype_combobox">
       <property name="geometry">
        <rect>
-        <x>220</x>
+        <x>300</x>
         <y>90</y>
-        <width>171</width>
+        <width>91</width>
         <height>25</height>
        </rect>
       </property>
@@ -1247,6 +1247,16 @@
        </property>
        <layout class="QHBoxLayout" name="packets_plot_layout"/>
       </widget>
+     </widget>
+     <widget class="QComboBox" name="packetmedium_combobox">
+      <property name="geometry">
+       <rect>
+        <x>50</x>
+        <y>90</y>
+        <width>101</width>
+        <height>25</height>
+       </rect>
+      </property>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_messages">

@@ -13,7 +13,7 @@ Linux compatible, debian based tested (should work on Windows, compatibility not
 | Display nodes configuration (with public key)|✅|✅|
 | Display map of nodes |✅|✅|
 | Display messages |✅|✅|
-| Display packets |✅|❌|
+| Display packets |✅|✅|
 | Send messages with acknowledgment|✅|❌|
 | Perform traceroute (with SNR)|✅|❌|
 | Export nodes (json) |✅|✅|
