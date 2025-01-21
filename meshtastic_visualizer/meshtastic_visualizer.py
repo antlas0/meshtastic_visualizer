@@ -995,7 +995,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.set_status(MessageLevel.INFO, trace)
 
     def export_packets(self) -> None:
-        packets = self._store.get_radio_packets()
+        packets = self._store.get_radio_packets() + self._store.get_mqtt_packets()
         [x.date2str() for x in packets]
         packets_list = [asdict(x) for x in packets]
         for p in packets_list:
