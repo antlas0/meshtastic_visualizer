@@ -261,6 +261,8 @@ class MeshtasticMQTT(QObject, threading.Thread):
             node_from = MeshtasticNode(
                 id=self.node_number_to_id(getattr(se.packet, 'from')),
                 lastseen=datetime.datetime.now(),
+                rssi=mp.rx_rssi,
+                snr=mp.rx_snr,
             )
 
             self._store.store_or_update_node(MeshtasticNode(
