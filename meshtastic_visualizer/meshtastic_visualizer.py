@@ -683,6 +683,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     "User": node.long_name,
                     "AKA": node.short_name,
                     "ID": node.id,
+                    "SNR": node.snr if node.hopsaway == 0 else "/",
+                    "RSSI": node.rssi if node.hopsaway == 0 else "/",
                     "Action": None,
                     "Role": node.role,
                     "Hardware": node.hardware,
@@ -706,6 +708,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             "User",
             "AKA",
             "ID",
+            "SNR",
+            "RSSI",
             "Action",
             "Role",
             "Hardware",
@@ -725,8 +729,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 current_item = self.mesh_table.item(row_idx, col_idx)
                 current_widget = self.mesh_table.cellWidget(row_idx, col_idx)
                 if current_item is None and current_widget is None:
-                    if col_idx == 4:  # insert widget in cell
-                        btn = QPushButton("Traceroute")
+                    if col_idx == 6:  # insert widget in cell
+                        btn = QPushButton("Traceroute", self)
                         btn.setEnabled(self._manager.is_connected())
                         self.mesh_table.setCellWidget(row_idx, col_idx, btn)
                         self._traceroute_buttons.append(btn)
