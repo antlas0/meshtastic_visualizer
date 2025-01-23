@@ -83,6 +83,27 @@ class MeshtasticDataStore(Thread):
         self._lock.release()
         return packets
 
+    def get_radio_packet(self, pid: int) -> Optional[RadioPacket]:
+        self._lock.acquire()
+        packet = list(
+            filter(
+                lambda x: x.pid == pid,
+                self.radiopackets.values()))
+        if len(packet) == 1:
+            packet = copy.deepcopy(packet[0])
+        else:
+            packet = None
+        self._lock.release()
+        return packet
+
+    def get_mqtt_packet(self, pid: int) -> Optional[MQTTPacket]:
+        self._lock.acquire()
+        packet = None
+        if pid in self.mqttpackets:
+            packet = copy.deepcopy(self.mqttpackets[pid])
+        self._lock.release()
+        return packet
+
     def clear_radio_packets(self) -> None:
         self._lock.acquire()
         del self.radiopackets
@@ -171,10 +192,10 @@ class MeshtasticDataStore(Thread):
     def add_neighbor(self, me: str, my_neighbor: str) -> None:
         self._lock.acquire()
         for k, v in {me: my_neighbor, my_neighbor: me}.items():
-            if self.nodes[k].neighbors is None:
+            if k in self.nodes.keys() and self.nodes[k].neighbors is None:
                 self.nodes[k].neighbors = []
 
-            if v not in self.nodes[k].neighbors:
+            if k in self.nodes.keys() and v not in self.nodes[k].neighbors:
                 self.nodes[k].neighbors.append(v)
         self._lock.release()
 

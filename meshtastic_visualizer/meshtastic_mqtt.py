@@ -23,6 +23,7 @@ from .resources import run_in_thread, \
     MeshtasticMessage, \
     NodeMetrics, \
     MeshtasticMQTTClientSettings, \
+    Packet, \
     MQTTPacket, \
     TIME_FORMAT
 
@@ -37,10 +38,10 @@ class MeshtasticMQTT(QObject, threading.Thread):
 
     notify_frontend_signal = pyqtSignal(MessageLevel, str)
     refresh_ui_signal = pyqtSignal()
-    notify_nodes_table_signal = pyqtSignal()
+    notify_nodes_update = pyqtSignal(MeshtasticNode)
     notify_nodes_metrics_signal = pyqtSignal()
     notify_message_signal = pyqtSignal()
-    notify_mqtt_enveloppe_signal = pyqtSignal(str)
+    notify_new_packet = pyqtSignal(Packet)
 
     def __init__(self) -> None:
         super().__init__()
@@ -232,32 +233,32 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 strl.append("|!e|")
                 strl.append(
                     f"pn:{portnums_pb2.PortNum.Name(se.packet.decoded.portnum)}")
-            self.notify_mqtt_enveloppe_signal.emit(" ".join(strl))
 
-            self._store.store_mqtt_packet(
-                MQTTPacket(
-                    date=datetime.datetime.now(),
-                    pid=se.packet.id,
-                    from_id=self.node_number_to_id(
-                        getattr(
-                            se.packet,
-                            'from')),
-                    to_id=self.node_number_to_id(
-                        getattr(
-                            se.packet,
-                            'to')),
-                    channel_id=se.channel_id,
-                    is_encrypted=is_encrypted,
-                    is_decrypted=decrypted,
-                    gateway_id=se.gateway_id,
-                    payload=mp.decoded.payload,
-                    port_num=portnums_pb2.PortNum.Name(
-                        se.packet.decoded.portnum),
-                    rssi=mp.rx_rssi,
-                    snr=mp.rx_snr,
-                    hop_limit=se.packet.hop_limit,
-                    hop_start=se.packet.hop_start,
-                ))
+            packet = MQTTPacket(
+                date=datetime.datetime.now(),
+                pid=se.packet.id,
+                from_id=self.node_number_to_id(
+                    getattr(
+                        se.packet,
+                        'from')),
+                to_id=self.node_number_to_id(
+                    getattr(
+                        se.packet,
+                        'to')),
+                channel_id=se.channel_id,
+                is_encrypted=is_encrypted,
+                is_decrypted=decrypted,
+                gateway_id=se.gateway_id,
+                payload=mp.decoded.payload,
+                port_num=portnums_pb2.PortNum.Name(
+                    se.packet.decoded.portnum),
+                rssi=mp.rx_rssi,
+                snr=mp.rx_snr,
+                hop_limit=se.packet.hop_limit,
+                hop_start=se.packet.hop_start,
+            )
+            self._store.store_mqtt_packet(packet)
+            self.notify_new_packet.emit(packet)
             node_from = MeshtasticNode(
                 id=self.node_number_to_id(getattr(se.packet, 'from')),
                 lastseen=datetime.datetime.now(),
@@ -399,7 +400,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 int(se.packet.hop_start) - int(se.packet.hop_limit))
             if node_from.hopsaway is not None and node_from.hopsaway == 0:
                 self._store.add_neighbor(node_from.id, se.gateway_id)
-            self.notify_nodes_table_signal.emit()
+            self.notify_nodes_update.emit(node_from)
 
     def enqueue_task(self, task, *args, **kwargs):
         self.task_queue.put((task, args, kwargs))

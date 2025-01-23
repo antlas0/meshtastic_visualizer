@@ -5,7 +5,7 @@ import os
 import json
 from threading import Lock
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Optional
 from PyQt6 import QtCore
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtGui import QTextCursor
@@ -19,6 +19,8 @@ from dataclasses import asdict
 from .meshtastic_manager import MeshtasticManager
 from .resources import MessageLevel, \
     MeshtasticMessage, \
+    MeshtasticNode, \
+    Packet, \
     TEXT_MESSAGE_MAX_CHARS, \
     MeshtasticMQTTClientSettings, \
     MAINWINDOW_STYLESHEET, \
@@ -95,22 +97,22 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.update_nodes_metrics)
         self._manager.notify_local_device_configuration_signal.connect(
             self.update_device_details)
-        self._manager.notify_packet_received.connect(
-            self.update_packets_treeview)
+        self._manager.notify_new_packet.connect(
+            self.update_packet_received)
         self._manager.notify_message_signal.connect(
             self.update_received_message)
         self._mqtt_manager.notify_message_signal.connect(
             self.update_received_message)
-        self._mqtt_manager.notify_mqtt_enveloppe_signal.connect(
-            self.update_packets_treeview)
+        self._mqtt_manager.notify_new_packet.connect(
+            self.update_packet_received)
         self._manager.notify_traceroute_signal.connect(self.update_traceroute)
         self._manager.notify_channels_signal.connect(
             self.update_channels_list)
-        self._manager.notify_nodes_table_signal.connect(
-            self.update_nodes_table)
-        self._mqtt_manager.notify_nodes_table_signal.connect(
-            self.update_nodes_table)
-        self._mqtt_manager.notify_mqtt_enveloppe_signal.connect(
+        self._manager.notify_nodes_update.connect(
+            self.update_nodes)
+        self._mqtt_manager.notify_nodes_update.connect(
+            self.update_nodes)
+        self._mqtt_manager.notify_new_packet.connect(
             self.update_received_mqtt_log)
 
         self._update_meshtastic_devices()
@@ -140,9 +142,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 self._store.get_packet_metrics_fields()):
             self.pm_metric_combobox.insertItem(
                 i + 1, metric)
-        self.nodes_filter_linedit.textChanged.connect(self.update_nodes_table)
+        self.nodes_filter_linedit.textChanged.connect(self.update_nodes)
         self.shortcut_filter_combobox.currentTextChanged.connect(
-            self.update_nodes_table)
+            self.update_nodes)
         self.mqtt_connect_button.pressed.connect(self.connect_mqtt)
         self.mqtt_disconnect_button.pressed.connect(
             self._mqtt_manager.disconnect_mqtt)
@@ -258,15 +260,15 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packets_treewidget.setHeaderLabels(["Packet", "Details"])
         self.packettype_combobox.insertItem(0, "All")
         self.packettype_combobox.currentIndexChanged.connect(
-            self.clean_packets_treeview)
+            self.update_packets_filtered)
         self.packetsource_combobox.insertItem(0, "All")
         self.packetsource_combobox.currentIndexChanged.connect(
-            self.clean_packets_treeview)
+            self.update_packets_filtered)
         self.packetmedium_combobox.insertItem(0, "All")
         self.packetmedium_combobox.insertItem(1, "Radio")
         self.packetmedium_combobox.insertItem(2, "MQTT")
         self.packetmedium_combobox.currentIndexChanged.connect(
-            self.clean_packets_treeview)
+            self.update_packets_filtered)
         self.setStyleSheet(MAINWINDOW_STYLESHEET)
 
     def clear_messages_table(self) -> None:
@@ -275,6 +277,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def clear_nodes(self) -> None:
         self._store.clear_nodes()
         self._store.clear_nodes_metrics()
+        self._traceroute_buttons.clear()
         self.mesh_table.setRowCount(0)
         self.nm_node_combobox.clear()
         self.nodes_total_lcd.display(0)
@@ -580,66 +583,21 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.send_message_signal.emit(m)
             self.message_textedit.clear()
 
-    def update_nodes_table(self) -> None:
+    def update_nodes(self, node: MeshtasticNode) -> None:
+        self.update_local_node_config()
         nodes = self._store.get_nodes()
         if nodes is None:
             return
+        self.update_nodes_filter(nodes)
+        self.update_nodes_table(nodes)
 
-        self.update_local_node_config()
-
-        # update LCD widgets
-        self.nodes_total_lcd.display(len(nodes.values()))
-        positioned_nodes = list(
-            filter(
-                lambda x: x.lat is not None and x.lon is not None and x.lat and x.lon,
-                nodes.values()))
-        self.nodes_gps_lcd.display(len(positioned_nodes))
-        recently_seen = list(
-            filter(
-                lambda x: x.rx_counter > 0,
-                nodes.values()))
-        self.nodes_recently_lcd.display(len(recently_seen))
-
-        # filter by nodes_filter
-        filtered = nodes.values()  # nofilter
-        hopfilter = {
-            "1-hop": 1,
-            "2-hops": 2,
-            "3-hops": 3,
-            "4-hops": 4,
-            "5-hops": 5,
-            "6-hops": 6,
-            "7-hops": 7,
-        }
-        if self.shortcut_filter_combobox.currentText() == "Recently seen":
-            filtered = recently_seen
-        elif self.shortcut_filter_combobox.currentText() == "Neighbors":
-            filtered = list(filter(lambda x: x.hopsaway == 0, nodes.values()))
-        elif self.shortcut_filter_combobox.currentText() in hopfilter.keys():
-            filtered = list(filter(
-                lambda x: x.hopsaway == hopfilter[self.shortcut_filter_combobox.currentText()], nodes.values()))
-
-        if len(self.nodes_filter_linedit.text()) != 0:
-            # first search in long_name, then in id
-            pattern = self.nodes_filter_linedit.text()
-            filtered = list(filter(lambda x: pattern.lower() in x.long_name.lower(
-            ) if x.long_name is not None else False, nodes.values()))
-            if not filtered:
-                filtered = list(
-                    filter(
-                        lambda x: pattern.lower() in x.id.lower(),
-                        nodes.values()))
-
-        # update multiples inputs
-        # TODO: create a dedicated signal for that
-        # messages nodes
+    def update_nodes_filter(self, nodes: List[MeshtasticNode]) -> None:
         current_recipient = None
         if self.messagerecipient_combobox.currentText():
             current_recipient = self.messagerecipient_combobox.currentText()
         self.messagerecipient_combobox.clear()
         self.messagerecipient_combobox.insertItem(0, "All")
 
-        # network metrics nodes
         current_nm_node = self.nm_node_combobox.currentText()
         self.nm_node_combobox.clear()
         self.nm_node_combobox.insertItem(
@@ -655,6 +613,58 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if current_recipient:
             self.messagerecipient_combobox.setCurrentText(current_recipient)
 
+    def apply_nodes_filter(
+            self,
+            nodes: List[MeshtasticNode]) -> List[MeshtasticNode]:
+        filtered = nodes.values()  # nofilter
+        hopfilter = {
+            "1-hop": 1,
+            "2-hops": 2,
+            "3-hops": 3,
+            "4-hops": 4,
+            "5-hops": 5,
+            "6-hops": 6,
+            "7-hops": 7,
+        }
+        if self.shortcut_filter_combobox.currentText() == "Recently seen":
+            recently_seen = list(
+                filter(
+                    lambda x: x.rx_counter > 0,
+                    nodes.values()))
+            filtered = recently_seen
+        elif self.shortcut_filter_combobox.currentText() == "Neighbors":
+            filtered = list(filter(lambda x: x.hopsaway == 0, nodes.values()))
+        elif self.shortcut_filter_combobox.currentText() in hopfilter.keys():
+            filtered = list(filter(
+                lambda x: x.hopsaway == hopfilter[self.shortcut_filter_combobox.currentText()], nodes.values()))
+        if len(self.nodes_filter_linedit.text()) != 0:
+            # first search in long_name, then in id
+            pattern = self.nodes_filter_linedit.text()
+            filtered = list(filter(lambda x: pattern.lower() in x.long_name.lower(
+            ) if x.long_name is not None else False, nodes.values()))
+            if not filtered:
+                filtered = list(
+                    filter(
+                        lambda x: pattern.lower() in x.id.lower(),
+                        nodes.values()))
+        return filtered
+
+    def update_nodes_table(self, nodes: List[MeshtasticNode]) -> None:
+        # update LCD widgets
+        self.nodes_total_lcd.display(len(nodes.values()))
+        positioned_nodes = list(
+            filter(
+                lambda x: x.lat is not None and x.lon is not None and x.lat and x.lon,
+                nodes.values()))
+        self.nodes_gps_lcd.display(len(positioned_nodes))
+        recently_seen = list(
+            filter(
+                lambda x: x.rx_counter > 0,
+                nodes.values()))
+        self.nodes_recently_lcd.display(len(recently_seen))
+
+        filtered = self.apply_nodes_filter(nodes)
+
         # update table
         rows: list[dict[str, any]] = []
         for node in filtered:
@@ -662,10 +672,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
             status_line = []
 
-            if node.lastseen:
-                recently_seen = node.lastseen > datetime.now() - timedelta(minutes=30)
-                if recently_seen:
-                    status_line.append("📶")
             if node.rx_counter > 0:
                 status_line.append(f"{node.rx_counter}✉️")
             if node.has_location():
@@ -730,16 +736,18 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 current_widget = self.mesh_table.cellWidget(row_idx, col_idx)
                 if current_item is None and current_widget is None:
                     if col_idx == 6:  # insert widget in cell
-                        btn = QPushButton("Traceroute", self)
-                        btn.setEnabled(self._manager.is_connected())
-                        self.mesh_table.setCellWidget(row_idx, col_idx, btn)
-                        self._traceroute_buttons.append(btn)
-                        btn.clicked.connect(
-                            lambda: self.traceroute(
-                                self.mesh_table.item(
-                                    self.mesh_table.indexAt(
-                                        self.sender().pos()).row(),
-                                    2).text()))
+                        if self._manager.is_connected():
+                            btn = QPushButton("Traceroute")
+                            btn.setEnabled(True)
+                            self.mesh_table.setCellWidget(
+                                row_idx, col_idx, btn)
+                            self._traceroute_buttons.append(btn)
+                            btn.clicked.connect(
+                                lambda: self.traceroute(
+                                    self.mesh_table.item(
+                                        self.mesh_table.indexAt(
+                                            self.sender().pos()).row(),
+                                        2).text()))
                     else:
                         data = str(value)
                         if data == "None":
@@ -869,61 +877,61 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     current_item.setText(str(value))
         self.messages_table.resizeColumnsToContents()
 
-    def clean_packets_treeview(self) -> None:
-        self.packets_treewidget.clear()
-        self.update_packets_treeview()
-
-    def update_packets_treeview(self) -> None:
-        # Example: Modify existing items or add new ones
-        packets = self._store.get_radio_packets() + self._store.get_mqtt_packets()
-        alreading_existing_packets = [
-            self.packets_treewidget.topLevelItem(i).text(0) for i in range(
-                self.packets_treewidget.topLevelItemCount())]
-
+    def update_packets_filter(self, packets: List[Packet]) -> None:
         current_pm_node = self.pm_node_combobox.currentText()
         self.pm_node_combobox.clear()
         inserted = []
         for i, packet in enumerate(packets):
-            name = self._store.get_long_name_from_id(packet.from_id)
-            if name not in inserted:
-                self.pm_node_combobox.insertItem(i, name)
-                inserted.append(name)
+            if packet.from_id not in inserted:
+                self.pm_node_combobox.insertItem(i, packet.from_id)
+                inserted.append(packet.from_id)
+            if self.packettype_combobox.findText(packet.port_num) == -1:
+                self.packettype_combobox.insertItem(
+                    10000, packet.port_num)  # insert last
+
+            if self.packetsource_combobox.findText(packet.from_id) == -1:
+                self.packetsource_combobox.insertItem(
+                    100000, packet.from_id)  # insert last
         self.pm_node_combobox.setCurrentText(current_pm_node)
 
-        filtered_packets = packets
+    def update_packets_filtered(self) -> None:
+        self.packets_treewidget.clear()
+        self.update_packet_received(MeshtasticNode())
 
+    def update_packet_received(self, packet: Optional[Packet]) -> None:
+        packets = self._store.get_radio_packets() + self._store.get_mqtt_packets()
+        self.update_packets_filter(packets)
+        self.update_packets_treeview(packets)
+
+    def apply_packets_filter(self, packets: List[Packet]) -> List[Packet]:
         if self.packetmedium_combobox.currentText() != "All":
-            filtered_packets = list(
+            packets = list(
                 filter(
                     lambda x: x.source.lower() == self.packetmedium_combobox.currentText().lower(),
-                    filtered_packets))
-
+                    packets))
         if self.packetsource_combobox.currentText() != "All":
-            filtered_packets = list(
+            packets = list(
                 filter(
                     lambda x: x.from_id == self._store.get_id_from_long_name(
                         self.packetsource_combobox.currentText()),
-                    filtered_packets))
-
+                    packets))
         if self.packettype_combobox.currentText() != "All":
-            filtered_packets = list(
+            packets = list(
                 filter(
                     lambda x: x.port_num == self.packettype_combobox.currentText(),
-                    filtered_packets))
+                    packets))
+
+        return packets
+
+    def update_packets_treeview(self, packets: List[Packet]) -> None:
+        alreading_existing_packets = [
+            self.packets_treewidget.topLevelItem(i).text(0) for i in range(
+                self.packets_treewidget.topLevelItemCount())]
+
+        filtered_packets = self.apply_packets_filter(packets)
 
         for packet in filtered_packets:
             packet.date2str()
-            if self.packettype_combobox.findText(packet.port_num) == -1:
-                self.packettype_combobox.insertItem(
-                    1000, packet.port_num)  # insert last
-
-            if self.packetsource_combobox.findText(
-                self._store.get_long_name_from_id(
-                    packet.from_id)) == -1:
-                self.packetsource_combobox.insertItem(
-                    100000, self._store.get_long_name_from_id(
-                        packet.from_id))  # insert last
-
             if str(packet.date) in alreading_existing_packets:
                 continue
             category_item = QTreeWidgetItem([str(packet.date), ""])
@@ -934,20 +942,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packets_treewidget.resizeColumnToContents(0)
         self.packets_treewidget.resizeColumnToContents(1)
         self.packets_total_lcd.display(len(packets))
-
-    def update_radio_log(self, message: str, message_type: str):
-        self.output_textedit.setReadOnly(True)
-        tmp = [
-            self.output_textedit.toPlainText()
-        ]
-        if self.output_textedit.toPlainText() != "":
-            tmp.append("\n")
-        nnow = datetime.now().strftime(TIME_FORMAT)
-        tmp.append(f"[{nnow}] {message}")
-        self.output_textedit.setText("".join(tmp))
-        cursor = QTextCursor(self.output_textedit.textCursor())
-        cursor.setPosition(len(self.output_textedit.toPlainText()))
-        self.output_textedit.setTextCursor(cursor)
 
     def update_device_details(self, configuration: dict):
         self.output_textedit.setText(configuration)
@@ -996,6 +990,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def export_packets(self) -> None:
         packets = self._store.get_radio_packets() + self._store.get_mqtt_packets()
+        packets = self.apply_packets_filter(packets)
+
         [x.date2str() for x in packets]
         packets_list = [asdict(x) for x in packets]
         for p in packets_list:

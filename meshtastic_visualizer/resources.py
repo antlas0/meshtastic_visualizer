@@ -162,18 +162,15 @@ class MeshtasticMQTTClientSettings:
 
 
 @dataclass
-class MQTTPacket(JsonExporter):
+class Packet(JsonExporter):
     date: datetime.datetime
     pid: str
     from_id: str
     to_id: str
-    channel_id: str
-    is_encrypted: bool
-    payload: str
     port_num: str
-    gateway_id: str = ""
-    is_decrypted: bool = False
-    source: str = "mqtt"
+    is_encrypted: bool
+    payload: bytes
+    source: str = "unknown"
     snr: Optional[float] = None
     rssi: Optional[float] = None
     hop_limit: Optional[int] = None
@@ -181,20 +178,16 @@ class MQTTPacket(JsonExporter):
 
 
 @dataclass
-class RadioPacket(JsonExporter):
-    date: datetime.datetime
-    pid: str
-    from_id: str
-    to_id: str
-    channel_id: str
-    is_encrypted: bool
-    payload: bytes
-    port_num: str
+class MQTTPacket(Packet):
+    channel_id: Optional[str] = None
+    gateway_id: str = ""
+    is_decrypted: bool = False
+    source: str = "mqtt"
+
+
+@dataclass
+class RadioPacket(Packet):
     decoded: Optional[dict] = None
-    snr: Optional[float] = None
-    rssi: Optional[float] = None
-    hop_limit: Optional[int] = None
-    hop_start: Optional[int] = None
     source: str = "radio"
     priority: Optional[str] = None
 
