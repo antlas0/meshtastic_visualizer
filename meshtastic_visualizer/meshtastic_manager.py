@@ -13,7 +13,7 @@ import threading
 from threading import Lock
 import meshtastic
 import meshtastic.serial_interface
-from meshtastic import channel_pb2, portnums_pb2, mesh_pb2, config_pb2
+from meshtastic import channel_pb2, portnums_pb2, mesh_pb2, config_pb2, telemetry_pb2
 from PyQt6.QtCore import pyqtSignal, QObject
 
 
@@ -278,9 +278,19 @@ class MeshtasticManager(QObject, threading.Thread):
             self.notify_nodes_metrics_signal.emit()
 
         if decoded["portnum"] == PacketInfoType.PCK_POSITION_APP.value:
-            node_from.lat = decoded["position"]["latitude"] if "latitude" in decoded["position"] else None
-            node_from.lon = decoded["position"]["longitude"] if "longitude" in decoded["position"] else None
-            node_from.alt = decoded["position"]["altitude"] if "altitude" in decoded["position"] else None
+            position = mesh_pb2.Position()
+            try:
+                position.ParseFromString(decoded["payload"])
+
+            except Exception as e:
+                pass
+            else:
+                if position.latitude_i != 0 and position.longitude_i != 0:
+                    node_from.lat = str(
+                        round(position.latitude_i * 1e-7, 7))
+                    node_from.lon = str(
+                        round(position.longitude_i * 1e-7, 7))
+                    node_from.alt = str(position.altitude)
 
         if decoded["portnum"] == PacketInfoType.PCK_ROUTING_APP.value:
             ack_label = decoded["routing"]["errorReason"]
