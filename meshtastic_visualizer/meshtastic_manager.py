@@ -206,8 +206,12 @@ class MeshtasticManager(QObject, threading.Thread):
             return
 
         decoded = packet['decoded']
+
         if 'payload' not in decoded or not isinstance(
                 decoded['payload'], bytes):
+            return
+
+        if decoded["portnum"] == portnums_pb2.UNKNOWN_APP:
             return
 
         nodes_to_update: list = []
