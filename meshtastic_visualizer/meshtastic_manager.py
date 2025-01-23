@@ -252,30 +252,32 @@ class MeshtasticManager(QObject, threading.Thread):
         node_from.lastseen = datetime.datetime.now()
 
         if decoded["portnum"] == PacketInfoType.PCK_TELEMETRY_APP.value:
-            node_from.battery_level = decoded["telemetry"]["deviceMetrics"]["batteryLevel"] if "deviceMetrics" in packet[
-                "decoded"]["telemetry"] and "batteryLevel" in decoded["telemetry"]["deviceMetrics"] else None
-            node_from.txairutil = round(
-                decoded["telemetry"]["deviceMetrics"]["airUtilTx"],
-                2) if "deviceMetrics" in decoded["telemetry"] and "airUtilTx" in decoded["telemetry"]["deviceMetrics"] else None
-            node_from.chutil = round(
-                decoded["telemetry"]["deviceMetrics"]["channelUtilization"],
-                2) if "deviceMetrics" in decoded["telemetry"] and "channelUtilization" in decoded["telemetry"]["deviceMetrics"] else None
-            node_from.voltage = round(
-                decoded["telemetry"]["deviceMetrics"]["voltage"],
-                2) if "deviceMetrics" in decoded["telemetry"] and "voltage" in decoded["telemetry"]["deviceMetrics"] else None
-            node_from.uptime = decoded["telemetry"]["deviceMetrics"]["uptimeSeconds"] if "deviceMetrics" in packet[
-                "decoded"]["telemetry"] and "uptimeSeconds" in decoded["telemetry"]["deviceMetrics"] else None
-            nm = NodeMetrics(
-                node_id=node_from.id,
-                timestamp=int(round(datetime.datetime.now().timestamp())),
-                uptime=int(node_from.uptime) if node_from.uptime is not None else None,
-                air_util_tx=float(node_from.txairutil) if node_from.txairutil is not None else None,
-                channel_utilization=float(node_from.chutil) if node_from.chutil is not None else None,
-                battery_level=float(node_from.battery_level) if node_from.battery_level is not None else None,
-                voltage=float(node_from.voltage) if node_from.voltage is not None else None,
-            )
-            self._data.store_or_update_node_metrics(nm)
-            self.notify_nodes_metrics_signal.emit()
+            env = telemetry_pb2.Telemetry()
+            try:
+                env.ParseFromString(decoded["payload"])
+            except Exception as e:
+                pass
+            else:
+                node_from.lastseen = datetime.datetime.now()
+                node_from.chutil = round(
+                    env.device_metrics.channel_utilization, 2)
+                node_from.txairutil = round(
+                    env.device_metrics.air_util_tx, 2)
+                node_from.battery_level = env.device_metrics.battery_level
+                node_from.voltage = round(env.device_metrics.voltage, 2)
+                node_from.uptime = env.device_metrics.uptime_seconds
+
+                nm = NodeMetrics(
+                    node_id=node_from.id,
+                    timestamp=int(round(datetime.datetime.now().timestamp())),
+                    uptime=int(node_from.uptime) if node_from.uptime is not None else None,
+                    air_util_tx=float(node_from.txairutil) if node_from.txairutil is not None else None,
+                    channel_utilization=float(node_from.chutil) if node_from.chutil is not None else None,
+                    battery_level=float(node_from.battery_level) if node_from.battery_level is not None else None,
+                    voltage=float(node_from.voltage) if node_from.voltage is not None else None,
+                )
+                self._data.store_or_update_node_metrics(nm)
+                self.notify_nodes_metrics_signal.emit()
 
         if decoded["portnum"] == PacketInfoType.PCK_POSITION_APP.value:
             position = mesh_pb2.Position()
