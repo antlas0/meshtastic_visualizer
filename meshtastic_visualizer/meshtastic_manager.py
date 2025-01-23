@@ -13,7 +13,7 @@ import threading
 from threading import Lock
 import meshtastic
 import meshtastic.serial_interface
-from meshtastic import channel_pb2, portnums_pb2, mesh_pb2
+from meshtastic import channel_pb2, portnums_pb2, mesh_pb2, config_pb2
 from PyQt6.QtCore import pyqtSignal, QObject
 
 
@@ -333,6 +333,19 @@ class MeshtasticManager(QObject, threading.Thread):
                 )
             )
             self.notify_traceroute_signal.emit(route, snr_towards, snr_back)
+        if decoded["portnum"] == PacketInfoType.PCK_NODEINFO_APP.value:
+            info = mesh_pb2.User()
+            try:
+                info.ParseFromString(decoded["payload"])
+            except Exception as e:
+                pass
+            else:
+                node_from.long_name = info.long_name
+                node_from.short_name = info.short_name
+                node_from.hardware = mesh_pb2.HardwareModel.Name(info.hw_model)
+                node_from.role = config_pb2.Config.DeviceConfig.Role.Name(
+                    info.role)
+                node_from.public_key = str(info.public_key)
 
         if decoded["portnum"] == PacketInfoType.PCK_NEIGHBORINFO_APP.value:
             if "neighbors" in decoded["neighborinfo"]:
