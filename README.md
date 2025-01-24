@@ -56,7 +56,6 @@ A lot ! Please fill an issue to add ideas or raise bugs.
 
 ## Contributing
 Please open a Pull Request.
-Automatic lintering is done with `autopep8` in a `pre-commit` hook. You will need to ensure `requirements_dev.txt` are installed.
 
 ## Overview
 (currently outdated)
