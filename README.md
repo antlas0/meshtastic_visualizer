@@ -58,12 +58,11 @@ A lot ! Please fill an issue to add ideas or raise bugs.
 Please open a Pull Request.
 
 ## Overview
-(currently outdated)
-![Capture d’écran du 2024-12-15 13-45-37](https://github.com/user-attachments/assets/e1ecdbcc-2dc6-4ca4-841a-75abf75f3c97)
-![Capture d’écran du 2024-12-15 13-45-21](https://github.com/user-attachments/assets/85d23338-3edc-4cb2-8240-0652767fc23c)
-![Capture d’écran du 2024-12-15 13-45-03](https://github.com/user-attachments/assets/4d2a605c-72ee-4431-9306-dfa5f92323ad)
-![Capture d’écran du 2024-12-15 13-45-32](https://github.com/user-attachments/assets/5fb386cb-1910-4969-b3f1-db626e2d7edb)
-
+![Capture d’écran du 2025-02-01 15-47-45](https://github.com/user-attachments/assets/a1570525-a6f8-4118-a99b-662293ffa831)
+![Capture d’écran du 2025-02-01 15-47-52](https://github.com/user-attachments/assets/08e10371-1732-4ae2-8c77-43b7a26f796b)
+![Capture d’écran du 2025-02-01 15-47-58](https://github.com/user-attachments/assets/05ba32f0-8603-4b4f-b8db-70c5fef04f44)
+![Capture d’écran du 2025-02-01 15-48-03](https://github.com/user-attachments/assets/0539358c-4c44-4850-b584-dadd41e7067a)
+![Capture d’écran du 2025-02-01 15-48-08](https://github.com/user-attachments/assets/7fb9b61d-c212-483a-8da4-cee3505ca462)
 
 
 
