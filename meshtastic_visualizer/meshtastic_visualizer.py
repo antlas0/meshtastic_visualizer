@@ -4,12 +4,13 @@
 import os
 import json
 from threading import Lock
+from pathlib import Path
 from datetime import datetime, timedelta
 from typing import List, Optional
 from PyQt6 import QtCore
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtGui import QTextCursor
-from PyQt6.QtWidgets import QTableWidgetItem, QListWidgetItem, QTreeWidgetItem, QPushButton
+from PyQt6.QtWidgets import QTableWidgetItem, QListWidgetItem, QTreeWidgetItem, QPushButton, QFileDialog
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtCore import pyqtSignal, QSettings
 import pyqtgraph as pg
@@ -74,6 +75,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._local_board_id: str = ""
         self._action_buttons = []
         self._traceroute_buttons = []
+        self._current_output_folder = os.getcwd()
         self.setup_ui()
 
         self._store = MeshtasticDataStore()
@@ -143,8 +145,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.pm_metric_combobox.insertItem(
                 i + 1, metric)
         self.nodes_filter_linedit.textChanged.connect(self.update_nodes)
-        self.shortcut_filter_combobox.currentTextChanged.connect(
-            self.update_nodes)
+        self.shortcut_filter_combobox.currentTextChanged.connect(self.update_nodes)
         self.mqtt_connect_button.pressed.connect(self.connect_mqtt)
         self.mqtt_disconnect_button.pressed.connect(
             self._mqtt_manager.disconnect_mqtt)
@@ -165,6 +166,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.tabWidget.currentChanged.connect(self.remove_notification_badge)
         self.notification_bar.setOpenExternalLinks(True)
         self.connect_button.clicked.connect(self.connect_device)
+        self.output_folder_button.clicked.connect(self.choose_output_folder)
+        self.output_folder_label.setReadOnly(True)
+        self.output_folder_label.setText(os.path.basename(self._current_output_folder))
         self.scan_com_button.clicked.connect(self._update_meshtastic_devices)
         self.disconnect_button.clicked.connect(self.disconnect_device)
         self.refresh_map_button.clicked.connect(self.get_nodes)
@@ -271,6 +275,17 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.update_packets_filtered)
         self.setStyleSheet(MAINWINDOW_STYLESHEET)
 
+    def choose_output_folder(self):
+        dialog = QFileDialog(self)
+        dialog.setDirectory(self._current_output_folder if self._current_output_folder else os.getcwd())
+        dialog.setFileMode(QFileDialog.FileMode.Directory)
+        dialog.setViewMode(QFileDialog.ViewMode.List)
+        if dialog.exec():
+            if len(dialog.selectedFiles()) == 1:
+                self._current_output_folder = dialog.selectedFiles()[0]
+                self.refresh_status_header(MessageLevel.INFO, f"Output directory is set to: {self._current_output_folder}")
+                self.output_folder_label.setText(os.path.basename(self._current_output_folder))
+
     def clear_messages_table(self) -> None:
         self.messages_table.setRowCount(0)
 
@@ -334,7 +349,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             for button in self._action_buttons:
                 button.setEnabled(False)
             for button in self._traceroute_buttons:
-                button.setEnabled(False)
+                    button.setEnabled(False)
 
         if self._mqtt_manager.is_connected():
             self.mqtt_connect_button.setEnabled(False)
@@ -583,7 +598,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.send_message_signal.emit(m)
             self.message_textedit.clear()
 
-    def update_nodes(self, node: MeshtasticNode) -> None:
+    def update_nodes(self, node:MeshtasticNode) -> None:
         self.update_local_node_config()
         nodes = self._store.get_nodes()
         if nodes is None:
@@ -613,9 +628,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if current_recipient:
             self.messagerecipient_combobox.setCurrentText(current_recipient)
 
-    def apply_nodes_filter(
-            self,
-            nodes: List[MeshtasticNode]) -> List[MeshtasticNode]:
+    def apply_nodes_filter(self, nodes: List[MeshtasticNode]) -> List[MeshtasticNode]:
         filtered = nodes.values()  # nofilter
         hopfilter = {
             "1-hop": 1,
@@ -739,8 +752,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                         if self._manager.is_connected():
                             btn = QPushButton("Traceroute")
                             btn.setEnabled(True)
-                            self.mesh_table.setCellWidget(
-                                row_idx, col_idx, btn)
+                            self.mesh_table.setCellWidget(row_idx, col_idx, btn)
                             self._traceroute_buttons.append(btn)
                             btn.clicked.connect(
                                 lambda: self.traceroute(
@@ -898,15 +910,15 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packets_treewidget.clear()
         self.update_packet_received(MeshtasticNode())
 
-    def update_packet_received(self, packet: Optional[Packet]) -> None:
+    def update_packet_received(self, packet:Optional[Packet]) -> None:
         packets = self._store.get_radio_packets() + self._store.get_mqtt_packets()
         self.update_packets_filter(packets)
         self.update_packets_treeview(packets)
 
-    def apply_packets_filter(self, packets: List[Packet]) -> List[Packet]:
+    def apply_packets_filter(self, packets:List[Packet]) -> List[Packet]:
         if self.packetmedium_combobox.currentText() != "All":
             packets = list(
-                filter(
+                    filter(
                     lambda x: x.source.lower() == self.packetmedium_combobox.currentText().lower(),
                     packets))
         if self.packetsource_combobox.currentText() != "All":
@@ -981,7 +993,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def export_mqtt_logs(self) -> None:
         nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
-        fpath = f"mqtt_logs_{nnow}.log"
+        fpath = os.path.join(self._current_output_folder, f"mqtt_logs_{nnow}.log")
         with open(fpath, "w") as text_file:
             text_file.write(self.mqtt_output_textedit.toPlainText())
             absp = os.path.abspath(fpath)
@@ -1001,7 +1013,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 p["payload"] = "convertion error"
         data_json = json.dumps(packets_list, indent=4)
         nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
-        fpath = f"packet_{nnow}.json"
+        fpath = os.path.join(self._current_output_folder, f"packet_{nnow}.json")
         with open(fpath, "w") as json_file:
             json_file.write(data_json)
             absp = os.path.abspath(fpath)
@@ -1014,7 +1026,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         messages = [asdict(x) for x in messages]
         data_json = json.dumps(messages, indent=4)
         nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
-        fpath = f"messages_{nnow}.json"
+        fpath = os.path.join(self._current_output_folder, f"messages_{nnow}.json")
         with open(fpath, "w") as json_file:
             json_file.write(data_json)
             absp = os.path.abspath(fpath)
@@ -1027,7 +1039,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         nodes = [asdict(x) for x in nodes]
         data_json = json.dumps(nodes, indent=4)
         nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
-        fpath = f"nodes_{nnow}.json"
+        fpath = os.path.join(self._current_output_folder, f"nodes_{nnow}.json")
         with open(fpath, "w") as json_file:
             json_file.write(data_json)
             absp = os.path.abspath(fpath)
