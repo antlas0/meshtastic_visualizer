@@ -190,6 +190,8 @@ class MeshtasticDataStore(Thread):
         return res
 
     def add_neighbor(self, me: str, my_neighbor: str) -> None:
+        if me == my_neighbor:
+            return
         self._lock.acquire()
         for k, v in {me: my_neighbor, my_neighbor: me}.items():
             if k in self.nodes.keys() and self.nodes[k].neighbors is None:
