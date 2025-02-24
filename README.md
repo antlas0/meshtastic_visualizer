@@ -32,6 +32,7 @@ $ xhost +local:docker
 $ docker build . -t meshtastic_visualizer:latest
 $ docker run -it \
     --env="DISPLAY=$DISPLAY" \
+    --privileged \
     --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
     --device=/dev/ttyACM0 \
     meshtastic_visualizer:latest \
