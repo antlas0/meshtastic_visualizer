@@ -8,7 +8,6 @@ import base64
 import logging
 import google.protobuf.json_format
 import threading
-from meshtastic import portnums_pb2, mesh_pb2
 from PyQt6.QtCore import pyqtSignal, QObject
 from meshtastic.protobuf import mesh_pb2, mqtt_pb2, portnums_pb2, telemetry_pb2, config_pb2
 import paho.mqtt.client as mqtt
