@@ -23,7 +23,8 @@ Warning: Work in progress !
 | Export events logs |✅|✅|
 | Nodes telemetry metrics plotting (CHutil, power,...) |✅|✅|
 | Packets RF metrics plotting (RSSI, SNR,...) |✅|✅|
-## How to run 
+
+## How to run with Docker
 
 Based on X11, build the dockerfile and run the docker container. This example assumes your node is accessible at `/dev/ttyACM0`.
 ```bash
@@ -39,7 +40,7 @@ $ docker run -it \
     python -m meshtastic_visualizer
 ```
 
-## How to install
+## How to install and run
 
 To install on your computer:
 ```bash
