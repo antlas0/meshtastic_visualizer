@@ -18,7 +18,6 @@ from .resources import run_in_thread, \
 
 @dataclass
 class MeshtasticDataStore(Thread):
-    device_path: Optional[str] = None
     channels: Optional[List[Channel]] = None
     local_node_config: Optional[MeshtasticNode] = None
     nodes: Dict[str, MeshtasticNode] = field(
@@ -114,11 +113,6 @@ class MeshtasticDataStore(Thread):
         self._lock.acquire()
         del self.mqttpackets
         self.mqttpackets = {}
-        self._lock.release()
-
-    def set_device_path(self, path: str) -> None:
-        self._lock.acquire()
-        self.device_path = path
         self._lock.release()
 
     def get_channel_index_from_name(self, name: str) -> int:

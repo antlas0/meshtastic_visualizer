@@ -68,14 +68,21 @@ class Mapper:
         markers: list = []
         links: list = []
 
+        # remove any node that does not have full coordinates
+        nodes_filtered = {}
+        for node_id, details in nodes.items():
+            if details.lat is not None and details.lat != "None" \
+                and details.lon is not None and details.lon != "None":
+                nodes_filtered[node_id] = details
+
         # in case of links tracing, pre-create a dict(node_id, [lat, lon])
         nodes_coords = {
             x.id: [
                 float(
                     x.lat), float(
-                    x.lon)] for __, x in nodes.items() if x.lat is not None and x.lon is not None}
+                    x.lon)] for __, x in nodes_filtered.items()}
 
-        for node_id, node in nodes.items():
+        for node_id, node in nodes_filtered.items():
             if node.lat is None or node.lon is None:
                 continue
             icon_name:str = "tower-cell"
@@ -148,4 +155,4 @@ class Mapper:
         if links:
             links_group.add_to(self._map)
             folium.LayerControl().add_to(self._map)
-        del nodes
+        del nodes_filtered

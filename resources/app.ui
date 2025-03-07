@@ -75,8 +75,8 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>120</y>
-        <width>711</width>
+        <y>140</y>
+        <width>701</width>
         <height>161</height>
        </rect>
       </property>
@@ -87,7 +87,7 @@
        </size>
       </property>
       <property name="title">
-       <string>Local device radio info</string>
+       <string>Device radio info</string>
       </property>
       <widget class="QLabel" name="label_5">
        <property name="geometry">
@@ -453,90 +453,6 @@
        </property>
       </widget>
      </widget>
-     <widget class="QGroupBox" name="groupBox_4">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>10</y>
-        <width>471</width>
-        <height>91</height>
-       </rect>
-      </property>
-      <property name="sizeIncrement">
-       <size>
-        <width>200</width>
-        <height>50</height>
-       </size>
-      </property>
-      <property name="title">
-       <string>Local device connection</string>
-      </property>
-      <widget class="QPushButton" name="connect_button">
-       <property name="geometry">
-        <rect>
-         <x>200</x>
-         <y>30</y>
-         <width>111</width>
-         <height>25</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>▶️ Connect</string>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="device_combobox">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>30</y>
-         <width>178</width>
-         <height>25</height>
-        </rect>
-       </property>
-       <property name="placeholderText">
-        <string>Serial port path</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="disconnect_button">
-       <property name="geometry">
-        <rect>
-         <x>200</x>
-         <y>60</y>
-         <width>111</width>
-         <height>25</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>⏹️ Disconnect</string>
-       </property>
-      </widget>
-      <widget class="QCheckBox" name="reset_nodedb_checkbox">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>60</y>
-         <width>121</width>
-         <height>23</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Reset NodeDB</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="scan_com_button">
-       <property name="geometry">
-        <rect>
-         <x>330</x>
-         <y>30</y>
-         <width>121</width>
-         <height>25</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>🔍 Scan ports</string>
-       </property>
-      </widget>
-     </widget>
      <widget class="QGroupBox" name="groupBox_6">
       <property name="geometry">
        <rect>
@@ -777,9 +693,9 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>280</y>
+        <y>310</y>
         <width>711</width>
-        <height>281</height>
+        <height>251</height>
        </rect>
       </property>
       <property name="title">
@@ -791,7 +707,7 @@
          <x>10</x>
          <y>30</y>
          <width>691</width>
-         <height>241</height>
+         <height>211</height>
         </rect>
        </property>
        <property name="readOnly">
@@ -803,8 +719,8 @@
       <property name="geometry">
        <rect>
         <x>490</x>
-        <y>10</y>
-        <width>231</width>
+        <y>30</y>
+        <width>221</width>
         <height>91</height>
        </rect>
       </property>
@@ -814,7 +730,7 @@
       <widget class="QPushButton" name="output_folder_button">
        <property name="geometry">
         <rect>
-         <x>140</x>
+         <x>130</x>
          <y>60</y>
          <width>81</width>
          <height>25</height>
@@ -829,10 +745,143 @@
         <rect>
          <x>10</x>
          <y>30</y>
-         <width>211</width>
+         <width>201</width>
          <height>25</height>
         </rect>
        </property>
+      </widget>
+     </widget>
+     <widget class="QTabWidget" name="tabWidget_2">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>451</width>
+        <height>101</height>
+       </rect>
+      </property>
+      <property name="tabPosition">
+       <enum>QTabWidget::North</enum>
+      </property>
+      <property name="tabShape">
+       <enum>QTabWidget::Rounded</enum>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tab_3">
+       <attribute name="title">
+        <string>Local device connection</string>
+       </attribute>
+       <widget class="QPushButton" name="serial_disconnect_button">
+        <property name="geometry">
+         <rect>
+          <x>200</x>
+          <y>40</y>
+          <width>111</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>⏹️ Disconnect</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="serial_connect_button">
+        <property name="geometry">
+         <rect>
+          <x>200</x>
+          <y>10</y>
+          <width>111</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>▶️ Connect</string>
+        </property>
+       </widget>
+       <widget class="QComboBox" name="device_combobox">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>181</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="placeholderText">
+         <string>Serial port path</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="reset_nodedb_checkbox">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>40</y>
+          <width>121</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Reset NodeDB</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="scan_com_button">
+        <property name="geometry">
+         <rect>
+          <x>320</x>
+          <y>10</y>
+          <width>121</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>🔍 Scan ports</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tab_4">
+       <attribute name="title">
+        <string>Remote device connection</string>
+       </attribute>
+       <widget class="QPushButton" name="tcp_connect_button">
+        <property name="geometry">
+         <rect>
+          <x>200</x>
+          <y>10</y>
+          <width>111</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>▶️ Connect</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="ipaddress_textedit">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>181</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="placeholderText">
+         <string>http://192.168.1.1</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="tcp_disconnect_button">
+        <property name="geometry">
+         <rect>
+          <x>200</x>
+          <y>40</y>
+          <width>111</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>⏹️ Disconnect</string>
+        </property>
+       </widget>
       </widget>
      </widget>
     </widget>
