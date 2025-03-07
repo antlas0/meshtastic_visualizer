@@ -60,7 +60,7 @@ A lot ! Please fill an issue to add ideas or raise bugs.
 Please open a Pull Request.
 
 ## Overview
-![Capture d’écran du 2025-02-01 15-47-45](https://github.com/user-attachments/assets/a1570525-a6f8-4118-a99b-662293ffa831)
+![Capture d’écran du 2025-03-07 14-44-38](https://github.com/user-attachments/assets/e176bb7f-08ce-4562-86c1-d765537722a3)
 ![Capture d’écran du 2025-02-01 15-47-52](https://github.com/user-attachments/assets/08e10371-1732-4ae2-8c77-43b7a26f796b)
 ![Capture d’écran du 2025-02-01 15-47-58](https://github.com/user-attachments/assets/05ba32f0-8603-4b4f-b8db-70c5fef04f44)
 ![Capture d’écran du 2025-02-01 15-48-03](https://github.com/user-attachments/assets/0539358c-4c44-4850-b584-dadd41e7067a)
