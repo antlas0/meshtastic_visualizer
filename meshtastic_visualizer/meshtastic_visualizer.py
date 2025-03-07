@@ -206,6 +206,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.batterylevel_progressbar.hide()
         self.serial_connect_button.setEnabled(True)
         self.serial_disconnect_button.setEnabled(False)
+        self.tcp_connect_button.setEnabled(True)
+        self.tcp_disconnect_button.setEnabled(False)
         self._action_buttons = [
             self.send_button,
             self.message_textedit,
@@ -342,6 +344,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._lock.acquire()
         self.serial_connect_button.setEnabled(True)
         self.serial_disconnect_button.setEnabled(False)
+        self.tcp_connect_button.setEnabled(True)
+        self.tcp_disconnect_button.setEnabled(False)
         for button in self._action_buttons:
             button.setEnabled(False)
         for button in self._traceroute_buttons:
