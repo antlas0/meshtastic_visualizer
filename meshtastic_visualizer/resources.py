@@ -37,6 +37,11 @@ class PacketInfoType(enum.Enum):
     PCK_UNKNOWN = ""
 
 
+class ConnectionKind(enum.Enum):
+    UNKNOWN=0
+    SERIAL=1
+    TCP=2
+
 def create_getter(field_name):
     def getter(self):
         with self._lock:

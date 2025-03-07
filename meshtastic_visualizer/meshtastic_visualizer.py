@@ -26,7 +26,8 @@ from .resources import MessageLevel, \
     MeshtasticMQTTClientSettings, \
     MAINWINDOW_STYLESHEET, \
     TIME_FORMAT, \
-    DEFAULT_TRACEROUTE_CHANNEL
+    DEFAULT_TRACEROUTE_CHANNEL, \
+    ConnectionKind
 
 from .meshtastic_mqtt import MeshtasticMQTT
 from .meshtastic_datastore import MeshtasticDataStore
@@ -34,7 +35,7 @@ from .mapper import Mapper
 
 
 class MeshtasticQtApp(QtWidgets.QMainWindow):
-    connect_device_signal = pyqtSignal(bool)
+    connect_device_signal = pyqtSignal(ConnectionKind, str, bool)
     disconnect_device_signal = pyqtSignal()
     get_nodes_signal = pyqtSignal()
     send_message_signal = pyqtSignal(MeshtasticMessage)
@@ -165,12 +166,14 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def setup_ui(self) -> None:
         self.tabWidget.currentChanged.connect(self.remove_notification_badge)
         self.notification_bar.setOpenExternalLinks(True)
-        self.connect_button.clicked.connect(self.connect_device)
+        self.serial_connect_button.clicked.connect(self.connect_device_serial)
+        self.tcp_connect_button.clicked.connect(self.connect_device_tcp)
         self.output_folder_button.clicked.connect(self.choose_output_folder)
         self.output_folder_label.setReadOnly(True)
         self.output_folder_label.setText(os.path.basename(self._current_output_folder))
         self.scan_com_button.clicked.connect(self._update_meshtastic_devices)
-        self.disconnect_button.clicked.connect(self.disconnect_device)
+        self.serial_disconnect_button.clicked.connect(self.disconnect_device)
+        self.tcp_disconnect_button.clicked.connect(self.disconnect_device)
         self.refresh_map_button.clicked.connect(self.get_nodes)
         self.send_button.clicked.connect(self.send_message)
         self.nm_update_button.setEnabled(False)
@@ -201,8 +204,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.traceroute_table.setHorizontalHeaderLabels(
             ["Id", "SNR To", "SNR Back"])
         self.batterylevel_progressbar.hide()
-        self.connect_button.setEnabled(True)
-        self.disconnect_button.setEnabled(False)
+        self.serial_connect_button.setEnabled(True)
+        self.serial_disconnect_button.setEnabled(False)
         self._action_buttons = [
             self.send_button,
             self.message_textedit,
@@ -252,6 +255,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packets_total_lcd.setDecMode()
         self.nodes_gps_lcd.setDecMode()
         self.nodes_recently_lcd.setDecMode()
+        self.ipaddress_textedit.setText(self._settings.value("tcp", "http://192.168.1.1"))
         self.mqtt_host_linedit.setText(self._settings.value("mqtt_host", ""))
         self.mqtt_port_spinbox.setValue(
             int(self._settings.value("mqtt_port", 1883)))
@@ -336,20 +340,28 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def refresh_ui(self) -> None:
         self._lock.acquire()
-        if self._manager.is_connected():
-            self.connect_button.setEnabled(False)
-            self.disconnect_button.setEnabled(True)
-            for button in self._action_buttons:
-                button.setEnabled(True)
-            for button in self._traceroute_buttons:
-                button.setEnabled(True)
-        else:
-            self.connect_button.setEnabled(True)
-            self.disconnect_button.setEnabled(False)
-            for button in self._action_buttons:
+        self.serial_connect_button.setEnabled(True)
+        self.serial_disconnect_button.setEnabled(False)
+        for button in self._action_buttons:
+            button.setEnabled(False)
+        for button in self._traceroute_buttons:
                 button.setEnabled(False)
+
+        if self._manager.is_serial_connected():
+            self.serial_connect_button.setEnabled(False)
+            self.serial_disconnect_button.setEnabled(True)
+            for button in self._action_buttons:
+                button.setEnabled(True)
             for button in self._traceroute_buttons:
-                    button.setEnabled(False)
+                button.setEnabled(True)
+
+        if self._manager.is_tcp_connected():
+            self.tcp_connect_button.setEnabled(False)
+            self.tcp_disconnect_button.setEnabled(True)
+            for button in self._action_buttons:
+                button.setEnabled(True)
+            for button in self._traceroute_buttons:
+                button.setEnabled(True)
 
         if self._mqtt_manager.is_connected():
             self.mqtt_connect_button.setEnabled(False)
@@ -383,16 +395,26 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.set_status(status, message)
         self._lock.release()
 
-    def connect_device(self):
+    def connect_device_serial(self):
         device_path = self.device_combobox.currentText()
         if device_path:
-            self._manager.set_meshtastic_device(device_path)
             self.set_status(MessageLevel.INFO, f"Connecting to {device_path}.")
-            self.connect_device_signal.emit(
-                self.reset_nodedb_checkbox.isChecked())
+            self.connect_device_signal.emit(ConnectionKind.SERIAL, device_path, self.reset_nodedb_checkbox.isChecked())
         else:
             self.set_status(MessageLevel.ERROR,
                             f"Cannot connect. Please specify a device path.")
+
+    def connect_device_tcp(self):
+        ip = self.ipaddress_textedit.text()
+        if ip:
+            if "https" in ip:
+                self.set_status(MessageLevel.INFO, "Cannot connect through https, only http.")
+                return
+            self.set_status(MessageLevel.INFO, f"Connecting to {ip}.")
+            self._settings.setValue("tcp", ip)
+            self.connect_device_signal.emit(ConnectionKind.TCP, ip, False)
+        else:
+            self.set_status(MessageLevel.ERROR, f"Cannot connect. Please specify an accessible ip address.")
 
     def disconnect_device(self) -> None:
         for i, device in enumerate(self._manager.get_meshtastic_devices()):
