@@ -108,6 +108,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._manager.notify_traceroute_signal.connect(self.update_traceroute)
         self._manager.notify_channels_signal.connect(
             self.update_channels_list)
+        self._manager.notify_channels_signal.connect(
+            self.update_channels_table)
         self._manager.notify_nodes_update.connect(
             self.update_nodes)
         self._mqtt_manager.notify_nodes_update.connect(
@@ -798,6 +800,38 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if not channels:
             return []
         return [channel.name for channel in channels]
+
+    def update_channels_table(self):
+        config = self._manager.get_data_store()
+        channels = config.get_channels()
+        if not channels:
+            return
+
+        rows: list[dict[str, any]] = []
+        for channel in channels:
+            row = {
+                "Index": channel.index,
+                "Name": channel.name,
+                "Role": channel.role,
+                "PSK": channel.psk}
+            rows.append(row)
+
+        self.channels_table.clear()
+        self.channels_table.setRowCount(0)
+        columns = ["Index", "Name", "Role", "PSK"]
+        for i in range(self.channels_table.rowCount()):
+            self.channels_table.removeRow(i)
+        self.channels_table.setColumnCount(len(columns))
+        self.channels_table.setHorizontalHeaderLabels(
+            columns)
+
+        for row in rows:
+            row_position = self.channels_table.rowCount()
+            self.channels_table.insertRow(row_position)
+            for i, elt in enumerate(columns):
+                self.channels_table.setItem(
+                    row_position, i, QTableWidgetItem(str(row[elt])))
+                self.channels_table.resizeColumnsToContents()
 
     def update_channels_list(self):
         config = self._store
