@@ -159,13 +159,15 @@ class MeshtasticManager(QObject, threading.Thread):
             self._local_board_id, False).resetNodeDb()
 
     def get_local_node_details(self) -> None:
-        conf = {}
+        conf = []
         try:
-            conf = str(self._interface.getNode("^local").localConfig)
+            conf.append(str(self._interface.getNode("^local").localConfig))
+            conf.append(str(self._interface.getNode("^local").moduleConfig))
+            conf.extend([ str(x) for x in self._interface.getNode("^local").channels])
         except Exception as e:
             pass
         else:
-            self.notify_local_device_configuration_signal.emit(conf)
+            self.notify_local_device_configuration_signal.emit("\n".join(conf))
 
     @run_in_thread
     def load_local_node_configuration(self) -> None:
