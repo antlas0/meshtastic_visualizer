@@ -75,7 +75,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.status_var: str = ""
         self._local_board_id: str = ""
         self._action_buttons = []
-        self._traceroute_buttons = []
         self._current_output_folder = os.getcwd()
         self.setup_ui()
 
@@ -298,7 +297,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def clear_nodes(self) -> None:
         self._store.clear_nodes()
         self._store.clear_nodes_metrics()
-        self._traceroute_buttons.clear()
         self.mesh_table.setRowCount(0)
         self.nm_node_combobox.clear()
         self.nodes_total_lcd.display(0)
@@ -348,23 +346,17 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.tcp_disconnect_button.setEnabled(False)
         for button in self._action_buttons:
             button.setEnabled(False)
-        for button in self._traceroute_buttons:
-                button.setEnabled(False)
 
         if self._manager.is_serial_connected():
             self.serial_connect_button.setEnabled(False)
             self.serial_disconnect_button.setEnabled(True)
             for button in self._action_buttons:
                 button.setEnabled(True)
-            for button in self._traceroute_buttons:
-                button.setEnabled(True)
 
         if self._manager.is_tcp_connected():
             self.tcp_connect_button.setEnabled(False)
             self.tcp_disconnect_button.setEnabled(True)
             for button in self._action_buttons:
-                button.setEnabled(True)
-            for button in self._traceroute_buttons:
                 button.setEnabled(True)
 
         if self._mqtt_manager.is_connected():
@@ -779,7 +771,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                             btn = QPushButton("Traceroute")
                             btn.setEnabled(True)
                             self.mesh_table.setCellWidget(row_idx, col_idx, btn)
-                            self._traceroute_buttons.append(btn)
                             btn.clicked.connect(
                                 lambda: self.traceroute(
                                     self.mesh_table.item(
