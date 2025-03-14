@@ -4,14 +4,12 @@
 import os
 import json
 from threading import Lock
-from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Optional
 from PyQt6 import QtCore
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtGui import QTextCursor
-from PyQt6.QtWidgets import QTableWidgetItem, QListWidgetItem, QTreeWidgetItem, QPushButton, QFileDialog
-from PyQt6.QtWebEngineWidgets import QWebEngineView
+from PyQt6.QtWidgets import QTableWidgetItem, QTreeWidgetItem, QPushButton, QFileDialog
 from PyQt6.QtCore import pyqtSignal, QSettings
 import pyqtgraph as pg
 from pyqtgraph import DateAxisItem

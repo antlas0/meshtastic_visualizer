@@ -7,8 +7,7 @@ from dataclasses import dataclass, fields, field
 from typing import List, Optional, Any, Dict
 from threading import Lock, Thread
 
-from .resources import run_in_thread, \
-    Channel, \
+from .resources import Channel, \
     MeshtasticNode, \
     MeshtasticMessage, \
     NodeMetrics, \

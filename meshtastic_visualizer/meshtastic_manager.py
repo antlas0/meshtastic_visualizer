@@ -5,7 +5,6 @@ import base64
 import logging
 import datetime
 from pubsub import pub
-from dataclasses import asdict
 from typing import Union, Optional
 import google.protobuf.json_format
 from typing import List, Optional

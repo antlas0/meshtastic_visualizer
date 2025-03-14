@@ -2,7 +2,7 @@
 
 import enum
 import datetime
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, fields
 from typing import List, Optional
 
 
