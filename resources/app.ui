@@ -761,7 +761,7 @@
        </property>
       </widget>
      </widget>
-     <widget class="QTabWidget" name="tabWidget_2">
+     <widget class="QTabWidget" name="connection_tabs">
       <property name="geometry">
        <rect>
         <x>10</x>

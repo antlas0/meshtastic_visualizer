@@ -346,18 +346,24 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.tcp_disconnect_button.setEnabled(False)
         for button in self._action_buttons:
             button.setEnabled(False)
+        self.connection_tabs.setTabEnabled(0, True);
+        self.connection_tabs.setTabEnabled(1, True);
 
         if self._manager.is_serial_connected():
             self.serial_connect_button.setEnabled(False)
             self.serial_disconnect_button.setEnabled(True)
             for button in self._action_buttons:
                 button.setEnabled(True)
+            self.connection_tabs.setTabEnabled(0, True);
+            self.connection_tabs.setTabEnabled(1, False);
 
         if self._manager.is_tcp_connected():
             self.tcp_connect_button.setEnabled(False)
             self.tcp_disconnect_button.setEnabled(True)
             for button in self._action_buttons:
                 button.setEnabled(True)
+            self.connection_tabs.setTabEnabled(0, False);
+            self.connection_tabs.setTabEnabled(1, True);
 
         if self._mqtt_manager.is_connected():
             self.mqtt_connect_button.setEnabled(False)
