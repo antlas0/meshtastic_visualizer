@@ -20,6 +20,7 @@ Warning: Work in progress !
 | Perform traceroute (with SNR)|✅|❌|
 | Export nodes (json) |✅|✅|
 | Export messages and packets (json) |✅|✅|
+| Export telemetry metrics (json) |✅|✅|
 | Export events logs |✅|✅|
 | Nodes telemetry metrics plotting (CHutil, power,...) |✅|✅|
 | Packets RF metrics plotting (RSSI, SNR,...) |✅|✅|
