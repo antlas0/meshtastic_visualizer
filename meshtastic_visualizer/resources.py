@@ -151,6 +151,9 @@ class NodeMetrics:
     air_util_tx: Optional[float] = None
     channel_utilization: Optional[float] = None
     battery_level: Optional[float] = None
+    num_packets_tx: Optional[float] = None
+    num_tx_relay: Optional[float] = None
+    num_tx_relay_canceled: Optional[float] = None
 
 
 @dataclass

@@ -298,6 +298,9 @@ class MeshtasticDataStore(Thread):
             "uptime",
             "voltage",
             "air_util_tx",
+            "num_packets_tx",
+            "num_tx_relay",
+            "num_tx_relay_canceled",
             "channel_utilization",
             "battery_level",
         ]

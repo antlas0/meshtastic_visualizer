@@ -277,23 +277,27 @@ class MeshtasticManager(QObject, threading.Thread):
                 pass
             else:
                 node_from.lastseen = datetime.datetime.now()
-                node_from.chutil = round(
-                    env.device_metrics.channel_utilization, 2)
-                node_from.txairutil = round(
-                    env.device_metrics.air_util_tx, 2)
-                node_from.battery_level = env.device_metrics.battery_level
-                node_from.voltage = round(env.device_metrics.voltage, 2)
-                node_from.uptime = env.device_metrics.uptime_seconds
-
                 nm = NodeMetrics(
                     node_id=node_from.id,
                     timestamp=int(round(datetime.datetime.now().timestamp())),
-                    uptime=int(node_from.uptime) if node_from.uptime is not None else None,
-                    air_util_tx=float(node_from.txairutil) if node_from.txairutil is not None else None,
-                    channel_utilization=float(node_from.chutil) if node_from.chutil is not None else None,
-                    battery_level=float(node_from.battery_level) if node_from.battery_level is not None else None,
-                    voltage=float(node_from.voltage) if node_from.voltage is not None else None,
                 )
+                if env.HasField("device_metrics"):
+                    node_from.txairutil = round(env.device_metrics.air_util_tx, 2)
+                    node_from.battery_level = round(env.device_metrics.battery_level)
+                    node_from.chutil = round(env.device_metrics.channel_utilization, 2)
+                    node_from.voltage = round(env.device_metrics.voltage, 2)
+                    node_from.uptime = env.device_metrics.uptime_seconds
+                    nm.air_util_tx = round(env.device_metrics.air_util_tx, 2)
+                    nm.battery_level = round(env.device_metrics.battery_level)
+                    nm.channel_utilization = round(env.device_metrics.channel_utilization, 2)
+                    nm.voltage = round(env.device_metrics.voltage, 2)
+                    nm.uptime = env.device_metrics.uptime_seconds
+
+                if env.HasField("local_stats"):
+                    nm.num_packets_tx = env.local_stats.num_packets_tx
+                    nm.num_tx_relay = env.local_stats.num_tx_relay
+                    nm.num_tx_relay_canceled = env.local_stats.num_tx_relay_canceled
+
                 self._data.store_or_update_node_metrics(nm)
                 self.notify_nodes_metrics_signal.emit()
 
