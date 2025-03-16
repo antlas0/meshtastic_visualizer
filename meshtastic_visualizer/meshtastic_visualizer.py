@@ -51,6 +51,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.show()
 
         self._map = None
+        self._local_board_ln = ""
         self._telemetry_plot_widget = pg.PlotWidget()
         self._packets_plot_widget = pg.PlotWidget()
         self._telemetry_plot_item = self._telemetry_plot_widget.plot(
@@ -130,10 +131,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.export_chat_button.pressed.connect(self.export_chat)
         self.export_packets_button.pressed.connect(self.export_packets)
         self.export_nodes_button.pressed.connect(self.export_nodes)
+        self.export_node_metrics_button.pressed.connect(self.export_node_metrics)
         self.clear_mqtt_button.pressed.connect(self.mqtt_output_textedit.clear)
         self.clear_messages_button.pressed.connect(self.clear_messages_table)
         self.clear_messages_button.pressed.connect(self._store.clear_messages)
         self.clear_nodes_button.pressed.connect(self.clear_nodes)
+        self.clear_node_metrics_button.pressed.connect(self.clear_nodes_metrics)
         self.clear_packets_button.pressed.connect(self.clear_packets)
         self.export_mqtt_button.pressed.connect(self.export_mqtt_logs)
         for i, metric in enumerate(
@@ -308,6 +311,14 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             y=None)
         self._telemetry_plot_widget.setTitle("No data")
 
+    def clear_nodes_metrics(self) -> None:
+        self._store.clear_nodes_metrics()
+        self.nm_node_combobox.clear()
+        self._telemetry_plot_item.setData(
+            x=None,
+            y=None)
+        self._telemetry_plot_widget.setTitle("No data")
+
     def clear_packets(self) -> None:
         self._store.clear_radio_packets()
         self._store.clear_mqtt_packets()
@@ -436,8 +447,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             ["Id", "SNR To", "SNR Back"])
         for hop in route:
             device = self._store.get_long_name_from_id(hop)
-            if hop == self._local_board_id:
-                device = "Me"
             row_position = self.traceroute_table.rowCount()
             self.traceroute_table.insertRow(row_position)
             self.traceroute_table.setItem(
@@ -472,8 +481,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def mesh_table_is_clicked(self, row, column) -> None:
         node_id = self.mesh_table.item(row, 2).text()
         long_name = self._store.get_long_name_from_id(node_id)
-        if self._local_board_id and node_id == self._local_board_id:
-            long_name = "Me"
         self.nm_node_combobox.setCurrentText(long_name)
 
     def init_map(self):
@@ -548,7 +555,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.clean_plot(kind=kind)
             self._lock.release()
             return
-        if "timestamp" not in metric or metric_name not in metric:
+        if "timestamp" not in metric or "value" not in metric:
             self.clean_plot(kind=kind)
             self._lock.release()
             return
@@ -556,15 +563,15 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 list(
                     filter(
                 lambda x: x is not None,
-                metric[metric_name]))) == 0:
+                metric["value"]))) == 0:
             self.clean_plot(kind=kind)
             self._lock.release()
             return
 
         if len(
             metric["timestamp"]) == len(
-            metric[metric_name]) and len(
-                metric[metric_name]) > 0:
+            metric["value"]) and len(
+                metric["value"]) > 0:
 
             target_widget = {
                 "telemetry": self._telemetry_plot_widget,
@@ -576,19 +583,19 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             }
             none_indexes = [
                 i for i, v in enumerate(
-                    metric[metric_name]) if v is None]
+                    metric["value"]) if v is None]
             for i in reversed(none_indexes):
                 metric["timestamp"].pop(i)
-                metric[metric_name].pop(i)
+                metric["value"].pop(i)
 
             target_item[kind].setData(
                 x=metric["timestamp"],
-                y=metric[metric_name])
+                y=metric["value"])
             target_widget[kind].getPlotItem().getViewBox().setRange(
                 xRange=(min(metric["timestamp"]), max(metric["timestamp"])),
-                yRange=(min(metric[metric_name]), max(metric[metric_name])),
+                yRange=(min(metric["value"]), max(metric["value"])),
             )
-            target_widget[kind].setLabel('left', metric_name, units='')
+            target_widget[kind].setLabel('left', "value", units='')
             target_widget[kind].setLabel('bottom', 'Timestamp', units='')
             target_widget[kind].setTitle(
                 f'{metric_name} vs time for node {self._store.get_long_name_from_id(node_id)}')
@@ -639,8 +646,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         current_nm_node = self.nm_node_combobox.currentText()
         self.nm_node_combobox.clear()
-        self.nm_node_combobox.insertItem(
-            0, "Me")
+        if self._local_board_ln:
+            self.nm_node_combobox.insertItem(0, self._local_board_ln)
         for i, node in enumerate(nodes.values()):
             if node.id == self._local_board_id:
                 continue
@@ -858,6 +865,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             return
 
         self._local_board_id = cfg.id
+        self._local_board_ln = cfg.long_name
         self.devicename_label.setText(cfg.long_name)
         self.publickey_label.setText(cfg.public_key)
         self.hardware_label.setText(cfg.hardware)
@@ -1099,6 +1107,27 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             json_file.write(data_json)
             absp = os.path.abspath(fpath)
             trace = f"<a href='file://{absp}'>Exported nodes to file: {fpath}</a>"
+            self.set_status(MessageLevel.INFO, trace)
+
+    def export_node_metrics(self) -> None:
+        metric_names = self._store.get_node_metrics_fields()
+        node_id = self.nm_node_combobox.currentText()
+        nnow = datetime.now()
+        metrics = {
+            "node_id": node_id,
+            "date": nnow.strftime("%Y-%m-%d %H:%M:%S"),
+            "metric": {},
+        }
+        if not node_id:
+            return
+        for metric in metric_names:
+            metrics["metric"][metric] = self._store.get_node_metrics(self._store.get_id_from_long_name(node_id), metric)
+        data_json = json.dumps(metrics, indent=4)
+        fpath = os.path.join(self._current_output_folder, f"node_{node_id}_metrics_{nnow.strftime('%Y-%m-%d__%H_%M_%S')}.json")
+        with open(fpath, "w") as json_file:
+            json_file.write(data_json)
+            absp = os.path.abspath(fpath)
+            trace = f"<a href='file://{absp}'>Exported node {node_id} metrics to file: {fpath}</a>"
             self.set_status(MessageLevel.INFO, trace)
 
     def quit(self) -> None:

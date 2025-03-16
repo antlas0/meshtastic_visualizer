@@ -922,6 +922,19 @@
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
+         <widget class="QPushButton" name="export_node_metrics_button">
+          <property name="maximumSize">
+           <size>
+            <width>31</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>⬇️</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QLabel" name="label">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -977,6 +990,19 @@
          <widget class="QPushButton" name="nm_update_button">
           <property name="text">
            <string>⟳ Update</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="clear_node_metrics_button">
+          <property name="maximumSize">
+           <size>
+            <width>31</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>🗑️</string>
           </property>
          </widget>
         </item>
