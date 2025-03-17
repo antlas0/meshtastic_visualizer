@@ -736,6 +736,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     "SNR": node.snr if node.hopsaway == 0 else "/",
                     "RSSI": node.rssi if node.hopsaway == 0 else "/",
                     "Action": None,
+                    "Relay node": f"0x{node.relay_node:0x}" if node.relay_node else "/",
+                    "Next hop": f"0x{node.next_hop:0x}" if node.next_hop else "/",
                     "Role": node.role,
                     "Hardware": node.hardware,
                 }
@@ -761,6 +763,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             "SNR",
             "RSSI",
             "Action",
+            "Relay node",
+            "Next hop",
             "Role",
             "Hardware",
             "Latitude",

@@ -106,6 +106,10 @@ class Mapper:
                 strl.append(f"<b>🔊 Air Util. Tx:</b> {node.txairutil} %</br>")
             if node.lastseen:
                 strl.append(f"<b>⌛ Last seen:</b> {node.lastseen}</br>")
+            if node.relay_node:
+                strl.append(f"<b>📡 Relay node:</b> 0x{node.relay_node:0x}</br>")
+            if node.next_hop:
+                strl.append(f"<b>➡️ Next hop:</b> 0x{node.next_hop:0x}</br>")
             popup_content = "".join(strl)
             popup = folium.Popup(
                 popup_content, max_width=300, min_width=250)

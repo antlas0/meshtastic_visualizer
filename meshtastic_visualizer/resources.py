@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import re
 import enum
 import datetime
 from dataclasses import dataclass, fields
@@ -11,6 +12,9 @@ TIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 CHARGING_TRESHOLD = 4.2
 DEFAULT_TRACEROUTE_CHANNEL = 0
 
+def sneaky_to_camel(s:str) -> str:
+    res = re.sub(r'_([a-z])', lambda match: match.group(1).upper(),s)
+    return res
 
 class MessageLevel(enum.Enum):
     """
@@ -129,6 +133,8 @@ class MeshtasticNode(JsonExporter):
     # number of packets received from this node
     rx_counter: Optional[int] = None
     is_mqtt_gateway: Optional[bool] = None
+    relay_node: Optional[int] = None
+    next_hop: Optional[int] = None
 
     def has_location(self) -> bool:
         return (self.lat is not None and self.lon is not None)
@@ -183,6 +189,8 @@ class Packet(JsonExporter):
     rssi: Optional[float] = None
     hop_limit: Optional[int] = None
     hop_start: Optional[int] = None
+    relay_node: Optional[int] = None
+    next_hop: Optional[int] = None
 
 
 @dataclass

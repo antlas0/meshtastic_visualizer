@@ -27,7 +27,8 @@ from .resources import run_in_thread, \
     NodeMetrics, \
     RadioPacket, \
     Packet, \
-    ConnectionKind
+    ConnectionKind, \
+    sneaky_to_camel
 
 
 from .meshtastic_datastore import MeshtasticDataStore
@@ -251,6 +252,12 @@ class MeshtasticManager(QObject, threading.Thread):
             hop_start=packet["hopStart"] if "hopStart" in packet else None,
             priority=packet["priority"] if "priority" in packet else None,
         )
+
+        for f in ["relay_node", "next_hop"]:
+            if hasattr(packet, sneaky_to_camel(f)):
+                setattr(received_packet, f, getattr(packet, sneaky_to_camel(f)))
+                setattr(node_from, f, getattr(packet, sneaky_to_camel(f)))
+
         self._data.store_radiopacket(received_packet)
 
         node_from.rssi = round(
