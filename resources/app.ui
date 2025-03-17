@@ -603,6 +603,9 @@
          <height>25</height>
         </rect>
        </property>
+       <property name="toolTip">
+        <string>Disconnect from MQTT server.</string>
+       </property>
        <property name="text">
         <string>⏹️ Disconnect</string>
        </property>
@@ -615,6 +618,9 @@
          <width>101</width>
          <height>25</height>
         </rect>
+       </property>
+       <property name="toolTip">
+        <string>Connect to a MQTT server.</string>
        </property>
        <property name="text">
         <string>▶️ Connect</string>
@@ -655,6 +661,9 @@
          <height>25</height>
         </rect>
        </property>
+       <property name="toolTip">
+        <string>Download MQTT logs.</string>
+       </property>
        <property name="text">
         <string>⬇️</string>
        </property>
@@ -683,6 +692,9 @@
          <width>31</width>
          <height>25</height>
         </rect>
+       </property>
+       <property name="toolTip">
+        <string>Clear MQTT logs.</string>
        </property>
        <property name="text">
         <string>🗑️</string>
@@ -746,6 +758,9 @@
          <height>25</height>
         </rect>
        </property>
+       <property name="toolTip">
+        <string>Specify a path to export all downloads.</string>
+       </property>
        <property name="text">
         <string>⬇️ Change</string>
        </property>
@@ -758,6 +773,9 @@
          <width>201</width>
          <height>25</height>
         </rect>
+       </property>
+       <property name="toolTip">
+        <string>Current path where downloads are exported.</string>
        </property>
       </widget>
      </widget>
@@ -792,6 +810,9 @@
           <height>25</height>
          </rect>
         </property>
+        <property name="toolTip">
+         <string>Disconnect.</string>
+        </property>
         <property name="text">
          <string>⏹️ Disconnect</string>
         </property>
@@ -804,6 +825,12 @@
           <width>111</width>
           <height>25</height>
          </rect>
+        </property>
+        <property name="toolTip">
+         <string>Connect with serial connection.</string>
+        </property>
+        <property name="whatsThis">
+         <string/>
         </property>
         <property name="text">
          <string>▶️ Connect</string>
@@ -818,6 +845,9 @@
           <height>25</height>
          </rect>
         </property>
+        <property name="toolTip">
+         <string>Choose a serial port.</string>
+        </property>
         <property name="placeholderText">
          <string>Serial port path</string>
         </property>
@@ -831,6 +861,9 @@
           <height>23</height>
          </rect>
         </property>
+        <property name="toolTip">
+         <string>Reset nodeDB of node when connecting.</string>
+        </property>
         <property name="text">
          <string>Reset NodeDB</string>
         </property>
@@ -843,6 +876,9 @@
           <width>121</width>
           <height>25</height>
          </rect>
+        </property>
+        <property name="toolTip">
+         <string>List all detected serial ports.</string>
         </property>
         <property name="text">
          <string>🔍 Scan ports</string>
@@ -861,6 +897,9 @@
           <width>111</width>
           <height>25</height>
          </rect>
+        </property>
+        <property name="toolTip">
+         <string>Connect with TCP connection.</string>
         </property>
         <property name="text">
          <string>▶️ Connect</string>
@@ -887,6 +926,9 @@
           <width>111</width>
           <height>25</height>
          </rect>
+        </property>
+        <property name="toolTip">
+         <string>Disconnect.</string>
         </property>
         <property name="text">
          <string>⏹️ Disconnect</string>
@@ -929,6 +971,9 @@
             <height>25</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>Download telemetry metrics of selected node.</string>
+          </property>
           <property name="text">
            <string>⬇️</string>
           </property>
@@ -961,6 +1006,9 @@
             <height>20</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>Select a node.</string>
+          </property>
           <property name="editable">
            <bool>false</bool>
           </property>
@@ -981,6 +1029,9 @@
         </item>
         <item>
          <widget class="QComboBox" name="nm_metric_combobox">
+          <property name="toolTip">
+           <string>Select a telemetry metric.</string>
+          </property>
           <property name="placeholderText">
            <string>Metric</string>
           </property>
@@ -1000,6 +1051,9 @@
             <width>31</width>
             <height>25</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>Clear telemetry metrics of all nodes.</string>
           </property>
           <property name="text">
            <string>🗑️</string>
@@ -1100,7 +1154,11 @@
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_7">
        <item>
-        <widget class="QLineEdit" name="nodes_filter_linedit"/>
+        <widget class="QLineEdit" name="nodes_filter_linedit">
+         <property name="toolTip">
+          <string>Filter nodes details by long name or id.</string>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QComboBox" name="shortcut_filter_combobox">
@@ -1109,6 +1167,9 @@
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>Filter by predefined filters.</string>
          </property>
         </widget>
        </item>
@@ -1122,6 +1183,9 @@
         <width>31</width>
         <height>25</height>
        </rect>
+      </property>
+      <property name="toolTip">
+       <string>Clear all nodes (only in app, nodeDB remains unaffected).</string>
       </property>
       <property name="text">
        <string>🗑️</string>
@@ -1145,6 +1209,9 @@
         <width>31</width>
         <height>25</height>
        </rect>
+      </property>
+      <property name="toolTip">
+       <string>Download nodes details.</string>
       </property>
       <property name="text">
        <string>⬇️</string>
@@ -1170,6 +1237,9 @@
          <width>411</width>
          <height>201</height>
         </rect>
+       </property>
+       <property name="toolTip">
+        <string>Potential results of triggered traceroutes.</string>
        </property>
       </widget>
      </widget>
@@ -1227,6 +1297,9 @@
         <height>25</height>
        </rect>
       </property>
+      <property name="toolTip">
+       <string>Filter packets from selected node.</string>
+      </property>
      </widget>
      <widget class="QPushButton" name="export_packets_button">
       <property name="geometry">
@@ -1236,6 +1309,9 @@
         <width>31</width>
         <height>25</height>
        </rect>
+      </property>
+      <property name="toolTip">
+       <string>Download packets details.</string>
       </property>
       <property name="text">
        <string>⬇️</string>
@@ -1249,6 +1325,9 @@
         <width>91</width>
         <height>25</height>
        </rect>
+      </property>
+      <property name="toolTip">
+       <string>Filter packets by detected PORTNUM.</string>
       </property>
      </widget>
      <widget class="QLCDNumber" name="packets_total_lcd">
@@ -1269,6 +1348,9 @@
         <width>31</width>
         <height>25</height>
        </rect>
+      </property>
+      <property name="toolTip">
+       <string>Clear packets details.</string>
       </property>
       <property name="text">
        <string>🗑️</string>
@@ -1323,6 +1405,9 @@
             <height>20</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>Select a node id to see its packets metrics.</string>
+          </property>
           <property name="editable">
            <bool>false</bool>
           </property>
@@ -1343,6 +1428,9 @@
         </item>
         <item>
          <widget class="QComboBox" name="pm_metric_combobox">
+          <property name="toolTip">
+           <string>Choose a metric.</string>
+          </property>
           <property name="placeholderText">
            <string>Metric</string>
           </property>
@@ -1377,6 +1465,9 @@
         <width>101</width>
         <height>25</height>
        </rect>
+      </property>
+      <property name="toolTip">
+       <string>Filter packets from source (radio or mqtt).</string>
       </property>
      </widget>
     </widget>
@@ -1449,7 +1540,11 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="messagechannel_combobox"/>
+        <widget class="QComboBox" name="messagechannel_combobox">
+         <property name="toolTip">
+          <string>Select channel to send a message.</string>
+         </property>
+        </widget>
        </item>
        <item>
         <spacer name="horizontalSpacer_2">
@@ -1496,6 +1591,9 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="toolTip">
+          <string>Select recipient of the message (boradcast is &quot;all&quot;).</string>
+         </property>
         </widget>
        </item>
        <item>
@@ -1532,6 +1630,9 @@
         <height>25</height>
        </rect>
       </property>
+      <property name="toolTip">
+       <string>Download messages.</string>
+      </property>
       <property name="text">
        <string>⬇️</string>
       </property>
@@ -1544,6 +1645,9 @@
         <width>31</width>
         <height>25</height>
        </rect>
+      </property>
+      <property name="toolTip">
+       <string>Clear messages.</string>
       </property>
       <property name="text">
        <string>🗑️</string>
@@ -1586,6 +1690,9 @@
          <width>300</width>
          <height>16777215</height>
         </size>
+       </property>
+       <property name="toolTip">
+        <string>Refresh the map with latest received data.</string>
        </property>
        <property name="text">
         <string>⟳ Refresh map</string>
