@@ -1,6 +1,6 @@
 colorama==0.4.6
 folium==0.17.0
-meshtastic==2.5.9
+meshtastic==2.6.0
 protobuf==5.27.3
 pubsub==0.1.2
 PyQt6==6.7
