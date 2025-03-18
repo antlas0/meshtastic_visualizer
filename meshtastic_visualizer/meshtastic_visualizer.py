@@ -176,6 +176,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.scan_com_button.clicked.connect(self._update_meshtastic_devices)
         self.serial_disconnect_button.clicked.connect(self.disconnect_device)
         self.tcp_disconnect_button.clicked.connect(self.disconnect_device)
+        self.load_nodedb_checkbox.stateChanged.connect(self.load_nodedb_checkbox_bis.setChecked)
+        self.load_nodedb_checkbox_bis.stateChanged.connect(self.load_nodedb_checkbox.setChecked)
         self.refresh_map_button.clicked.connect(self.get_nodes)
         self.send_button.clicked.connect(self.send_message)
         self.nm_update_button.setEnabled(False)
@@ -217,7 +219,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         for button in self._action_buttons:
             button.setEnabled(False)
 
-        for i, f in enumerate(["All", "Recently seen", "Neighbors", "1-hop",
+        for i, f in enumerate(["All", "Recently seen", "Positioned", "Neighbors", "1-hop",
                               "2-hops", "3-hops", "4-hops", "5-hops", "6-hops", "7-hops"]):
             self.shortcut_filter_combobox.insertItem(i, f)
 
@@ -412,7 +414,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         device_path = self.device_combobox.currentText()
         if device_path:
             self.set_status(MessageLevel.INFO, f"Connecting to {device_path}.")
-            self.connect_device_signal.emit(ConnectionKind.SERIAL, device_path, self.reset_nodedb_checkbox.isChecked())
+            self.connect_device_signal.emit(ConnectionKind.SERIAL, device_path, self.load_nodedb_checkbox.isChecked())
         else:
             self.set_status(MessageLevel.ERROR,
                             f"Cannot connect. Please specify a device path.")
@@ -425,7 +427,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 return
             self.set_status(MessageLevel.INFO, f"Connecting to {ip}.")
             self._settings.setValue("tcp", ip)
-            self.connect_device_signal.emit(ConnectionKind.TCP, ip, False)
+            self.connect_device_signal.emit(ConnectionKind.TCP, ip, self.load_nodedb_checkbox_bis.isChecked())
         else:
             self.set_status(MessageLevel.ERROR, f"Cannot connect. Please specify an accessible ip address.")
 
@@ -629,6 +631,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.send_message_signal.emit(m)
             self.message_textedit.clear()
 
+    def explore_packets(self, node_id:str) -> None:
+        self.tabWidget.setCurrentIndex(2)
+        self.packetsource_combobox.setCurrentText(node_id)
+        self.pm_node_combobox.setCurrentText(node_id)
+        self.clean_plot(kind="packets")
+
     def update_nodes(self, node:MeshtasticNode) -> None:
         self.update_local_node_config()
         nodes = self._store.get_nodes()
@@ -676,6 +684,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     lambda x: x.rx_counter > 0,
                     nodes.values()))
             filtered = recently_seen
+        elif self.shortcut_filter_combobox.currentText() == "Positioned":
+            filtered = list(filter(lambda x: x.has_location(), nodes.values()))
         elif self.shortcut_filter_combobox.currentText() == "Neighbors":
             filtered = list(filter(lambda x: x.hopsaway == 0, nodes.values()))
         elif self.shortcut_filter_combobox.currentText() in hopfilter.keys():
@@ -736,8 +746,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     "SNR": node.snr if node.hopsaway == 0 else "/",
                     "RSSI": node.rssi if node.hopsaway == 0 else "/",
                     "Action": None,
-                    "Relay node": f"0x{node.relay_node:0x}" if node.relay_node else "/",
-                    "Next hop": f"0x{node.next_hop:0x}" if node.next_hop else "/",
+                    "Details": None,
+                    "Relay node": f"0x{node.relay_node}" if node.relay_node else "/",
+                    "Next hop": f"0x{node.next_hop}" if node.next_hop else "/",
                     "Role": node.role,
                     "Hardware": node.hardware,
                 }
@@ -763,6 +774,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             "SNR",
             "RSSI",
             "Action",
+            "Details",
             "Relay node",
             "Next hop",
             "Role",
@@ -788,18 +800,21 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                             btn = QPushButton("Traceroute")
                             btn.setEnabled(True)
                             self.mesh_table.setCellWidget(row_idx, col_idx, btn)
-                            btn.clicked.connect(
-                                lambda: self.traceroute(
-                                    self.mesh_table.item(
-                                        self.mesh_table.indexAt(
-                                            self.sender().pos()).row(),
-                                        2).text()))
+                            btn.clicked.connect(lambda: self.traceroute(self.mesh_table.item(self.mesh_table.indexAt(self.sender().pos()).row(),2).text()))
+                        else:
+                            data = str(value)
+                            if data == "None":
+                                data = ""
+                    if col_idx == 7:  # insert widget in cell
+                        btn = QPushButton("See packets")
+                        btn.setEnabled(True)
+                        self.mesh_table.setCellWidget(row_idx, col_idx, btn)
+                        btn.clicked.connect(lambda: self.explore_packets(self.mesh_table.item(self.mesh_table.indexAt(self.sender().pos()).row(),2).text()))
                     else:
                         data = str(value)
                         if data == "None":
                             data = ""
-                        self.mesh_table.setItem(
-                            row_idx, col_idx, QTableWidgetItem(data))
+                        self.mesh_table.setItem(row_idx, col_idx, QTableWidgetItem(data))
                 if current_item is not None:
                     if current_item.text() != str(value):
                         data = str(value)

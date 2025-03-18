@@ -852,7 +852,7 @@
          <string>Serial port path</string>
         </property>
        </widget>
-       <widget class="QCheckBox" name="reset_nodedb_checkbox">
+       <widget class="QCheckBox" name="load_nodedb_checkbox">
         <property name="geometry">
          <rect>
           <x>10</x>
@@ -865,7 +865,10 @@
          <string>Reset nodeDB of node when connecting.</string>
         </property>
         <property name="text">
-         <string>Reset NodeDB</string>
+         <string>Load NodeDB</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
        </widget>
        <widget class="QPushButton" name="scan_com_button">
@@ -932,6 +935,25 @@
         </property>
         <property name="text">
          <string>⏹️ Disconnect</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="load_nodedb_checkbox_bis">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>40</y>
+          <width>121</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="toolTip">
+         <string>Reset nodeDB of node when connecting.</string>
+        </property>
+        <property name="text">
+         <string>Load NodeDB</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
        </widget>
       </widget>

@@ -263,9 +263,9 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 snr=mp.rx_snr,
             )
             for f in ["relay_node", "next_hop"]:
-                if hasattr(se.packet, f):
-                    setattr(received_packet, f, getattr(se.packet, f))
-                    setattr(node_from, f, getattr(se.packet, f))
+                if getattr(se.packet, f) != 0:
+                    setattr(received_packet, f, f"{getattr(se.packet, f):0x}")
+                    setattr(node_from, f, f"{getattr(se.packet, f):0x}")
 
             self._store.store_mqtt_packet(received_packet)
             self.notify_new_packet.emit(received_packet)

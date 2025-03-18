@@ -356,7 +356,7 @@ class MeshtasticDataStore(Thread):
                 timestamp = [x.date.timestamp() for x in filtered]
                 values = [getattr(x, metric) for x in filtered]
                 res["timestamp"] = timestamp
-                res[metric] = values
+                res["value"] = values
         self._lock.release()
         return res.copy()
 

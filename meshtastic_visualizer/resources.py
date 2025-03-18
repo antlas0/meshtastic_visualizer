@@ -133,8 +133,8 @@ class MeshtasticNode(JsonExporter):
     # number of packets received from this node
     rx_counter: Optional[int] = None
     is_mqtt_gateway: Optional[bool] = None
-    relay_node: Optional[int] = None
-    next_hop: Optional[int] = None
+    relay_node: Optional[str] = None
+    next_hop: Optional[str] = None
 
     def has_location(self) -> bool:
         return (self.lat is not None and self.lon is not None)
@@ -189,8 +189,8 @@ class Packet(JsonExporter):
     rssi: Optional[float] = None
     hop_limit: Optional[int] = None
     hop_start: Optional[int] = None
-    relay_node: Optional[int] = None
-    next_hop: Optional[int] = None
+    relay_node: Optional[str] = None
+    next_hop: Optional[str] = None
 
 
 @dataclass
