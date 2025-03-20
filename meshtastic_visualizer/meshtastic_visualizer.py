@@ -25,7 +25,8 @@ from .resources import MessageLevel, \
     MAINWINDOW_STYLESHEET, \
     TIME_FORMAT, \
     DEFAULT_TRACEROUTE_CHANNEL, \
-    ConnectionKind
+    ConnectionKind, \
+    PacketInfoType
 
 from .meshtastic_mqtt import MeshtasticMQTT
 from .meshtastic_datastore import MeshtasticDataStore
@@ -188,7 +189,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.nm_metric_combobox.currentTextChanged.connect(
             self.update_node_metrics_buttons)
         self.pm_update_button.pressed.connect(self.update_packets_metrics)
-        self.pm_node_combobox.currentTextChanged.connect(
+        self.packetsource_combobox.currentTextChanged.connect(
             self.update_packets_metrics_buttons)
         self.pm_metric_combobox.currentTextChanged.connect(
             self.update_packets_metrics_buttons
@@ -258,8 +259,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         self.mqtt_disconnect_button.setEnabled(False)
         self.nodes_total_lcd.setDecMode()
-        self.packets_total_lcd.setDecMode()
         self.nodes_gps_lcd.setDecMode()
+        self.node_packets_number.setDecMode()
         self.nodes_recently_lcd.setDecMode()
         self.ipaddress_textedit.setText(self._settings.value("tcp", "http://192.168.1.1"))
         self.mqtt_host_linedit.setText(self._settings.value("mqtt_host", ""))
@@ -329,12 +330,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packettype_combobox.insertItem(0, "All")
         self.packetsource_combobox.clear()
         self.packetsource_combobox.insertItem(0, "All")
-        self.packets_total_lcd.display(0)
-        self.pm_node_combobox.clear()
         self._packets_plot_item.setData(
             x=None,
             y=None)
         self._packets_plot_widget.setTitle("No data")
+        self.reset_node_packets_counters()
 
     def _get_meshtastic_message_header_fields(self) -> dict:
         return {
@@ -536,7 +536,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def update_packets_metrics(self) -> str:
         self.pm_update_button.setEnabled(False)
         node_id = self._store.get_id_from_long_name(
-            self.pm_node_combobox.currentText())
+            self.packetsource_combobox.currentText())
         metric_name = self.pm_metric_combobox.currentText()
         if not node_id or not metric_name:
             self.clean_plot(kind="packets")
@@ -632,10 +632,43 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.message_textedit.clear()
 
     def explore_packets(self, node_id:str) -> None:
-        self.tabWidget.setCurrentIndex(2)
-        self.packetsource_combobox.setCurrentText(node_id)
-        self.pm_node_combobox.setCurrentText(node_id)
+        self.packetsource_combobox.blockSignals(True)
+        self.packetmedium_combobox.blockSignals(True)
+        self.packettype_combobox.blockSignals(True)
+        self.packetsource_combobox.setCurrentText("All")
+        self.packettype_combobox.setCurrentText("All")
+        self.packetmedium_combobox.setCurrentText("All")
         self.clean_plot(kind="packets")
+        if self._store.has_node_id(node_id):
+            self.tabWidget.setCurrentIndex(2)
+            self.packetsource_combobox.setCurrentText(node_id)
+        self.update_packets_filtered()
+        self.packetsource_combobox.blockSignals(False)
+        self.packetmedium_combobox.blockSignals(False)
+        self.packettype_combobox.blockSignals(False)
+
+    def reset_node_packets_counters(self) -> None:
+        self.messages_packets_number.setRange(0, 1)
+        self.messages_packets_number.setValue(0)
+        self.nodeinfo_packets_number.setRange(0, 1)
+        self.nodeinfo_packets_number.setValue(0)
+        self.position_packets_number.setRange(0, 1)
+        self.position_packets_number.setValue(0)
+        self.telemetry_packets_number.setRange(0, 1)
+        self.telemetry_packets_number.setValue(0)
+        self.neighbor_packets_number.setRange(0, 1)
+        self.neighbor_packets_number.setValue(0)
+        self.routing_packets_number.setRange(0, 1)
+        self.routing_packets_number.setValue(0)
+        self.traceroute_packets_number.setRange(0, 1)
+        self.traceroute_packets_number.setValue(0)
+        self.admin_packets_number.setRange(0, 1)
+        self.admin_packets_number.setValue(0)
+        self.rangetest_packets_number.setRange(0, 1)
+        self.rangetest_packets_number.setValue(0)
+        self.mapreport_packets_number.setRange(0, 1)
+        self.mapreport_packets_number.setValue(0)
+        self.node_packets_number.display(0)
 
     def update_nodes(self, node:MeshtasticNode) -> None:
         self.update_local_node_config()
@@ -726,16 +759,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
             status_line = []
 
-            if node.rx_counter > 0:
-                status_line.append(f"{node.rx_counter}✉️")
-            if node.has_location():
-                status_line.append("📍")
-            if node.public_key:
-                status_line.append("🔑")
             if node.is_mqtt_gateway:
                 status_line.append("🖥️")
-            if node.hopsaway is not None:
-                status_line.append(f"{node.hopsaway}✈️")
+            else:
+                status_line.append("📡")
 
             row.update(
                 {
@@ -745,8 +772,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     "ID": node.id,
                     "SNR": node.snr if node.hopsaway == 0 else "/",
                     "RSSI": node.rssi if node.hopsaway == 0 else "/",
-                    "Action": None,
+                    "Hops": f"✈️{node.hopsaway}" if node.hopsaway else "",
+                    "RX": f"⬊{node.rx_counter}" if node.rx_counter is not None and node.rx_counter > 0 else "/",
+                    "TX": f"⬈{node.tx_counter}" if node.tx_counter is not None and node.tx_counter > 0 else "/",
                     "Details": None,
+                    "Action": None,
                     "Relay node": f"0x{node.relay_node}" if node.relay_node else "/",
                     "Next hop": f"0x{node.next_hop}" if node.next_hop else "/",
                     "Role": node.role,
@@ -773,8 +803,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             "ID",
             "SNR",
             "RSSI",
-            "Action",
+            "Hops",
+            "RX",
+            "TX",
             "Details",
+            "Action",
             "Relay node",
             "Next hop",
             "Role",
@@ -795,7 +828,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 current_item = self.mesh_table.item(row_idx, col_idx)
                 current_widget = self.mesh_table.cellWidget(row_idx, col_idx)
                 if current_item is None and current_widget is None:
-                    if col_idx == 6:  # insert widget in cell
+                    if col_idx == 10:  # insert widget in cell
                         if self._manager.is_connected():
                             btn = QPushButton("Traceroute")
                             btn.setEnabled(True)
@@ -805,7 +838,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                             data = str(value)
                             if data == "None":
                                 data = ""
-                    if col_idx == 7:  # insert widget in cell
+                    if col_idx == 9:  # insert widget in cell
                         btn = QPushButton("See packets")
                         btn.setEnabled(True)
                         self.mesh_table.setCellWidget(row_idx, col_idx, btn)
@@ -972,12 +1005,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.messages_table.resizeColumnsToContents()
 
     def update_packets_filter(self, packets: List[Packet]) -> None:
-        current_pm_node = self.pm_node_combobox.currentText()
-        self.pm_node_combobox.clear()
         inserted = []
         for i, packet in enumerate(packets):
             if packet.from_id not in inserted:
-                self.pm_node_combobox.insertItem(i, packet.from_id)
                 inserted.append(packet.from_id)
             if self.packettype_combobox.findText(packet.port_num) == -1:
                 self.packettype_combobox.insertItem(
@@ -986,16 +1016,16 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             if self.packetsource_combobox.findText(packet.from_id) == -1:
                 self.packetsource_combobox.insertItem(
                     100000, packet.from_id)  # insert last
-        self.pm_node_combobox.setCurrentText(current_pm_node)
 
     def update_packets_filtered(self) -> None:
+        self.reset_node_packets_counters()
         self.packets_treewidget.clear()
         self.update_packet_received(MeshtasticNode())
 
     def update_packet_received(self, packet:Optional[Packet]) -> None:
         packets = self._store.get_radio_packets() + self._store.get_mqtt_packets()
         self.update_packets_filter(packets)
-        self.update_packets_treeview(packets)
+        self.update_packets_widgets(packets)
 
     def apply_packets_filter(self, packets:List[Packet]) -> List[Packet]:
         if self.packetmedium_combobox.currentText() != "All":
@@ -1017,7 +1047,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         return packets
 
-    def update_packets_treeview(self, packets: List[Packet]) -> None:
+    def update_packets_widgets(self, packets: List[Packet]) -> None:
         alreading_existing_packets = [
             self.packets_treewidget.topLevelItem(i).text(0) for i in range(
                 self.packets_treewidget.topLevelItemCount())]
@@ -1035,7 +1065,30 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 category_item.addChild(sub_item_widget)
         self.packets_treewidget.resizeColumnToContents(0)
         self.packets_treewidget.resizeColumnToContents(1)
-        self.packets_total_lcd.display(len(packets))
+
+        filtered_packets_number = len(filtered_packets)
+        if filtered_packets_number > 0:
+            self.messages_packets_number.setRange(0, filtered_packets_number)
+            self.messages_packets_number.setValue(len(list(filter(lambda x: x.port_num == PacketInfoType.PCK_TEXT_MESSAGE_APP.value, filtered_packets))))
+            self.nodeinfo_packets_number.setRange(0, filtered_packets_number)
+            self.nodeinfo_packets_number.setValue(len(list(filter(lambda x: x.port_num == PacketInfoType.PCK_NODEINFO_APP.value, filtered_packets))))
+            self.position_packets_number.setRange(0, filtered_packets_number)
+            self.position_packets_number.setValue(len(list(filter(lambda x: x.port_num == PacketInfoType.PCK_POSITION_APP.value, filtered_packets))))
+            self.telemetry_packets_number.setRange(0, filtered_packets_number)
+            self.telemetry_packets_number.setValue(len(list(filter(lambda x: x.port_num == PacketInfoType.PCK_TELEMETRY_APP.value, filtered_packets))))
+            self.neighbor_packets_number.setRange(0, filtered_packets_number)
+            self.neighbor_packets_number.setValue(len(list(filter(lambda x: x.port_num == PacketInfoType.PCK_NEIGHBORINFO_APP.value, filtered_packets))))
+            self.routing_packets_number.setRange(0, filtered_packets_number)
+            self.routing_packets_number.setValue(len(list(filter(lambda x: x.port_num == PacketInfoType.PCK_ROUTING_APP.value, filtered_packets))))
+            self.traceroute_packets_number.setRange(0, filtered_packets_number)
+            self.traceroute_packets_number.setValue(len(list(filter(lambda x: x.port_num == PacketInfoType.PCK_TRACEROUTE_APP.value, filtered_packets))))
+            self.admin_packets_number.setRange(0, filtered_packets_number)
+            self.admin_packets_number.setValue(len(list(filter(lambda x: x.port_num == PacketInfoType.PCK_ADMIN_APP.value, filtered_packets))))
+            self.rangetest_packets_number.setRange(0, filtered_packets_number)
+            self.rangetest_packets_number.setValue(len(list(filter(lambda x: x.port_num == PacketInfoType.PCK_RANGE_TEST_APP.value, filtered_packets))))
+            self.mapreport_packets_number.setRange(0, filtered_packets_number)
+            self.mapreport_packets_number.setValue(len(list(filter(lambda x: x.port_num == PacketInfoType.PCK_MAP_REPORT_APP.value, filtered_packets))))
+            self.node_packets_number.display(filtered_packets_number)
 
     def update_device_details(self, configuration: dict):
         self.output_textedit.setText(configuration)
@@ -1149,10 +1202,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             trace = f"<a href='file://{absp}'>Exported node {node_id} metrics to file: {fpath}</a>"
             self.set_status(MessageLevel.INFO, trace)
 
+    def closeEvent(self, event) -> None:
+        self.quit()
+
     def quit(self) -> None:
         self._manager.quit()
         self._mqtt_manager.quit()
-        self.master.quit()
-
-    def run(self):
-        self.master.mainloop()

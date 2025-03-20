@@ -296,6 +296,7 @@ class MeshtasticManager(QObject, threading.Thread):
                     nm.num_packets_tx = env.local_stats.num_packets_tx
                     nm.num_tx_relay = env.local_stats.num_tx_relay
                     nm.num_tx_relay_canceled = env.local_stats.num_tx_relay_canceled
+                    node_from.tx_counter = (env.local_stats.num_packets_tx + env.local_stats.num_tx_relay)
 
                 self._data.store_or_update_node_metrics(nm)
                 self.notify_nodes_metrics_signal.emit()
@@ -631,6 +632,7 @@ class MeshtasticManager(QObject, threading.Thread):
 
     def quit(self):
         # Signal the thread to exit
+        pub.unsubAll()
         self.task_queue.put((None, [], {}))
 
     def run(self):

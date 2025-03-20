@@ -128,6 +128,13 @@ class MeshtasticDataStore(Thread):
         self._lock.release()
         return res
 
+    def has_node_id(self, node_id:str) -> bool:
+        res = False
+        self._lock.acquire()
+        res = (node_id in self.nodes.keys()) and (self.nodes[node_id].rx_counter > 0)
+        self._lock.release()
+        return res
+
     def get_id_from_long_name(self, long_name_or_id: str) -> str:
         self._lock.acquire()
         res: str = ""

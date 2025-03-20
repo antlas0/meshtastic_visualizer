@@ -38,6 +38,9 @@ class PacketInfoType(enum.Enum):
     PCK_TRACEROUTE_APP = "TRACEROUTE_APP"
     PCK_STORE_FORWARD_APP = "STORE_FORWARD_APP"
     PCK_NODEINFO_APP = "NODEINFO_APP"
+    PCK_ADMIN_APP = "ADMIN_APP"
+    PCK_RANGE_TEST_APP = "RANGE_TEST_APP"
+    PCK_MAP_REPORT_APP = "MAP_REPORT_APP"
     PCK_UNKNOWN = ""
 
 
@@ -130,8 +133,8 @@ class MeshtasticNode(JsonExporter):
     uptime: Optional[int] = None
     is_local: Optional[bool] = None
     public_key: Optional[str] = None
-    # number of packets received from this node
     rx_counter: Optional[int] = None
+    tx_counter: Optional[int] = None
     is_mqtt_gateway: Optional[bool] = None
     relay_node: Optional[str] = None
     next_hop: Optional[str] = None

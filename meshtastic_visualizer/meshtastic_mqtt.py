@@ -391,6 +391,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                         nm.num_packets_tx = env.local_stats.num_packets_tx
                         nm.num_tx_relay = env.local_stats.num_tx_relay
                         nm.num_tx_relay_canceled = env.local_stats.num_tx_relay_canceled
+                        node_from.tx_counter = (env.local_stats.num_packets_tx + env.local_stats.num_tx_relay)
 
                     self._store.store_or_update_node_metrics(nm)
                     self.notify_nodes_metrics_signal.emit()
