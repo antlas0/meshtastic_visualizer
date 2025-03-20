@@ -58,15 +58,16 @@ class Mapper:
         Args:
             nodes (list): nodes
         """
+        self.create_map()
+
         if nodes is None or not nodes:
             return
-
-        self.create_map()
 
         markers_group = folium.FeatureGroup(name="Stations")
         links_group = folium.FeatureGroup(name="Links")
         markers: list = []
         links: list = []
+        relays: list = []
 
         # remove any node that does not have full coordinates
         nodes_filtered = {}
@@ -81,6 +82,56 @@ class Mapper:
                 float(
                     x.lat), float(
                     x.lon)] for __, x in nodes_filtered.items()}
+
+        # prepare a dict with relays of node
+        nodes_relays = {}
+        for __, node in nodes_filtered.items():
+            if node.relay_node == node.id[-2:]:
+                continue
+            if node.relay_node is not None and node.relay_node != 0:
+                potential_relays = list(filter(lambda x:node.relay_node == x.id[-2:], nodes_filtered.values()))
+                if len(potential_relays) > 0:
+                    nodes_relays[node.id] = potential_relays
+
+        for node_id, node_relays in nodes_relays.items():
+            rgroup = folium.FeatureGroup(name=f"Relay: {node_id}")
+
+            strl = []
+            node = nodes_filtered[node_id]
+            if node.long_name:
+                strl.append(f"<b>👤 Name:</b> {node.long_name}</br>")
+            strl.append(f"<b>🆔 id:</b> {node.id}</br>")
+            popup_content = "".join(strl)
+            popup = folium.Popup(popup_content, max_width=300, min_width=250)
+            relay_marker = folium.Marker(
+                location=[
+                    node.lat,
+                    node.lon],
+                tooltip=popup_content,
+                popup=popup,
+                icon=folium.Icon(color="blue"),
+            )
+            relay_marker.add_to(rgroup)
+            for relay in node_relays:
+                if relay.id == node_id:
+                    continue
+                strl = []
+                if relay.long_name:
+                    strl.append(f"<b>👤 Name:</b> {relay.long_name}</br>")
+                strl.append(f"<b>🆔 id:</b> {relay.id}</br>")
+                popup_content = "".join(strl)
+                popup = folium.Popup(popup_content, max_width=300, min_width=250)
+                relay_marker = folium.Marker(
+                    location=[
+                        relay.lat,
+                        relay.lon],
+                    tooltip=popup_content,
+                    popup=popup,
+                    icon=folium.Icon(color="orange", icon="tower-observation", prefix="fa"),
+                )
+                relay_marker.add_to(rgroup)
+                rgroup.add_to(self._map)
+                relays.append(rgroup)
 
         for node_id, node in nodes_filtered.items():
             if node.lat is None or node.lon is None:
@@ -106,6 +157,10 @@ class Mapper:
                 strl.append(f"<b>🔊 Air Util. Tx:</b> {node.txairutil} %</br>")
             if node.lastseen:
                 strl.append(f"<b>⌛ Last seen:</b> {node.lastseen}</br>")
+            if node.relay_node:
+                strl.append(f"<b>📡 Relay node:</b> {node.relay_node}</br>")
+            if node.next_hop:
+                strl.append(f"<b>➡️ Next hop:</b> {node.next_hop}</br>")
             popup_content = "".join(strl)
             popup = folium.Popup(
                 popup_content, max_width=300, min_width=250)
@@ -154,5 +209,10 @@ class Mapper:
                                  max(markers_lat), max(markers_lon)]])
         if links:
             links_group.add_to(self._map)
-            folium.LayerControl().add_to(self._map)
+        if relays:
+            for g in relays:
+                g.add_to(self._map)
+
+        if links or relays:
+            folium.LayerControl().add_to(self._map)   
         del nodes_filtered

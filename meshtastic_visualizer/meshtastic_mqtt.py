@@ -233,7 +233,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 strl.append(
                     f"pn:{portnums_pb2.PortNum.Name(se.packet.decoded.portnum)}")
 
-            packet = MQTTPacket(
+            received_packet = MQTTPacket(
                 date=datetime.datetime.now(),
                 pid=se.packet.id,
                 from_id=self.node_number_to_id(
@@ -256,14 +256,19 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 hop_limit=se.packet.hop_limit,
                 hop_start=se.packet.hop_start,
             )
-            self._store.store_mqtt_packet(packet)
-            self.notify_new_packet.emit(packet)
             node_from = MeshtasticNode(
                 id=self.node_number_to_id(getattr(se.packet, 'from')),
                 lastseen=datetime.datetime.now(),
                 rssi=mp.rx_rssi,
                 snr=mp.rx_snr,
             )
+            for f in ["relay_node", "next_hop"]:
+                if getattr(se.packet, f) != 0:
+                    setattr(received_packet, f, f"{getattr(se.packet, f):0x}")
+                    setattr(node_from, f, f"{getattr(se.packet, f):0x}")
+
+            self._store.store_mqtt_packet(received_packet)
+            self.notify_new_packet.emit(received_packet)
 
             self._store.store_or_update_node(MeshtasticNode(
                 id=se.gateway_id,
@@ -382,12 +387,11 @@ class MeshtasticMQTT(QObject, threading.Thread):
                         nm.channel_utilization = round(env.device_metrics.channel_utilization, 2)
                         nm.voltage = round(env.device_metrics.voltage, 2)
                         nm.uptime = env.device_metrics.uptime_seconds
-                        if round(env.device_metrics.voltage, 2) == 0.0:
-                            print("test")
                     if env.HasField("local_stats"):
                         nm.num_packets_tx = env.local_stats.num_packets_tx
                         nm.num_tx_relay = env.local_stats.num_tx_relay
                         nm.num_tx_relay_canceled = env.local_stats.num_tx_relay_canceled
+                        node_from.tx_counter = (env.local_stats.num_packets_tx + env.local_stats.num_tx_relay)
 
                     self._store.store_or_update_node_metrics(nm)
                     self.notify_nodes_metrics_signal.emit()

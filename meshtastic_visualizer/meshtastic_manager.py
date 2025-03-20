@@ -27,7 +27,8 @@ from .resources import run_in_thread, \
     NodeMetrics, \
     RadioPacket, \
     Packet, \
-    ConnectionKind
+    ConnectionKind, \
+    sneaky_to_camel
 
 
 from .meshtastic_datastore import MeshtasticDataStore
@@ -85,7 +86,7 @@ class MeshtasticManager(QObject, threading.Thread):
         return list_serial_ports()
 
     @run_in_thread
-    def connect_device(self, connection_kind:ConnectionKind, target:str, resetDB: bool = False) -> bool:
+    def connect_device(self, connection_kind:ConnectionKind, target:str, load_db: bool = True) -> bool:
         res = False
         if self._interface is not None:
             self.refresh_ui_signal.emit()
@@ -113,9 +114,8 @@ class MeshtasticManager(QObject, threading.Thread):
 
             node = self._interface.getMyNodeInfo()
             self._local_board_id = node["user"]["id"]
-            if resetDB:
-                self.reset_local_node_db()
-            self.load_local_nodedb()
+            if load_db:
+                self.load_local_nodedb()
             self.load_local_node_configuration()
             self.get_local_node_details()
             self.notify_frontend_signal.emit(MessageLevel.INFO, trace)
@@ -150,13 +150,6 @@ class MeshtasticManager(QObject, threading.Thread):
 
         self.refresh_ui_signal.emit()
         return res
-
-    @run_in_thread
-    def reset_local_node_db(self) -> None:
-        if self._interface is None:
-            return
-        node = self._interface.getNode(
-            self._local_board_id, False).resetNodeDb()
 
     def get_local_node_details(self) -> None:
         conf = []
@@ -251,6 +244,12 @@ class MeshtasticManager(QObject, threading.Thread):
             hop_start=packet["hopStart"] if "hopStart" in packet else None,
             priority=packet["priority"] if "priority" in packet else None,
         )
+
+        for f in ["relay_node", "next_hop"]:
+            if hasattr(packet, sneaky_to_camel(f)) and getattr(packet, sneaky_to_camel(f)) != 0:
+                setattr(received_packet, f, f"{getattr(packet, sneaky_to_camel(f)):0x}")
+                setattr(node_from, f, f"{getattr(packet, sneaky_to_camel(f)):0x}")
+
         self._data.store_radiopacket(received_packet)
 
         node_from.rssi = round(
@@ -297,6 +296,7 @@ class MeshtasticManager(QObject, threading.Thread):
                     nm.num_packets_tx = env.local_stats.num_packets_tx
                     nm.num_tx_relay = env.local_stats.num_tx_relay
                     nm.num_tx_relay_canceled = env.local_stats.num_tx_relay_canceled
+                    node_from.tx_counter = (env.local_stats.num_packets_tx + env.local_stats.num_tx_relay)
 
                 self._data.store_or_update_node_metrics(nm)
                 self.notify_nodes_metrics_signal.emit()
@@ -632,6 +632,7 @@ class MeshtasticManager(QObject, threading.Thread):
 
     def quit(self):
         # Signal the thread to exit
+        pub.unsubAll()
         self.task_queue.put((None, [], {}))
 
     def run(self):

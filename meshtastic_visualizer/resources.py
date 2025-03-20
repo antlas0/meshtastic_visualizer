@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import re
 import enum
 import datetime
 from dataclasses import dataclass, fields
@@ -11,6 +12,9 @@ TIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 CHARGING_TRESHOLD = 4.2
 DEFAULT_TRACEROUTE_CHANNEL = 0
 
+def sneaky_to_camel(s:str) -> str:
+    res = re.sub(r'_([a-z])', lambda match: match.group(1).upper(),s)
+    return res
 
 class MessageLevel(enum.Enum):
     """
@@ -34,6 +38,9 @@ class PacketInfoType(enum.Enum):
     PCK_TRACEROUTE_APP = "TRACEROUTE_APP"
     PCK_STORE_FORWARD_APP = "STORE_FORWARD_APP"
     PCK_NODEINFO_APP = "NODEINFO_APP"
+    PCK_ADMIN_APP = "ADMIN_APP"
+    PCK_RANGE_TEST_APP = "RANGE_TEST_APP"
+    PCK_MAP_REPORT_APP = "MAP_REPORT_APP"
     PCK_UNKNOWN = ""
 
 
@@ -126,9 +133,11 @@ class MeshtasticNode(JsonExporter):
     uptime: Optional[int] = None
     is_local: Optional[bool] = None
     public_key: Optional[str] = None
-    # number of packets received from this node
     rx_counter: Optional[int] = None
+    tx_counter: Optional[int] = None
     is_mqtt_gateway: Optional[bool] = None
+    relay_node: Optional[str] = None
+    next_hop: Optional[str] = None
 
     def has_location(self) -> bool:
         return (self.lat is not None and self.lon is not None)
@@ -183,6 +192,8 @@ class Packet(JsonExporter):
     rssi: Optional[float] = None
     hop_limit: Optional[int] = None
     hop_start: Optional[int] = None
+    relay_node: Optional[str] = None
+    next_hop: Optional[str] = None
 
 
 @dataclass
