@@ -54,7 +54,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._map = None
         self._local_board_ln = ""
         self._telemetry_plot_widget = pg.PlotWidget()
+        self._telemetry_plot_widget.plotItem.getViewBox().setMouseMode(pg.ViewBox.RectMode)
         self._packets_plot_widget = pg.PlotWidget()
+        self._packets_plot_widget.plotItem.getViewBox().setMouseMode(pg.ViewBox.RectMode)
         self._telemetry_plot_item = self._telemetry_plot_widget.plot(
             pen=pg.mkPen(
                 '#007aff',
