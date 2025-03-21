@@ -57,20 +57,24 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._telemetry_plot_widget.plotItem.getViewBox().setMouseMode(pg.ViewBox.RectMode)
         self._packets_plot_widget = pg.PlotWidget()
         self._packets_plot_widget.plotItem.getViewBox().setMouseMode(pg.ViewBox.RectMode)
-        self._telemetry_plot_item = self._telemetry_plot_widget.plot(
+        self._telemetry_plot_item = pg.ScatterPlotItem(
             pen=pg.mkPen(
                 '#007aff',
                 width=1),
             symbol='o',
             symbolPen='b',
-            symbolSize=8)
-        self._packets_plot_item = self._packets_plot_widget.plot(
+            symbolSize=8,
+            hoverable=True)
+        self._telemetry_plot_widget.addItem(self._telemetry_plot_item)
+        self._packets_plot_item = pg.ScatterPlotItem(
             pen=pg.mkPen(
                 '#007aff',
                 width=1),
             symbol='o',
             symbolPen='b',
-            symbolSize=8)
+            symbolSize=8,
+            hoverable=True)
+        self._packets_plot_widget.addItem(self._packets_plot_item)
         self._settings = QSettings("antlas0", "meshtastic_visualizer")
 
         # Variables
