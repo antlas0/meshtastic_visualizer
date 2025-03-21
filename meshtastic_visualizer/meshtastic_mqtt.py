@@ -41,6 +41,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
     notify_nodes_metrics_signal = pyqtSignal()
     notify_message_signal = pyqtSignal()
     notify_new_packet = pyqtSignal(Packet)
+    notify_mqtt_logs = pyqtSignal(str)
 
     def __init__(self) -> None:
         super().__init__()
@@ -269,6 +270,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
 
             self._store.store_mqtt_packet(received_packet)
             self.notify_new_packet.emit(received_packet)
+            self.notify_mqtt_logs.emit(" ".join(strl))
 
             self._store.store_or_update_node(MeshtasticNode(
                 id=se.gateway_id,

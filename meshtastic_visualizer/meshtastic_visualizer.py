@@ -116,7 +116,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.update_nodes)
         self._mqtt_manager.notify_nodes_update.connect(
             self.update_nodes)
-        self._mqtt_manager.notify_new_packet.connect(
+        self._mqtt_manager.notify_mqtt_logs.connect(
             self.update_received_mqtt_log)
 
         self._update_meshtastic_devices()
