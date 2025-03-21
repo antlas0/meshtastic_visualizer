@@ -1309,6 +1309,9 @@
       <property name="toolTip">
        <string>Filter packets from selected node.</string>
       </property>
+      <property name="editable">
+       <bool>true</bool>
+      </property>
      </widget>
      <widget class="QPushButton" name="export_packets_button">
       <property name="geometry">
@@ -1372,7 +1375,7 @@
         <rect>
          <x>10</x>
          <y>220</y>
-         <width>211</width>
+         <width>221</width>
          <height>28</height>
         </rect>
        </property>
@@ -1900,6 +1903,9 @@
          </property>
          <property name="toolTip">
           <string>Select recipient of the message (boradcast is &quot;all&quot;).</string>
+         </property>
+         <property name="editable">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
