@@ -206,8 +206,7 @@ class MeshtasticManager(QObject, threading.Thread):
 
     @run_in_thread
     def on_receive(self, packet: dict,
-                   interface: Optional[meshtastic.serial_interface.SerialInterface] = None,
-                   node_list: Optional[list]=None):
+                   interface):
         if "decoded" not in packet:
             return
         if "portnum" not in packet["decoded"]:
