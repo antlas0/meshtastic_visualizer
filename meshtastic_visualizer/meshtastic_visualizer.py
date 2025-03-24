@@ -81,11 +81,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.status_var: str = ""
         self._local_board_id: str = ""
         self._action_buttons = []
-        self._current_output_folder = os.getcwd()
-        self.setup_ui()
-
+        self._current_output_folder = self._settings.value("output_folder", os.getcwd())
         self._store = MeshtasticDataStore()
         self._manager = MeshtasticManager()
+        self._update_meshtastic_devices()
+        self.setup_ui()
+
         self._manager.set_store(self._store)
         self._manager.start()
 
@@ -124,8 +125,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.update_nodes)
         self._mqtt_manager.notify_mqtt_logs.connect(
             self.update_received_mqtt_log)
-
-        self._update_meshtastic_devices()
 
         self.connect_device_signal.connect(self._manager.connect_device)
         self.disconnect_device_signal.connect(self._manager.disconnect_device)
@@ -173,6 +172,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.device_combobox.insertItem(i, device)
 
     def setup_ui(self) -> None:
+        self.device_combobox.setCurrentText(self._settings.value("serial_port", ""))
         self.tabWidget.currentChanged.connect(self.remove_notification_badge)
         self.notification_bar.setOpenExternalLinks(True)
         self.serial_connect_button.clicked.connect(self.connect_device_serial)
@@ -283,7 +283,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packettype_combobox.currentIndexChanged.connect(
             self.update_packets_filtered)
         self.packetsource_combobox.insertItem(0, "All")
-        self.packetsource_combobox.currentIndexChanged.connect(
+        self.packetsource_combobox.currentTextChanged.connect(
             self.update_packets_filtered)
         self.packetmedium_combobox.insertItem(0, "All")
         self.packetmedium_combobox.insertItem(1, "Radio")
@@ -300,6 +300,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if dialog.exec():
             if len(dialog.selectedFiles()) == 1:
                 self._current_output_folder = dialog.selectedFiles()[0]
+                self._settings.setValue("output_folder", self._current_output_folder)
                 self.refresh_status_header(MessageLevel.INFO, f"Output directory is set to: {self._current_output_folder}")
                 self.output_folder_label.setText(os.path.basename(self._current_output_folder))
 
@@ -421,6 +422,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if device_path:
             self.set_status(MessageLevel.INFO, f"Connecting to {device_path}.")
             self.connect_device_signal.emit(ConnectionKind.SERIAL, device_path, self.load_nodedb_checkbox.isChecked())
+            self._settings.setValue("serial_port", self.device_combobox.currentText())
         else:
             self.set_status(MessageLevel.ERROR,
                             f"Cannot connect. Please specify a device path.")
@@ -648,6 +650,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if self._store.has_node_id(node_id):
             self.tabWidget.setCurrentIndex(2)
             self.packetsource_combobox.setCurrentText(node_id)
+        self.update_packets_metrics_buttons()
         self.update_packets_filtered()
         self.packetsource_combobox.blockSignals(False)
         self.packetmedium_combobox.blockSignals(False)
@@ -776,9 +779,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     "User": node.long_name,
                     "AKA": node.short_name,
                     "ID": node.id,
-                    "SNR": node.snr if node.hopsaway == 0 else "/",
-                    "RSSI": node.rssi if node.hopsaway == 0 else "/",
-                    "Hops": f"✈️{node.hopsaway}" if node.hopsaway else "",
+                    "SNR": node.snr if node.snr is not None and node.hopsaway == 0 else "/",
+                    "RSSI": node.rssi if node.rssi is not None and node.hopsaway == 0 else "/",
+                    "Hops": f"✈️{node.hopsaway}" if node.hopsaway is not None else "/",
                     "RX": f"⬊{node.rx_counter}" if node.rx_counter is not None and node.rx_counter > 0 else "/",
                     "TX": f"⬈{node.tx_counter}" if node.tx_counter is not None and node.tx_counter > 0 else "/",
                     "Details": None,

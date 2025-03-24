@@ -245,9 +245,9 @@ class MeshtasticManager(QObject, threading.Thread):
         )
 
         for f in ["relay_node", "next_hop"]:
-            if hasattr(packet, sneaky_to_camel(f)) and getattr(packet, sneaky_to_camel(f)) != 0:
-                setattr(received_packet, f, f"{getattr(packet, sneaky_to_camel(f)):0x}")
-                setattr(node_from, f, f"{getattr(packet, sneaky_to_camel(f)):0x}")
+            if sneaky_to_camel(f) in packet and packet[sneaky_to_camel(f)] != 0:
+                setattr(received_packet, f, f"{packet[sneaky_to_camel(f)]:0x}")
+                setattr(node_from, f, f"{packet[sneaky_to_camel(f)]:0x}")
 
         self._data.store_radiopacket(received_packet)
 
