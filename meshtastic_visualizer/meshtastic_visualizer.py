@@ -724,11 +724,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if len(self.nodes_filter_linedit.text()) != 0:
             # first search in long_name, then in id, then in aka
             pattern = self.nodes_filter_linedit.text()
-            filtered = list(filter(lambda x: pattern.lower() in x.short_name.lower() if x.short_name is not None else False, filtered))
+            filtered = list(filter(lambda x: pattern.lower() in x.short_name.lower() if x.short_name is not None else False, nodes.values()))
             if not filtered:
-                filtered = list(filter(lambda x: pattern.lower() in x.long_name.lower() if x.long_name is not None else False, filtered))
+                filtered = list(filter(lambda x: pattern.lower() in x.long_name.lower() if x.long_name is not None else False,nodes.values()))
             if not filtered:
-                filtered = list(filter(lambda x: pattern.lower() in x.id.lower(), filtered))
+                filtered = list(filter(lambda x: pattern.lower() in x.id.lower(),nodes.values()))
         return filtered
 
     def update_nodes_table(self, nodes: List[MeshtasticNode]) -> None:
