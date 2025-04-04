@@ -94,13 +94,15 @@ class Mapper:
                     nodes_relays[node.id] = potential_relays
 
         for node_id, node_relays in nodes_relays.items():
-            rgroup = folium.FeatureGroup(name=f"Relay: {node_id}")
+            rgroup = folium.FeatureGroup(name=f"Relay: {node_id}", show=False)
 
             strl = []
             node = nodes_filtered[node_id]
             if node.long_name:
                 strl.append(f"<b>👤 Name:</b> {node.long_name}</br>")
             strl.append(f"<b>🆔 id:</b> {node.id}</br>")
+            if node.short_name:
+                strl.append(f"<b>AKA:</b> {node.short_name}</br>")
             popup_content = "".join(strl)
             popup = folium.Popup(popup_content, max_width=300, min_width=250)
             relay_marker = folium.Marker(
@@ -119,6 +121,8 @@ class Mapper:
                 if relay.long_name:
                     strl.append(f"<b>👤 Name:</b> {relay.long_name}</br>")
                 strl.append(f"<b>🆔 id:</b> {relay.id}</br>")
+                if relay.short_name:
+                    strl.append(f"<b>AKA:</b> {relay.short_name}</br>")
                 popup_content = "".join(strl)
                 popup = folium.Popup(popup_content, max_width=300, min_width=250)
                 relay_marker = folium.Marker(
@@ -141,6 +145,8 @@ class Mapper:
             if node.long_name:
                 strl.append(f"<b>👤 Name:</b> {node.long_name}</br>")
             strl.append(f"<b>🆔 id:</b> {node.id}</br>")
+            if node.short_name:
+                strl.append(f"<b>AKA:</b> {node.short_name}</br>")
             if node.hardware:
                 strl.append(f"<b>🚲 Hardware:</b> {node.hardware}</br>")
             if node.battery_level:

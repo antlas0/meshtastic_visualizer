@@ -343,16 +343,15 @@ class MeshtasticDataStore(Thread):
         self._lock.release()
         return res.copy()
 
-    def get_packet_metrics(self, node_id: str, metric: str) -> Dict:
+    def get_packet_metrics(self, node_id: str, metric: str, port_num:str="all") -> Dict:
         self._lock.acquire()
         res: Dict[str, List[Any]] = {}
 
         packets: list = list(copy.deepcopy(self.radiopackets).values(
         )) + list(copy.deepcopy(self.mqttpackets).values())
-        filtered = list(
-            filter(
-                lambda x: x.from_id == node_id,
-                packets))
+        filtered = list(filter(lambda x: x.from_id == node_id, packets))
+        if port_num.lower() != "all":
+            filtered = list(filter(lambda x: x.port_num == port_num, filtered))
 
         if len(filtered) == 0:
             res = {}

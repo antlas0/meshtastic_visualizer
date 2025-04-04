@@ -188,17 +188,14 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.refresh_map_button.clicked.connect(self.get_nodes)
         self.send_button.clicked.connect(self.send_message)
         self.nm_update_button.setEnabled(False)
-        self.pm_update_button.setEnabled(False)
         self.nm_update_button.pressed.connect(self.update_nodes_metrics)
         self.nm_node_combobox.currentTextChanged.connect(
             self.update_node_metrics_buttons)
         self.nm_metric_combobox.currentTextChanged.connect(
             self.update_node_metrics_buttons)
         self.pm_update_button.pressed.connect(self.update_packets_metrics)
-        self.packetsource_combobox.currentTextChanged.connect(
-            self.update_packets_metrics_buttons)
-        self.pm_metric_combobox.currentTextChanged.connect(
-            self.update_packets_metrics_buttons
+        self.messagechannel_combobox.textActivated.connect(
+            self.update_received_message
         )
         self.mesh_table.cellClicked.connect(self.mesh_table_is_clicked)
         self.message_textedit.textChanged.connect(
@@ -525,9 +522,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def update_node_metrics_buttons(self) -> None:
         self.nm_update_button.setEnabled(True)
 
-    def update_packets_metrics_buttons(self) -> None:
-        self.pm_update_button.setEnabled(True)
-
     def update_nodes_metrics(self) -> str:
         self.nm_update_button.setEnabled(False)
         node_id = self._store.get_id_from_long_name(
@@ -542,7 +536,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             kind="telemetry")
 
     def update_packets_metrics(self) -> str:
-        self.pm_update_button.setEnabled(False)
         node_id = self._store.get_id_from_long_name(
             self.packetsource_combobox.currentText())
         metric_name = self.pm_metric_combobox.currentText()
@@ -560,7 +553,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if kind == "telemetry":
             metric = self._store.get_node_metrics(node_id, metric_name)
         elif kind == "packets":
-            metric = self._store.get_packet_metrics(node_id, metric_name)
+            metric = self._store.get_packet_metrics(node_id, metric_name, self.packettype_combobox.currentText())
         else:
             self.clean_plot(kind=kind)
             self._lock.release()
@@ -650,7 +643,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if self._store.has_node_id(node_id):
             self.tabWidget.setCurrentIndex(2)
             self.packetsource_combobox.setCurrentText(node_id)
-        self.update_packets_metrics_buttons()
         self.update_packets_filtered()
         self.packetsource_combobox.blockSignals(False)
         self.packetmedium_combobox.blockSignals(False)
@@ -721,28 +713,22 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             "7-hops": 7,
         }
         if self.shortcut_filter_combobox.currentText() == "Recently seen":
-            recently_seen = list(
-                filter(
-                    lambda x: x.rx_counter > 0,
-                    nodes.values()))
+            recently_seen = list(filter(lambda x: x.rx_counter > 0,nodes.values()))
             filtered = recently_seen
         elif self.shortcut_filter_combobox.currentText() == "Positioned":
             filtered = list(filter(lambda x: x.has_location(), nodes.values()))
         elif self.shortcut_filter_combobox.currentText() == "Neighbors":
             filtered = list(filter(lambda x: x.hopsaway == 0, nodes.values()))
         elif self.shortcut_filter_combobox.currentText() in hopfilter.keys():
-            filtered = list(filter(
-                lambda x: x.hopsaway == hopfilter[self.shortcut_filter_combobox.currentText()], nodes.values()))
+            filtered = list(filter(lambda x: x.hopsaway == hopfilter[self.shortcut_filter_combobox.currentText()], nodes.values()))
         if len(self.nodes_filter_linedit.text()) != 0:
-            # first search in long_name, then in id
+            # first search in long_name, then in id, then in aka
             pattern = self.nodes_filter_linedit.text()
-            filtered = list(filter(lambda x: pattern.lower() in x.long_name.lower(
-            ) if x.long_name is not None else False, nodes.values()))
+            filtered = list(filter(lambda x: pattern.lower() in x.short_name.lower() if x.short_name is not None else False, nodes.values()))
             if not filtered:
-                filtered = list(
-                    filter(
-                        lambda x: pattern.lower() in x.id.lower(),
-                        nodes.values()))
+                filtered = list(filter(lambda x: pattern.lower() in x.long_name.lower() if x.long_name is not None else False,nodes.values()))
+            if not filtered:
+                filtered = list(filter(lambda x: pattern.lower() in x.id.lower(),nodes.values()))
         return filtered
 
     def update_nodes_table(self, nodes: List[MeshtasticNode]) -> None:
@@ -808,8 +794,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         columns = [
             "Status",
             "User",
-            "AKA",
             "ID",
+            "AKA",
             "SNR",
             "RSSI",
             "Hops",
@@ -958,10 +944,17 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         channels = self._store.get_channels()
         messages = self._store.get_messages()
-        self.messages_table.setRowCount(len(messages))
+
+        # filter by current channel
+        current_channel = list(filter(lambda x: x.name == self.messagechannel_combobox.currentText(),  channels))
+        filtered_messages = messages
+        if len(current_channel) == 1:
+            filtered_messages = list(filter(lambda x: x.channel_index == current_channel[0].index, messages))
+
+        self.messages_table.setRowCount(len(filtered_messages))
         rows: list[dict[str, any]] = []
 
-        for message in messages:
+        for message in filtered_messages:
             message.date2str("%Y-%m-%d %H:%M:%S")
             data = {}
             for column in columns:
