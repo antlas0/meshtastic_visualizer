@@ -316,6 +316,7 @@ class MeshtasticDataStore(Thread):
         return [
             "snr",
             "rssi",
+            "hopsaway",
         ]
 
     def store_or_update_node_metrics(self, new_metric: NodeMetrics) -> None:

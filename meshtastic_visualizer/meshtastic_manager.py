@@ -243,6 +243,8 @@ class MeshtasticManager(QObject, threading.Thread):
             hop_start=packet["hopStart"] if "hopStart" in packet else None,
             priority=packet["priority"] if "priority" in packet else None,
         )
+        if received_packet.hop_limit is not None and received_packet.hop_start is not None:
+            received_packet.hopsaway = received_packet.hop_start - received_packet.hop_limit
 
         for f in ["relay_node", "next_hop"]:
             if sneaky_to_camel(f) in packet and packet[sneaky_to_camel(f)] != 0:

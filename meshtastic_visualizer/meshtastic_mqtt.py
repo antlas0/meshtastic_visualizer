@@ -263,6 +263,9 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 rssi=mp.rx_rssi,
                 snr=mp.rx_snr,
             )
+
+            if received_packet.hop_limit is not None and received_packet.hop_start is not None:
+                received_packet.hopsaway = received_packet.hop_start - received_packet.hop_limit
             for f in ["relay_node", "next_hop"]:
                 if getattr(se.packet, f) != 0:
                     setattr(received_packet, f, f"{getattr(se.packet, f):0x}")

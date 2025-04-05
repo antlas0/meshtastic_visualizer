@@ -192,6 +192,7 @@ class Packet(JsonExporter):
     rssi: Optional[float] = None
     hop_limit: Optional[int] = None
     hop_start: Optional[int] = None
+    hopsaway: Optional[int] = None
     relay_node: Optional[str] = None
     next_hop: Optional[str] = None
 
