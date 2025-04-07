@@ -28,6 +28,7 @@ from .resources import run_in_thread, \
     RadioPacket, \
     Packet, \
     ConnectionKind, \
+    BROADCAST_NAME, \
     sneaky_to_camel
 
 
@@ -40,7 +41,6 @@ logging.basicConfig(level=logging.ERROR)
 FILE_IDENTIFIER = b'FILEDATA:'
 ANNOUNCE_IDENTIFIER = b'FILEINFO:'
 CHUNK_SIZE = 100  # Chunk size in bytes
-BROADCAST_ADDR = "^all"
 
 
 class MeshtasticManager(QObject, threading.Thread):
@@ -464,8 +464,11 @@ class MeshtasticManager(QObject, threading.Thread):
             return
 
         message.pki_encrypted = False
-        if message.to_id != BROADCAST_ADDR:
+        if message.to_id != BROADCAST_NAME:
             message.pki_encrypted = True
+            if not self._data.has_node_id(self._data.get_id_from_short_name(message.to_id)):
+                self.notify_frontend_signal.emit(MessageLevel.ERROR, f"Node id unknown {message.to_id}")
+                return
 
         sent_packet = self._interface.sendData(
             data=message.content.encode("utf8"),

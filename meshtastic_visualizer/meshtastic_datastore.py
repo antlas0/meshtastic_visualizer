@@ -128,10 +128,17 @@ class MeshtasticDataStore(Thread):
         self._lock.release()
         return res
 
-    def has_node_id(self, node_id:str) -> bool:
+    def has_seen_node_id(self, node_id:str) -> bool:
         res = False
         self._lock.acquire()
         res = (node_id in self.nodes.keys()) and (self.nodes[node_id].rx_counter > 0)
+        self._lock.release()
+        return res
+
+    def has_node_id(self, node_id:str) -> bool:
+        res = False
+        self._lock.acquire()
+        res = (node_id in self.nodes.keys())
         self._lock.release()
         return res
 
@@ -141,12 +148,6 @@ class MeshtasticDataStore(Thread):
         nodes = self.nodes.values()
         if nodes is None:
             res = ""
-        elif long_name_or_id == "Me":
-            node = list(filter(lambda x: x.is_local, nodes))
-            if len(node) != 1:
-                res = ""
-            else:
-                res = node[0].id
         elif long_name_or_id == "All":
             res = "^all"
         else:
@@ -156,6 +157,26 @@ class MeshtasticDataStore(Thread):
                     nodes))
             if len(node) != 1:
                 res = long_name_or_id
+            else:
+                res = node[0].id
+        self._lock.release()
+        return res
+
+    def get_id_from_short_name(self, short_name_or_id: str) -> str:
+        self._lock.acquire()
+        res: str = ""
+        nodes = self.nodes.values()
+        if nodes is None:
+            res = ""
+        elif short_name_or_id == "All":
+            res = "^all"
+        else:
+            node = list(
+                filter(
+                    lambda x: x.short_name == short_name_or_id,
+                    nodes))
+            if len(node) != 1:
+                res = short_name_or_id
             else:
                 res = node[0].id
         self._lock.release()
@@ -172,6 +193,24 @@ class MeshtasticDataStore(Thread):
             res = id
         else:
             res = node[0].long_name if node[0].long_name else node[0].id
+
+        if id == "!ffffffff":
+            res = "All"
+
+        self._lock.release()
+        return res
+
+    def get_short_name_from_id(self, id: str) -> str:
+        self._lock.acquire()
+        res: str = id
+        nodes = self.nodes.values()
+        if not nodes:
+            res = id
+        node = list(filter(lambda x: x.id == id, nodes))
+        if len(node) != 1:
+            res = id
+        else:
+            res = node[0].short_name if node[0].short_name else node[0].id
 
         if id == "!ffffffff":
             res = "All"

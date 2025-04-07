@@ -1829,59 +1829,6 @@
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
-        <widget class="QLabel" name="label_4">
-         <property name="maximumSize">
-          <size>
-           <width>90</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="font">
-          <font>
-           <family>Liberation sans</family>
-           <pointsize>10</pointsize>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Recipient</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QComboBox" name="messagerecipient_combobox">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="toolTip">
-          <string>Select recipient of the message (boradcast is &quot;all&quot;).</string>
-         </property>
-         <property name="editable">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Maximum</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
         <widget class="QLabel" name="remaining_chars_label">
          <property name="text">
           <string/>
@@ -1934,13 +1881,16 @@
       <property name="toolTip">
        <string>Select channel to send a message.</string>
       </property>
+      <property name="editable">
+       <bool>true</bool>
+      </property>
      </widget>
      <widget class="QLabel" name="label_3">
       <property name="geometry">
        <rect>
-        <x>352</x>
+        <x>343</x>
         <y>9</y>
-        <width>52</width>
+        <width>61</width>
         <height>29</height>
        </rect>
       </property>
@@ -1959,7 +1909,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Channel</string>
+       <string>Recipient</string>
       </property>
      </widget>
     </widget>

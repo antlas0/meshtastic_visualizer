@@ -6,7 +6,8 @@ import datetime
 from dataclasses import dataclass, fields
 from typing import List, Optional
 
-
+BROADCAST_NAME = "^all"
+BROADCAST_ADDR = "!ffffffff"
 TEXT_MESSAGE_MAX_CHARS = 237
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 CHARGING_TRESHOLD = 4.2

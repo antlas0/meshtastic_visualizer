@@ -26,7 +26,9 @@ from .resources import MessageLevel, \
     TIME_FORMAT, \
     DEFAULT_TRACEROUTE_CHANNEL, \
     ConnectionKind, \
-    PacketInfoType
+    PacketInfoType, \
+    BROADCAST_ADDR, \
+    BROADCAST_NAME
 
 from .meshtastic_mqtt import MeshtasticMQTT
 from .meshtastic_datastore import MeshtasticDataStore
@@ -312,7 +314,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.nodes_total_lcd.display(0)
         self.nodes_gps_lcd.display(0)
         self.nodes_recently_lcd.display(0)
-        self.messagerecipient_combobox.clear()
         self._telemetry_plot_item.setData(
             x=None,
             y=None)
@@ -346,8 +347,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             "ack": "Ack",
             "pki_encrypted": "Encrypted",
             "from_id": "From",
-            "to_id": "To",
-            "channel_index": "Channel",
             "content": "Message",
         }
 
@@ -606,20 +605,21 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def send_message(self):
         message = self.message_textedit.toPlainText()
-        channel_name = self.messagechannel_combobox.currentText()
-        recipient = self._store.get_id_from_long_name(
-            self.messagerecipient_combobox.currentText())
-        channel_index = -1
-        try:
-            channel_index = self._manager.get_data_store(
-            ).get_channel_index_from_name(channel_name)
-        except Exception:
-            channel_index = 0  # this is the default and seems to be standard before 2.5.X firmwares
-        finally:
-            pass
+        recipient = self.messagechannel_combobox.currentText() # channel or DM ?
+        if recipient in self.get_channel_names():
+            # channel broadcast
+            try:
+                channel_index = self._manager.get_data_store().get_channel_index_from_name(recipient)
+                recipient = BROADCAST_NAME
+            except Exception as e:
+                raise e
+        else:
+            # DM
+            recipient = self._store.get_id_from_short_name(self.messagechannel_combobox.currentText())
+            channel_index = 0 # not really meaningful
 
         # Update timeout before sending
-        if channel_index != -1 and message:
+        if message:
             m = MeshtasticMessage(
                 mid=-1,
                 date=datetime.now(),
@@ -640,7 +640,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packettype_combobox.setCurrentText("All")
         self.packetmedium_combobox.setCurrentText("All")
         self.clean_plot(kind="packets")
-        if self._store.has_node_id(node_id):
+        if self._store.has_seen_node_id(node_id):
             self.tabWidget.setCurrentIndex(2)
             self.packetsource_combobox.setCurrentText(node_id)
         self.update_packets_filtered()
@@ -677,15 +677,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if nodes is None:
             return
         self.update_nodes_filter(nodes)
+        self.update_message_combobox() # for DM
         self.update_nodes_table(nodes)
 
     def update_nodes_filter(self, nodes: List[MeshtasticNode]) -> None:
-        current_recipient = None
-        if self.messagerecipient_combobox.currentText():
-            current_recipient = self.messagerecipient_combobox.currentText()
-        self.messagerecipient_combobox.clear()
-        self.messagerecipient_combobox.insertItem(0, "All")
-
         current_nm_node = self.nm_node_combobox.currentText()
         self.nm_node_combobox.clear()
         if self._local_board_ln:
@@ -693,13 +688,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         for i, node in enumerate(nodes.values()):
             if node.id == self._local_board_id:
                 continue
-            self.messagerecipient_combobox.insertItem(
-                i + 1, node.long_name if node.long_name else node.id)
             self.nm_node_combobox.insertItem(
                 i, node.long_name if node.long_name else node.id)
         self.nm_node_combobox.setCurrentText(current_nm_node)
-        if current_recipient:
-            self.messagerecipient_combobox.setCurrentText(current_recipient)
 
     def apply_nodes_filter(self, nodes: List[MeshtasticNode]) -> List[MeshtasticNode]:
         filtered = nodes.values()  # nofilter
@@ -855,10 +846,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.get_nodes_signal.emit()
 
     def get_channel_names(self) -> List[str]:
-        config = self._store
-        channels = config.get_channels()
-        if not channels:
-            return []
+        channels = self._store.get_channels()
         return [channel.name for channel in channels]
 
     def update_channels_table(self):
@@ -933,6 +921,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.traceroute_signal.emit(
             dest_id, DEFAULT_TRACEROUTE_CHANNEL, maxhops)
 
+    def update_message_combobox(self) -> None:
+        already_present = [self.messagechannel_combobox.itemText(i) for i in range(self.messagechannel_combobox.count())]
+        for node in self._store.get_nodes().values():
+            if node.short_name and node.short_name not in already_present:
+                self.messagechannel_combobox.insertItem(self.messagechannel_combobox.count(), node.short_name)
+
     def update_received_message(self) -> None:
         if self.tabWidget.currentIndex() != 3:
             self.tabWidget.setTabText(3, "Messages 🔴")
@@ -949,7 +943,17 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         current_channel = list(filter(lambda x: x.name == self.messagechannel_combobox.currentText(),  channels))
         filtered_messages = messages
         if len(current_channel) == 1:
-            filtered_messages = list(filter(lambda x: x.channel_index == current_channel[0].index, messages))
+            # group message
+            filtered_messages = list(filter(lambda x: x.channel_index == current_channel[0].index and (x.to_id == BROADCAST_ADDR or x.to_id == BROADCAST_NAME), messages))
+        else:
+            # DM
+            def __filter_dm(self, message, node_id):
+                if (message.to_id != BROADCAST_ADDR and message.to_id != BROADCAST_NAME) and \
+                    (message.from_id == self._store.get_id_from_short_name(node_id) or message.to_id == self._store.get_id_from_short_name(node_id)):
+                    return True
+                return False
+
+            filtered_messages = list(filter(lambda x: __filter_dm(self, x, self.messagechannel_combobox.currentText()), messages))
 
         self.messages_table.setRowCount(len(filtered_messages))
         rows: list[dict[str, any]] = []
@@ -959,20 +963,13 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             data = {}
             for column in columns:
                 if column == "from_id" or column == "to_id":
-                    data[headers[column]] = self._store.get_long_name_from_id(
+                    data[headers[column]] = self._store.get_short_name_from_id(
                         getattr(
                             message, column))
-                elif column == "channel_index":
-                    name = "/"
-                    if channels is not None:
-                        for ch in channels:
-                            if ch.index == message.channel_index:
-                                name = ch.name
-                    else:
-                        name = message.channel_index
-                    data[headers[column]] = name
                 elif column == "ack":
                     label = "❔"
+                    if message.from_id != self._local_board_id:
+                        label = "/"
                     if getattr(message, "ack_status") is not None:
                         if getattr(message, "ack_status") is True:
                             if getattr(message, "ack_by") is not None:
