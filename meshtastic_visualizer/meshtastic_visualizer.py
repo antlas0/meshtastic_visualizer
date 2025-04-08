@@ -604,12 +604,16 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._lock.release()
 
     def send_message(self):
+        if not self._local_board_id:
+            self.refresh_status_header(message="Not connected to a board, cannot send.")
+            return
+
         message = self.message_textedit.toPlainText()
         recipient = self.messagechannel_combobox.currentText() # channel or DM ?
         if recipient in self.get_channel_names():
             # channel broadcast
             try:
-                channel_index = self._manager.get_data_store().get_channel_index_from_name(recipient)
+                channel_index = self._store.get_channel_index_from_name(recipient)
                 recipient = BROADCAST_NAME
             except Exception as e:
                 raise e
@@ -847,6 +851,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def get_channel_names(self) -> List[str]:
         channels = self._store.get_channels()
+        if channels is None:
+            return []
         return [channel.name for channel in channels]
 
     def update_channels_table(self):
@@ -924,8 +930,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def update_message_combobox(self) -> None:
         already_present = [self.messagechannel_combobox.itemText(i) for i in range(self.messagechannel_combobox.count())]
         for node in self._store.get_nodes().values():
-            if node.short_name and node.short_name not in already_present:
-                self.messagechannel_combobox.insertItem(self.messagechannel_combobox.count(), node.short_name)
+            sn = self._store.get_short_name_from_id(node.id)
+            if sn and sn not in already_present:
+                self.messagechannel_combobox.insertItem(self.messagechannel_combobox.count(), sn)
 
     def update_received_message(self) -> None:
         if self.tabWidget.currentIndex() != 3:
