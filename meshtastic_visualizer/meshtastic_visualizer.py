@@ -309,6 +309,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def clear_nodes(self) -> None:
         self._store.clear_nodes()
         self._store.clear_nodes_metrics()
+        self.update_channels_list()
         self.mesh_table.setRowCount(0)
         self.nm_node_combobox.clear()
         self.nodes_total_lcd.display(0)
