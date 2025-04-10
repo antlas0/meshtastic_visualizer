@@ -191,8 +191,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.send_button.clicked.connect(self.send_message)
         self.nm_update_button.setEnabled(False)
         self.nm_update_button.pressed.connect(self.update_nodes_metrics)
-        self.nm_node_combobox.currentTextChanged.connect(
-            self.update_node_metrics_buttons)
         self.nm_metric_combobox.currentTextChanged.connect(
             self.update_node_metrics_buttons)
         self.pm_update_button.pressed.connect(self.update_packets_metrics)
@@ -311,7 +309,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._store.clear_nodes_metrics()
         self.update_channels_list()
         self.mesh_table.setRowCount(0)
-        self.nm_node_combobox.clear()
+        self.nm_node_label.clear()
         self.nodes_total_lcd.display(0)
         self.nodes_gps_lcd.display(0)
         self.nodes_recently_lcd.display(0)
@@ -322,7 +320,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def clear_nodes_metrics(self) -> None:
         self._store.clear_nodes_metrics()
-        self.nm_node_combobox.clear()
+        self.nm_node_label.clear()
         self._telemetry_plot_item.setData(
             x=None,
             y=None)
@@ -489,7 +487,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def mesh_table_is_clicked(self, row, column) -> None:
         node_id = self.mesh_table.item(row, 2).text()
         long_name = self._store.get_long_name_from_id(node_id)
-        self.nm_node_combobox.setCurrentText(long_name)
+        self.nm_node_label.setText(long_name)
 
     def init_map(self):
         self._map = Mapper()
@@ -525,8 +523,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def update_nodes_metrics(self) -> str:
         self.nm_update_button.setEnabled(False)
-        node_id = self._store.get_id_from_long_name(
-            self.nm_node_combobox.currentText())
+        node_id = self._store.get_id_from_long_name(self.nm_node_label.text())
         metric_name = self.nm_metric_combobox.currentText()
         if not node_id or not metric_name:
             self.clean_plot(kind="telemetry")
@@ -682,23 +679,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def update_nodes(self, node:MeshtasticNode) -> None:
         self.update_local_node_config()
         nodes = self._store.get_nodes()
-        if nodes is None:
+        if not nodes:
             return
-        self.update_nodes_filter(nodes)
         self.update_message_combobox() # for DM
         self.update_nodes_table(nodes)
-
-    def update_nodes_filter(self, nodes: List[MeshtasticNode]) -> None:
-        current_nm_node = self.nm_node_combobox.currentText()
-        self.nm_node_combobox.clear()
-        if self._local_board_ln:
-            self.nm_node_combobox.insertItem(0, self._local_board_ln)
-        for i, node in enumerate(nodes.values()):
-            if node.id == self._local_board_id:
-                continue
-            self.nm_node_combobox.insertItem(
-                i, node.long_name if node.long_name else node.id)
-        self.nm_node_combobox.setCurrentText(current_nm_node)
 
     def apply_nodes_filter(self, nodes: List[MeshtasticNode]) -> List[MeshtasticNode]:
         filtered = nodes.values()  # nofilter
@@ -1197,7 +1181,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def export_node_metrics(self) -> None:
         metric_names = self._store.get_node_metrics_fields()
-        node_id = self.nm_node_combobox.currentText()
+        node_id = self.nm_node_label.text()
         nnow = datetime.now()
         metrics = {
             "node_id": node_id,
