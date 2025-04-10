@@ -1261,25 +1261,6 @@
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="label">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="font">
-           <font>
-            <family>Liberation sans</family>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Node</string>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QLabel" name="nm_node_label">
           <property name="font">
            <font>
