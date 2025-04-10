@@ -458,8 +458,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.traceroute_table.insertRow(row_position)
             self.traceroute_table.setItem(
                 row_position, 0, QTableWidgetItem(device))
-            self.traceroute_table.resizeColumnsToContents()
-
+    
         for i in range(len(snr_towards)):
             self.traceroute_table.setItem(
                 i, 1, QTableWidgetItem("↓" + str(snr_towards[i])))
@@ -467,6 +466,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.traceroute_table.setItem(
                 i, 2, QTableWidgetItem("↑" + str(snr_back[i])))
         self.traceroute_table.resizeColumnsToContents()
+        self.traceroute_table.resizeRowsToContents()
+
 
     def update_text_message_length(self):
         current_text = self.message_textedit.toPlainText()
@@ -666,6 +667,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.neighbor_packets_number.setValue(0)
         self.routing_packets_number.setRange(0, 1)
         self.routing_packets_number.setValue(0)
+        self.storeforward_packets_number.setRange(0, 1)
+        self.storeforward_packets_number.setValue(0)
         self.traceroute_packets_number.setRange(0, 1)
         self.traceroute_packets_number.setValue(0)
         self.admin_packets_number.setRange(0, 1)
@@ -846,6 +849,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                             data = ""
                         current_item.setText(data)
         self.mesh_table.resizeColumnsToContents()
+        self.mesh_table.resizeRowsToContents()
 
     def get_nodes(self):
         self.get_nodes_signal.emit()
@@ -1010,6 +1014,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 elif current_item.text() != value:
                     current_item.setText(str(value))
         self.messages_table.resizeColumnsToContents()
+        self.messages_table.resizeRowsToContents()
 
     def update_packets_filter(self, packets: List[Packet]) -> None:
         inserted = []
@@ -1087,6 +1092,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.neighbor_packets_number.setValue(len(list(filter(lambda x: x.port_num == PacketInfoType.PCK_NEIGHBORINFO_APP.value, filtered_packets))))
             self.routing_packets_number.setRange(0, filtered_packets_number)
             self.routing_packets_number.setValue(len(list(filter(lambda x: x.port_num == PacketInfoType.PCK_ROUTING_APP.value, filtered_packets))))
+            self.storeforward_packets_number.setRange(0, filtered_packets_number)
+            self.storeforward_packets_number.setValue(len(list(filter(lambda x: x.port_num == PacketInfoType.PCK_STORE_FORWARD_APP.value, filtered_packets))))
             self.traceroute_packets_number.setRange(0, filtered_packets_number)
             self.traceroute_packets_number.setValue(len(list(filter(lambda x: x.port_num == PacketInfoType.PCK_TRACEROUTE_APP.value, filtered_packets))))
             self.admin_packets_number.setRange(0, filtered_packets_number)

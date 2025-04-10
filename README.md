@@ -12,7 +12,7 @@ Warning: Work in progress !
 ## Features
 | Feature | Using local device | Using MQTT |
 |---|---|---|
-| Display nodes configuration (with public key)|✅|✅|
+| Display nodes configuration (PK, hopsaway,...)|✅|✅|
 | Display map of nodes |✅|✅|
 | Display messages |✅|✅|
 | Display packets |✅|✅|

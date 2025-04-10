@@ -361,12 +361,16 @@ class MeshtasticManager(QObject, threading.Thread):
             except Exception:
                 pass
 
-            nodes_to_update.append(
-                MeshtasticNode(
-                    id=neighbors[self._local_board_id],
-                    hopsaway=0,
+            l = list(route)
+            l.pop(0)
+            for hop, node_id in enumerate(l):
+                nodes_to_update.append(
+                    MeshtasticNode(
+                        id=node_id,
+                        hopsaway=hop,
+                    )
                 )
-            )
+
             self.notify_traceroute_signal.emit(route, snr_towards, snr_back)
         if decoded["portnum"] == PacketInfoType.PCK_NODEINFO_APP.value:
             info = mesh_pb2.User()
@@ -410,7 +414,7 @@ class MeshtasticManager(QObject, threading.Thread):
                         packet['from']) if "from" in packet else None,
                     to_id=self._node_id_from_num(
                         packet['to']),
-                    channel_index=packet["channel"] if "channel" in packet else None,
+                    channel_index=packet["channel"] if "channel" in packet else 0,
                     hop_limit=packet['hopLimit'] if 'hopLimit' in packet else None,
                     hop_start=packet['hopStart'] if 'hopStart' in packet else None,
                     want_ack=packet['wantAck'] if 'wantAck' in packet else None,
@@ -551,7 +555,7 @@ class MeshtasticManager(QObject, threading.Thread):
                 )
 
                 self._data.store_or_update_node(n, init=True)
-                self.notify_nodes_update.emit(n)
+            self.notify_nodes_update.emit(n)
 
     @run_in_thread
     def retrieve_channels(self) -> list:
