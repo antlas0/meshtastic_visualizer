@@ -17,7 +17,7 @@ from .resources import Channel, \
 
 @dataclass
 class MeshtasticDataStore(Thread):
-    channels: Optional[List[Channel]] = None
+    channels: List[Channel] = field(default_factory=list)
     local_node_config: Optional[MeshtasticNode] = None
     nodes: Dict[str, MeshtasticNode] = field(
         default_factory=dict)  # Dict[node_id, Node object]

@@ -809,6 +809,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     if col_idx == 10:  # insert widget in cell
                         if self._manager.is_connected():
                             btn = QPushButton("Traceroute")
+                            btn.setStyleSheet("QPushButton{font-size: 10px;}")
                             btn.setEnabled(True)
                             self.mesh_table.setCellWidget(row_idx, col_idx, btn)
                             btn.clicked.connect(lambda: self.traceroute(self.mesh_table.item(self.mesh_table.indexAt(self.sender().pos()).row(),2).text()))
@@ -819,6 +820,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     if col_idx == 9:  # insert widget in cell
                         btn = QPushButton("See packets")
                         btn.setEnabled(True)
+                        btn.setStyleSheet("QPushButton{font-size: 10px;}")
                         self.mesh_table.setCellWidget(row_idx, col_idx, btn)
                         btn.clicked.connect(lambda: self.explore_packets(self.mesh_table.item(self.mesh_table.indexAt(self.sender().pos()).row(),2).text()))
                     else:
@@ -840,7 +842,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def get_channel_names(self) -> List[str]:
         channels = self._store.get_channels()
-        if channels is None:
+        if not channels:
             return []
         return [channel.name for channel in channels]
 
@@ -865,8 +867,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         for i in range(self.channels_table.rowCount()):
             self.channels_table.removeRow(i)
         self.channels_table.setColumnCount(len(columns))
-        self.channels_table.setHorizontalHeaderLabels(
-            columns)
+        self.channels_table.setHorizontalHeaderLabels(columns)
 
         for row in rows:
             row_position = self.channels_table.rowCount()
@@ -874,7 +875,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             for i, elt in enumerate(columns):
                 self.channels_table.setItem(
                     row_position, i, QTableWidgetItem(str(row[elt])))
-                self.channels_table.resizeColumnsToContents()
+        self.channels_table.resizeColumnsToContents()
+        self.channels_table.resizeRowsToContents()
 
     def update_channels_list(self):
         config = self._store

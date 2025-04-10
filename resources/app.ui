@@ -35,6 +35,12 @@
    <string notr="true">font-family: Freesans, Emoji One;</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="font">
+    <font>
+     <family>Freesans</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
    <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
@@ -59,6 +65,7 @@
     <property name="font">
      <font>
       <family>Liberation sans</family>
+      <pointsize>10</pointsize>
      </font>
     </property>
     <property name="styleSheet">
@@ -68,6 +75,12 @@
      <number>0</number>
     </property>
     <widget class="QWidget" name="tab_device">
+     <property name="font">
+      <font>
+       <family>Liberation sans</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
      <attribute name="title">
       <string>Device</string>
      </attribute>
@@ -85,6 +98,12 @@
         <width>0</width>
         <height>0</height>
        </size>
+      </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
       </property>
       <property name="title">
        <string>Device radio info</string>
@@ -148,6 +167,12 @@
          <width>400</width>
          <height>16777215</height>
         </size>
+       </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
        </property>
        <property name="text">
         <string/>
@@ -218,6 +243,12 @@
          <width>190</width>
          <height>16777215</height>
         </size>
+       </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
        </property>
        <property name="text">
         <string/>
@@ -338,6 +369,12 @@
          <height>16777215</height>
         </size>
        </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -399,6 +436,12 @@
          <height>16777215</height>
         </size>
        </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -445,6 +488,12 @@
          <height>21</height>
         </rect>
        </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -461,6 +510,12 @@
         <width>401</width>
         <height>261</height>
        </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
       </property>
       <property name="title">
        <string>MQTT Reader</string>
@@ -479,6 +534,12 @@
          <layout class="QHBoxLayout" name="horizontalLayout_4">
           <item>
            <widget class="QLabel" name="label_12">
+            <property name="font">
+             <font>
+              <family>Liberation sans</family>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string>Host</string>
             </property>
@@ -486,6 +547,12 @@
           </item>
           <item>
            <widget class="QLineEdit" name="mqtt_host_linedit">
+            <property name="font">
+             <font>
+              <family>Liberation sans</family>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -500,6 +567,12 @@
             <property name="enabled">
              <bool>true</bool>
             </property>
+            <property name="font">
+             <font>
+              <family>Liberation sans</family>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string>Port</string>
             </property>
@@ -507,6 +580,12 @@
           </item>
           <item>
            <widget class="QSpinBox" name="mqtt_port_spinbox">
+            <property name="font">
+             <font>
+              <family>Liberation sans</family>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="minimum">
              <number>1024</number>
             </property>
@@ -524,6 +603,12 @@
          <layout class="QHBoxLayout" name="horizontalLayout_5">
           <item>
            <widget class="QLabel" name="label_13">
+            <property name="font">
+             <font>
+              <family>Liberation sans</family>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string>Username</string>
             </property>
@@ -531,6 +616,12 @@
           </item>
           <item>
            <widget class="QLineEdit" name="mqtt_username_linedit">
+            <property name="font">
+             <font>
+              <family>Liberation sans</family>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -542,6 +633,12 @@
          <layout class="QHBoxLayout" name="horizontalLayout_8">
           <item>
            <widget class="QLabel" name="label_17">
+            <property name="font">
+             <font>
+              <family>Liberation sans</family>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string>Password</string>
             </property>
@@ -549,6 +646,12 @@
           </item>
           <item>
            <widget class="QLineEdit" name="mqtt_password_linedit">
+            <property name="font">
+             <font>
+              <family>Liberation sans</family>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -560,6 +663,12 @@
          <layout class="QHBoxLayout" name="horizontalLayout_6">
           <item>
            <widget class="QLabel" name="label_14">
+            <property name="font">
+             <font>
+              <family>Liberation sans</family>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string>Topic</string>
             </property>
@@ -567,6 +676,12 @@
           </item>
           <item>
            <widget class="QLineEdit" name="mqtt_topic_linedit">
+            <property name="font">
+             <font>
+              <family>Liberation sans</family>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -578,6 +693,12 @@
          <layout class="QHBoxLayout" name="horizontalLayout_9">
           <item>
            <widget class="QLabel" name="label_16">
+            <property name="font">
+             <font>
+              <family>Liberation sans</family>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string>Key</string>
             </property>
@@ -585,6 +706,12 @@
           </item>
           <item>
            <widget class="QLineEdit" name="mqtt_key_linedit">
+            <property name="font">
+             <font>
+              <family>Liberation sans</family>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
             <property name="text">
              <string>AQ==</string>
             </property>
@@ -603,6 +730,12 @@
          <height>25</height>
         </rect>
        </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="toolTip">
         <string>Disconnect from MQTT server.</string>
        </property>
@@ -618,6 +751,12 @@
          <width>101</width>
          <height>25</height>
         </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
        </property>
        <property name="toolTip">
         <string>Connect to a MQTT server.</string>
@@ -648,6 +787,12 @@
         <width>401</width>
         <height>281</height>
        </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
       </property>
       <property name="title">
        <string>MQTT logs</string>
@@ -680,6 +825,12 @@
          <height>211</height>
         </rect>
        </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="readOnly">
         <bool>true</bool>
        </property>
@@ -710,6 +861,12 @@
         <height>251</height>
        </rect>
       </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
       <property name="title">
        <string>Device details</string>
       </property>
@@ -721,6 +878,12 @@
          <width>371</width>
          <height>211</height>
         </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
        </property>
        <property name="readOnly">
         <bool>true</bool>
@@ -735,6 +898,12 @@
          <height>211</height>
         </rect>
        </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
       </widget>
      </widget>
      <widget class="QGroupBox" name="groupBox_5">
@@ -745,6 +914,12 @@
         <width>221</width>
         <height>91</height>
        </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
       </property>
       <property name="title">
        <string>Export folder</string>
@@ -757,6 +932,12 @@
          <width>81</width>
          <height>25</height>
         </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
        </property>
        <property name="toolTip">
         <string>Specify a path to export all downloads.</string>
@@ -774,6 +955,12 @@
          <height>25</height>
         </rect>
        </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="toolTip">
         <string>Current path where downloads are exported.</string>
        </property>
@@ -787,6 +974,12 @@
         <width>451</width>
         <height>101</height>
        </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
       </property>
       <property name="tabPosition">
        <enum>QTabWidget::North</enum>
@@ -810,6 +1003,12 @@
           <height>25</height>
          </rect>
         </property>
+        <property name="font">
+         <font>
+          <family>Liberation sans</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
         <property name="toolTip">
          <string>Disconnect.</string>
         </property>
@@ -825,6 +1024,12 @@
           <width>111</width>
           <height>25</height>
          </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Liberation sans</family>
+          <pointsize>10</pointsize>
+         </font>
         </property>
         <property name="toolTip">
          <string>Connect with serial connection.</string>
@@ -845,6 +1050,12 @@
           <height>25</height>
          </rect>
         </property>
+        <property name="font">
+         <font>
+          <family>Liberation sans</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
         <property name="toolTip">
          <string>Choose a serial port.</string>
         </property>
@@ -860,6 +1071,12 @@
           <width>121</width>
           <height>23</height>
          </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Liberation sans</family>
+          <pointsize>10</pointsize>
+         </font>
         </property>
         <property name="toolTip">
          <string>Reset nodeDB of node when connecting.</string>
@@ -879,6 +1096,12 @@
           <width>121</width>
           <height>25</height>
          </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Liberation sans</family>
+          <pointsize>10</pointsize>
+         </font>
         </property>
         <property name="toolTip">
          <string>List all detected serial ports.</string>
@@ -901,6 +1124,12 @@
           <height>25</height>
          </rect>
         </property>
+        <property name="font">
+         <font>
+          <family>Liberation sans</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
         <property name="toolTip">
          <string>Connect with TCP connection.</string>
         </property>
@@ -917,6 +1146,12 @@
           <height>25</height>
          </rect>
         </property>
+        <property name="font">
+         <font>
+          <family>Liberation sans</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
         <property name="placeholderText">
          <string>http://192.168.1.1</string>
         </property>
@@ -929,6 +1164,12 @@
           <width>111</width>
           <height>25</height>
          </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Liberation sans</family>
+          <pointsize>10</pointsize>
+         </font>
         </property>
         <property name="toolTip">
          <string>Disconnect.</string>
@@ -946,6 +1187,12 @@
           <height>23</height>
          </rect>
         </property>
+        <property name="font">
+         <font>
+          <family>Liberation sans</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
         <property name="toolTip">
          <string>Reset nodeDB of node when connecting.</string>
         </property>
@@ -960,6 +1207,12 @@
      </widget>
     </widget>
     <widget class="QWidget" name="tab">
+     <property name="font">
+      <font>
+       <family>Liberation sans</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
      <attribute name="title">
       <string>Nodes</string>
      </attribute>
@@ -971,6 +1224,12 @@
         <width>691</width>
         <height>241</height>
        </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
       </property>
       <property name="title">
        <string>Telemetry metrics</string>
@@ -1009,6 +1268,12 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="font">
+           <font>
+            <family>Liberation sans</family>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
           <property name="text">
            <string>Node</string>
           </property>
@@ -1016,6 +1281,12 @@
         </item>
         <item>
          <widget class="QLabel" name="nm_node_label">
+          <property name="font">
+           <font>
+            <family>Liberation sans</family>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -1023,6 +1294,12 @@
         </item>
         <item>
          <widget class="QComboBox" name="nm_metric_combobox">
+          <property name="font">
+           <font>
+            <family>Liberation sans</family>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
           <property name="toolTip">
            <string>Select a telemetry metric.</string>
           </property>
@@ -1033,6 +1310,12 @@
         </item>
         <item>
          <widget class="QPushButton" name="nm_update_button">
+          <property name="font">
+           <font>
+            <family>Liberation sans</family>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
           <property name="text">
            <string>⟳ Update</string>
           </property>
@@ -1087,6 +1370,12 @@
         <height>17</height>
        </rect>
       </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
       <property name="text">
        <string>Positioned Nodes</string>
       </property>
@@ -1120,6 +1409,12 @@
         <height>17</height>
        </rect>
       </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
       <property name="text">
        <string>Seen recently</string>
       </property>
@@ -1132,6 +1427,12 @@
         <width>81</width>
         <height>17</height>
        </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
       </property>
       <property name="text">
        <string>Total nodes</string>
@@ -1149,6 +1450,12 @@
       <layout class="QHBoxLayout" name="horizontalLayout_7">
        <item>
         <widget class="QLineEdit" name="nodes_filter_linedit">
+         <property name="font">
+          <font>
+           <family>Liberation sans</family>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
          <property name="toolTip">
           <string>Filter nodes details by long name or id.</string>
          </property>
@@ -1162,6 +1469,12 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="font">
+          <font>
+           <family>Liberation sans</family>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
          <property name="toolTip">
           <string>Filter by predefined filters.</string>
          </property>
@@ -1172,7 +1485,7 @@
      <widget class="QPushButton" name="clear_nodes_button">
       <property name="geometry">
        <rect>
-        <x>1090</x>
+        <x>1110</x>
         <y>20</y>
         <width>31</width>
         <height>25</height>
@@ -1193,6 +1506,12 @@
         <width>1131</width>
         <height>261</height>
        </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
       </property>
      </widget>
      <widget class="QPushButton" name="export_nodes_button">
@@ -1220,6 +1539,12 @@
         <height>241</height>
        </rect>
       </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
       <property name="title">
        <string>Traceroute results</string>
       </property>
@@ -1232,6 +1557,12 @@
          <height>201</height>
         </rect>
        </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="toolTip">
         <string>Potential results of triggered traceroutes.</string>
        </property>
@@ -1239,6 +1570,12 @@
      </widget>
     </widget>
     <widget class="QWidget" name="tab_2">
+     <property name="font">
+      <font>
+       <family>Liberation sans</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
      <attribute name="title">
       <string>Packets</string>
      </attribute>
@@ -1250,6 +1587,12 @@
         <width>421</width>
         <height>511</height>
        </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
       </property>
       <property name="selectionBehavior">
        <enum>QAbstractItemView::SelectItems</enum>
@@ -1277,6 +1620,12 @@
         <width>131</width>
         <height>25</height>
        </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
       </property>
       <property name="toolTip">
        <string>Filter packets from selected node.</string>
@@ -1310,6 +1659,12 @@
         <height>25</height>
        </rect>
       </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
       <property name="toolTip">
        <string>Filter packets by detected PORTNUM.</string>
       </property>
@@ -1339,6 +1694,12 @@
         <height>531</height>
        </rect>
       </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
       <property name="title">
        <string>Packets metrics</string>
       </property>
@@ -1360,6 +1721,12 @@
             <height>16777215</height>
            </size>
           </property>
+          <property name="font">
+           <font>
+            <family>Liberation sans</family>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
           <property name="text">
            <string>Metric</string>
           </property>
@@ -1367,6 +1734,12 @@
         </item>
         <item>
          <widget class="QComboBox" name="pm_metric_combobox">
+          <property name="font">
+           <font>
+            <family>Liberation sans</family>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
           <property name="toolTip">
            <string>Choose a metric.</string>
           </property>
@@ -1377,6 +1750,12 @@
         </item>
         <item>
          <widget class="QPushButton" name="pm_update_button">
+          <property name="font">
+           <font>
+            <family>Liberation sans</family>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
           <property name="text">
            <string>⟳ Update</string>
           </property>
@@ -1403,6 +1782,12 @@
          <width>61</width>
          <height>20</height>
         </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
        </property>
        <property name="text">
         <string>Packets</string>
@@ -1446,6 +1831,12 @@
          <height>20</height>
         </rect>
        </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string>Telemetry</string>
        </property>
@@ -1477,6 +1868,12 @@
          <width>71</width>
          <height>20</height>
         </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
        </property>
        <property name="text">
         <string>Position</string>
@@ -1510,6 +1907,12 @@
          <height>20</height>
         </rect>
        </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string>Messages</string>
        </property>
@@ -1541,6 +1944,12 @@
          <width>71</width>
          <height>20</height>
         </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
        </property>
        <property name="text">
         <string>Neighbor</string>
@@ -1574,6 +1983,12 @@
          <height>20</height>
         </rect>
        </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string>Node info</string>
        </property>
@@ -1605,6 +2020,12 @@
          <width>71</width>
          <height>20</height>
         </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
        </property>
        <property name="text">
         <string>Routing</string>
@@ -1638,6 +2059,12 @@
          <height>20</height>
         </rect>
        </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string>Traceroute</string>
        </property>
@@ -1669,6 +2096,12 @@
          <width>71</width>
          <height>20</height>
         </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
        </property>
        <property name="text">
         <string>Admin</string>
@@ -1702,6 +2135,12 @@
          <height>20</height>
         </rect>
        </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string>Range test</string>
        </property>
@@ -1714,6 +2153,12 @@
          <width>81</width>
          <height>20</height>
         </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
        </property>
        <property name="text">
         <string>Map report</string>
@@ -1746,6 +2191,12 @@
          <width>101</width>
          <height>20</height>
         </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
        </property>
        <property name="text">
         <string>Store Forward</string>
@@ -1780,12 +2231,24 @@
         <height>25</height>
        </rect>
       </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
       <property name="toolTip">
        <string>Filter packets from source (radio or mqtt).</string>
       </property>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_messages">
+     <property name="font">
+      <font>
+       <family>Liberation sans</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
      <attribute name="title">
       <string>Messages</string>
      </attribute>
@@ -1798,6 +2261,12 @@
         <height>91</height>
        </rect>
       </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
      </widget>
      <widget class="QPushButton" name="send_button">
       <property name="geometry">
@@ -1807,6 +2276,12 @@
         <width>51</width>
         <height>131</height>
        </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
       </property>
       <property name="text">
        <string>Send</string>
@@ -1821,6 +2296,12 @@
         <height>361</height>
        </rect>
       </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
      </widget>
      <widget class="QWidget" name="horizontalLayoutWidget_4">
       <property name="geometry">
@@ -1834,6 +2315,12 @@
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
         <widget class="QLabel" name="remaining_chars_label">
+         <property name="font">
+          <font>
+           <family>Liberation sans</family>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
          <property name="text">
           <string/>
          </property>
@@ -1882,6 +2369,12 @@
         <height>26</height>
        </rect>
       </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
       <property name="toolTip">
        <string>Select channel to send a message.</string>
       </property>
@@ -1918,6 +2411,12 @@
      </widget>
     </widget>
     <widget class="QWidget" name="tab_nodes">
+     <property name="font">
+      <font>
+       <family>Liberation sans</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
      <attribute name="title">
       <string>Map</string>
      </attribute>
@@ -1929,6 +2428,12 @@
         <width>1131</width>
         <height>561</height>
        </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Liberation sans</family>
+        <pointsize>10</pointsize>
+       </font>
       </property>
       <property name="title">
        <string/>
@@ -1953,6 +2458,12 @@
          <width>300</width>
          <height>16777215</height>
         </size>
+       </property>
+       <property name="font">
+        <font>
+         <family>Liberation sans</family>
+         <pointsize>10</pointsize>
+        </font>
        </property>
        <property name="toolTip">
         <string>Refresh the map with latest received data.</string>
@@ -1997,6 +2508,12 @@
     <layout class="QHBoxLayout" name="horizontalLayout_12">
      <item>
       <widget class="QLabel" name="notification_bar">
+       <property name="font">
+        <font>
+         <family>Freesans</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="lineWidth">
         <number>2</number>
        </property>

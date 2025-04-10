@@ -114,8 +114,7 @@ class MeshtasticManager(QObject, threading.Thread):
 
             node = self._interface.getMyNodeInfo()
             self._local_board_id = node["user"]["id"]
-            if load_db:
-                self.load_local_nodedb()
+            self.load_local_nodedb(only_self=(not load_db))
             self.load_local_node_configuration()
             self.get_local_node_details()
             self.notify_frontend_signal.emit(MessageLevel.INFO, trace)
@@ -509,7 +508,7 @@ class MeshtasticManager(QObject, threading.Thread):
             self._data.store_or_update_node(n)
 
     @run_in_thread
-    def load_local_nodedb(self, include_self: bool = True) -> list:
+    def load_local_nodedb(self, only_self: bool = False) -> list:
         """Return a list of nodes in the mesh"""
         if self._interface is None:
             return []
@@ -518,7 +517,7 @@ class MeshtasticManager(QObject, threading.Thread):
             logging.debug(
                 f"self._interface.nodes:{self._interface.nodes}")
             for node in self._interface.nodesByNum.values():
-                if not include_self and node["num"] == self._interface.localNode.nodeNum:
+                if only_self and node["num"] != self._interface.localNode.nodeNum:
                     continue
 
                 batlevel = node["deviceMetrics"]["batteryLevel"] if "deviceMetrics" in node else 0
