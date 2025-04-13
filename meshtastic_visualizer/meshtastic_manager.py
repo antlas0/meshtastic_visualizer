@@ -473,15 +473,20 @@ class MeshtasticManager(QObject, threading.Thread):
                 self.notify_frontend_signal.emit(MessageLevel.ERROR, f"Node id unknown {message.to_id}")
                 return
 
-        sent_packet = self._interface.sendData(
-            data=message.content.encode("utf8"),
-            destinationId=message.to_id,
-            portNum=portnums_pb2.PortNum.TEXT_MESSAGE_APP,
-            wantAck=message.want_ack,
-            channelIndex=message.channel_index,
-            onResponseAckPermitted=False,
-            pkiEncrypted=message.pki_encrypted,
-        )
+        try:
+            sent_packet = self._interface.sendData(
+                data=message.content.encode("utf8"),
+                destinationId=message.to_id,
+                portNum=portnums_pb2.PortNum.TEXT_MESSAGE_APP,
+                wantAck=message.want_ack,
+                channelIndex=message.channel_index,
+                onResponseAckPermitted=False,
+                pkiEncrypted=message.pki_encrypted,
+            )
+        except Exception as e:
+            self.notify_frontend_signal.emit(MessageLevel.ERROR, f"Could not send message to {message.to_id}")
+            return
+
         sent_packet = RadioPacket(
             date=datetime.datetime.now(),
             pid=sent_packet.id,

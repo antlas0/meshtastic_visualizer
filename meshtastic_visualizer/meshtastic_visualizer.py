@@ -809,7 +809,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     if col_idx == 10:  # insert widget in cell
                         if self._manager.is_connected():
                             btn = QPushButton("Traceroute")
-                            btn.setStyleSheet("QPushButton{font-size: 10px;}")
+                            btn.setStyleSheet("QPushButton{font-size: 10pt;}")
                             btn.setEnabled(True)
                             self.mesh_table.setCellWidget(row_idx, col_idx, btn)
                             btn.clicked.connect(lambda: self.traceroute(self.mesh_table.item(self.mesh_table.indexAt(self.sender().pos()).row(),2).text()))
@@ -820,7 +820,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                     if col_idx == 9:  # insert widget in cell
                         btn = QPushButton("See packets")
                         btn.setEnabled(True)
-                        btn.setStyleSheet("QPushButton{font-size: 10px;}")
+                        btn.setStyleSheet("QPushButton{font-size: 10pt;}")
                         self.mesh_table.setCellWidget(row_idx, col_idx, btn)
                         btn.clicked.connect(lambda: self.explore_packets(self.mesh_table.item(self.mesh_table.indexAt(self.sender().pos()).row(),2).text()))
                     else:

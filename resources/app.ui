@@ -1220,9 +1220,9 @@
       <property name="geometry">
        <rect>
         <x>450</x>
-        <y>320</y>
+        <y>360</y>
         <width>691</width>
-        <height>241</height>
+        <height>201</height>
        </rect>
       </property>
       <property name="font">
@@ -1240,7 +1240,7 @@
          <x>10</x>
          <y>30</y>
          <width>671</width>
-         <height>41</height>
+         <height>31</height>
         </rect>
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -1291,6 +1291,12 @@
         </item>
         <item>
          <widget class="QPushButton" name="nm_update_button">
+          <property name="maximumSize">
+           <size>
+            <width>75</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="font">
            <font>
             <family>Liberation sans</family>
@@ -1324,9 +1330,9 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>80</y>
+         <y>70</y>
          <width>671</width>
-         <height>151</height>
+         <height>121</height>
         </rect>
        </property>
        <layout class="QHBoxLayout" name="telemetry_plot_layout"/>
@@ -1485,7 +1491,7 @@
         <x>10</x>
         <y>60</y>
         <width>1131</width>
-        <height>261</height>
+        <height>291</height>
        </rect>
       </property>
       <property name="font">
@@ -1515,9 +1521,9 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>320</y>
+        <y>360</y>
         <width>431</width>
-        <height>241</height>
+        <height>201</height>
        </rect>
       </property>
       <property name="font">
@@ -1535,7 +1541,7 @@
          <x>10</x>
          <y>30</y>
          <width>411</width>
-         <height>201</height>
+         <height>161</height>
         </rect>
        </property>
        <property name="font">
