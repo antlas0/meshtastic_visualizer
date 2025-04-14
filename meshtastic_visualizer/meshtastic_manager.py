@@ -588,6 +588,53 @@ class MeshtasticManager(QObject, threading.Thread):
             self.notify_channels_signal.emit()
 
     @run_in_thread
+    def send_telemetry(self) -> None:
+        try:
+            self._interface.sendTelemetry()
+        except Exception as e:
+            self.notify_frontend_signal.emit(MessageLevel.ERROR, f"Could not send telemetry")
+        else:
+            self.notify_frontend_signal.emit(MessageLevel.INFO, f"Telemetry broadcasted.")
+
+            sent_packet = RadioPacket(
+                date=datetime.datetime.now(),
+                pid=str(-1),
+                from_id=self._local_board_id,
+                to_id=BROADCAST_NAME,
+                is_encrypted=False,
+                payload=None,
+                port_num=PacketInfoType.PCK_TELEMETRY_APP.value,
+                snr=None,
+                rssi=None,
+            )
+            self._data.store_radiopacket(sent_packet)
+            self.notify_new_packet.emit(sent_packet)
+
+    @run_in_thread
+    def send_position(self) -> None:
+        try:
+            node_infos = self._interface.getMyNodeInfo()
+            self._interface.sendPosition(latitude=node_infos["position"]["latitude"], longitude=node_infos["position"]["longitude"])
+        except Exception as e:
+            self.notify_frontend_signal.emit(MessageLevel.ERROR, f"Could not send position: {e}")
+        else:
+            self.notify_frontend_signal.emit(MessageLevel.INFO, f"Position broadcasted.")
+
+            sent_packet = RadioPacket(
+                date=datetime.datetime.now(),
+                pid=str(-1),
+                from_id=self._local_board_id,
+                to_id=BROADCAST_NAME,
+                is_encrypted=False,
+                payload=None,
+                port_num=PacketInfoType.PCK_POSITION_APP.value,
+                snr=None,
+                rssi=None,
+            )
+            self._data.store_radiopacket(sent_packet)
+            self.notify_new_packet.emit(sent_packet)
+
+    @run_in_thread
     def send_traceroute(self,
                         dest: Union[int,
                                     str],

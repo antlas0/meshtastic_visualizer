@@ -29,6 +29,7 @@ from .resources import MessageLevel, \
     PacketInfoType, \
     BROADCAST_ADDR, \
     BROADCAST_NAME
+from .node_actions_widget import NodeActionsWidget
 
 from .meshtastic_mqtt import MeshtasticMQTT
 from .meshtastic_datastore import MeshtasticDataStore
@@ -42,6 +43,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     send_message_signal = pyqtSignal(MeshtasticMessage)
     retrieve_channels_signal = pyqtSignal()
     traceroute_signal = pyqtSignal(str, int, int)
+    send_telemetry_signal = pyqtSignal()
+    send_position_signal = pyqtSignal()
     mqtt_connect_signal = pyqtSignal(MeshtasticMQTTClientSettings)
 
     def __init__(self):
@@ -134,6 +137,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.retrieve_channels_signal.connect(self._manager.retrieve_channels)
         self.get_nodes_signal.connect(self.update_nodes_map)
         self.traceroute_signal.connect(self._manager.send_traceroute)
+        self.send_position_signal.connect(self._manager.send_position)
+        self.send_telemetry_signal.connect(self._manager.send_telemetry)
         self.mqtt_connect_signal.connect(
             self._mqtt_manager.configure_and_start)
         self.export_chat_button.pressed.connect(self.export_chat)
@@ -797,6 +802,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         ]
 
         del nodes
+        self.mesh_table.setRowCount(0)
         self.mesh_table.setRowCount(len(rows))
         self.mesh_table.setColumnCount(len(columns))
         self.mesh_table.setHorizontalHeaderLabels(columns)
@@ -808,11 +814,21 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 if current_item is None and current_widget is None:
                     if col_idx == 10:  # insert widget in cell
                         if self._manager.is_connected():
-                            btn = QPushButton("Traceroute")
-                            btn.setStyleSheet("QPushButton{font-size: 10pt;}")
-                            btn.setEnabled(True)
-                            self.mesh_table.setCellWidget(row_idx, col_idx, btn)
-                            btn.clicked.connect(lambda: self.traceroute(self.mesh_table.item(self.mesh_table.indexAt(self.sender().pos()).row(),2).text()))
+                            # get id to check if node is local
+                            is_local = row_data["ID"] == self._local_board_id
+
+                            self.mesh_table.setCellWidget(
+                                row_idx,
+                                col_idx,
+                                NodeActionsWidget(
+                                    parent=self,
+                                    callback_traceroute=self.traceroute,
+                                    callback_telemetry=lambda: self.send_telemetry_signal.emit(),
+                                    callback_position=lambda: self.send_position_signal.emit(),
+                                    is_local=is_local,
+                                    node_id=row_data["ID"]
+                                    )
+                                )
                         else:
                             data = str(value)
                             if data == "None":
@@ -995,8 +1011,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             for col_idx, value in enumerate(row_data.values()):
                 current_item = self.messages_table.item(row_idx, col_idx)
                 if current_item is None:
-                    self.messages_table.setItem(
-                        row_idx, col_idx, QTableWidgetItem(str(value)))
+                    item = QTableWidgetItem(str(value))
+                    self.messages_table.setItem(row_idx, col_idx, item)
+                    self.messages_table.scrollToItem(item,QtWidgets.QAbstractItemView.ScrollHint.EnsureVisible)
                 elif current_item.text() != value:
                     current_item.setText(str(value))
         self.messages_table.resizeColumnsToContents()
