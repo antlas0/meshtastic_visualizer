@@ -7,8 +7,6 @@ Initial work based on original repository of "Meshtastic Chat Desktop"
 Main framework used is PyQt6.
 Linux compatible, debian based tested (should work on Windows, compatibility not ensured).
 
-Warning: Work in progress !
-
 ## Features
 | Feature | Using local device | Using MQTT |
 |---|---|---|
