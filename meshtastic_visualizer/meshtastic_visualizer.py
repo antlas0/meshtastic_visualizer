@@ -179,6 +179,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.device_combobox.insertItem(i, device)
 
     def setup_ui(self) -> None:
+        self.mynodeinfo_refresh_button.clicked.connect(self._manager.get_local_node_infos)
         self.device_combobox.setCurrentText(self._settings.value("serial_port", ""))
         self.tabWidget.currentChanged.connect(self.remove_notification_badge)
         self.notification_bar.setOpenExternalLinks(True)
@@ -208,7 +209,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.remaining_chars_label.setText(
             f"{TEXT_MESSAGE_MAX_CHARS}/{TEXT_MESSAGE_MAX_CHARS}")
         self.init_map()
-
+        self.messages_table.setTextElideMode(QtCore.Qt.TextElideMode.ElideNone)
         self.messages_table.setColumnCount(
             len(self._get_meshtastic_message_header_fields().keys()))
         self.messages_table.setHorizontalHeaderLabels(
@@ -224,6 +225,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._action_buttons = [
             self.send_button,
             self.message_textedit,
+            self.mynodeinfo_refresh_button,
         ]
         for button in self._action_buttons:
             button.setEnabled(False)
@@ -280,6 +282,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self._settings.value("mqtt_password", ""))
         self.mqtt_topic_linedit.setText(self._settings.value("mqtt_topic", ""))
         self.mqtt_key_linedit.setText(self._settings.value("mqtt_key", "AQ=="))
+        self.packets_treewidget.itemClicked.connect(self.adjust_packets_treeview)
+        self.packets_treewidget.setWordWrap(True)
+        self.packets_treewidget.setTextElideMode(QtCore.Qt.TextElideMode.ElideNone)
         self.packets_treewidget.setHeaderLabels(["Packet", "Details"])
         self.packettype_combobox.insertItem(0, "All")
         self.packettype_combobox.currentIndexChanged.connect(
@@ -1042,6 +1047,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.update_packets_filter(packets)
         self.update_packets_widgets(packets)
 
+    def adjust_packets_treeview(self, item, column):
+        self.packets_treewidget.resizeColumnToContents(1)
+        # self.packets_treewidget.header().stretchLastSection()
+        # self.packets_treewidget.resizeColumnToContents(column)
+
     def apply_packets_filter(self, packets:List[Packet]) -> List[Packet]:
         if self.packetmedium_combobox.currentText() != "All":
             packets = list(
@@ -1079,7 +1089,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 sub_item_widget = QTreeWidgetItem([str(sub_item), str(value)])
                 category_item.addChild(sub_item_widget)
         self.packets_treewidget.resizeColumnToContents(0)
-        self.packets_treewidget.resizeColumnToContents(1)
 
         filtered_packets_number = len(filtered_packets)
         if filtered_packets_number > 0:

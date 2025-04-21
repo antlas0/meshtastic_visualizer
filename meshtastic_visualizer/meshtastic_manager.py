@@ -124,6 +124,12 @@ class MeshtasticManager(QObject, threading.Thread):
         self.refresh_ui_signal.emit()
         return res
 
+    def get_local_node_infos(self, dummy) -> None:
+        self.load_local_node_configuration()
+        self.get_local_node_details()
+        self.retrieve_channels()
+        self.refresh_ui_signal.emit()
+
     @run_in_thread
     def disconnect_device(self) -> bool:
         res = False
@@ -161,7 +167,6 @@ class MeshtasticManager(QObject, threading.Thread):
         else:
             self.notify_local_device_configuration_signal.emit("\n".join(conf))
 
-    @run_in_thread
     def load_local_node_configuration(self) -> None:
         if self._interface is None:
             return
@@ -234,7 +239,7 @@ class MeshtasticManager(QObject, threading.Thread):
             to_id=self._node_id_from_num(packet['to']),
             is_encrypted=packet["pkiEncrypted"] if "pkiEncrypted" in packet else False,
             payload=decoded['payload'],
-            decoded=str(decoded),
+            decoded=str(decoded).replace("\n", " "),
             port_num=decoded["portnum"],
             snr=packet["rxSnr"] if "rxSnr" in packet else None,
             rssi=packet["rxRssi"] if "rxRssi" in packet else None,
