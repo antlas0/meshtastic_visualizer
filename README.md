@@ -54,6 +54,8 @@ Otherwise, you can try `QT_QPA_PLATFORM=xcb`, by having previously installed `li
 
 ## Todo
 A lot ! Please fill an issue to add ideas or raise bugs.
+Code cleaning and going deeper in factorization becomes more and more needed :)
+
 
 ## Contributing
 Please open a Pull Request.
