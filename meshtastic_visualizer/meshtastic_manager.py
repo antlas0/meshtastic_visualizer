@@ -208,7 +208,6 @@ class MeshtasticManager(QObject, threading.Thread):
 
         self._data.set_local_node_config(n)
 
-    @run_in_thread
     def on_receive(self, packet, interface):
         if "decoded" not in packet:
             return
