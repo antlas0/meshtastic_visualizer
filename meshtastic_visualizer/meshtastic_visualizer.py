@@ -496,6 +496,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def mesh_table_is_clicked(self, row, column) -> None:
         node_id = self.mesh_table.item(row, 2).text()
+        self.update_node_metrics_buttons()
         long_name = self._store.get_long_name_from_id(node_id)
         self.nm_node_label.setText(long_name)
 
