@@ -1014,7 +1014,7 @@
       </property>
       <widget class="QWidget" name="tab_3">
        <attribute name="title">
-        <string>Local device connection</string>
+        <string>Serial connection</string>
        </attribute>
        <widget class="QPushButton" name="serial_disconnect_button">
         <property name="geometry">
@@ -1101,7 +1101,7 @@
          </font>
         </property>
         <property name="toolTip">
-         <string>Reset nodeDB of node when connecting.</string>
+         <string>Load nodeDB of node when connecting.</string>
         </property>
         <property name="text">
          <string>Load NodeDB</string>
@@ -1110,7 +1110,7 @@
          <bool>true</bool>
         </property>
        </widget>
-       <widget class="QPushButton" name="scan_com_button">
+       <widget class="QPushButton" name="serial_scan_button">
         <property name="geometry">
          <rect>
           <x>320</x>
@@ -1135,7 +1135,7 @@
       </widget>
       <widget class="QWidget" name="tab_4">
        <attribute name="title">
-        <string>Remote device connection</string>
+        <string>TCP connection</string>
        </attribute>
        <widget class="QPushButton" name="tcp_connect_button">
         <property name="geometry">
@@ -1216,13 +1216,131 @@
          </font>
         </property>
         <property name="toolTip">
-         <string>Reset nodeDB of node when connecting.</string>
+         <string>Load nodeDB of node when connecting.</string>
         </property>
         <property name="text">
          <string>Load NodeDB</string>
         </property>
         <property name="checked">
          <bool>true</bool>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tab_5">
+       <attribute name="title">
+        <string>Bluetooth Connection</string>
+       </attribute>
+       <widget class="QPushButton" name="ble_disconnect_button">
+        <property name="geometry">
+         <rect>
+          <x>200</x>
+          <y>40</y>
+          <width>111</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Liberation sans</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="toolTip">
+         <string>Disconnect.</string>
+        </property>
+        <property name="text">
+         <string>⏹️ Disconnect</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="ble_connect_button">
+        <property name="geometry">
+         <rect>
+          <x>200</x>
+          <y>10</y>
+          <width>111</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Liberation sans</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="toolTip">
+         <string>Connect with BLE connection.</string>
+        </property>
+        <property name="text">
+         <string>▶️ Connect</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="load_nodedb_checkbox_ter">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>40</y>
+          <width>121</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Liberation sans</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="toolTip">
+         <string>Load nodeDB of node when connecting.</string>
+        </property>
+        <property name="text">
+         <string>Load NodeDB</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QComboBox" name="ble_address_combobox">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>181</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Liberation sans</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="toolTip">
+         <string>Choose a BLE device.</string>
+        </property>
+        <property name="placeholderText">
+         <string>BLE address</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="ble_scan_button">
+        <property name="geometry">
+         <rect>
+          <x>320</x>
+          <y>10</y>
+          <width>121</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Liberation sans</family>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="toolTip">
+         <string>List all detected bluetooth devices.</string>
+        </property>
+        <property name="text">
+         <string>🔍 BLE Scan</string>
         </property>
        </widget>
       </widget>
