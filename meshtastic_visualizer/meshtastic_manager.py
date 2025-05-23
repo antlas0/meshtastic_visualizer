@@ -13,6 +13,7 @@ from threading import Lock
 import meshtastic
 import meshtastic.serial_interface
 import meshtastic.tcp_interface
+from meshtastic.ble_interface import BLEInterface
 from meshtastic import channel_pb2, portnums_pb2, mesh_pb2, config_pb2, telemetry_pb2
 from PyQt6.QtCore import pyqtSignal, QObject
 
@@ -50,6 +51,7 @@ class MeshtasticManager(QObject, threading.Thread):
     notify_local_device_configuration_signal = pyqtSignal(str)
     notify_new_packet = pyqtSignal(Packet)
     notify_message_signal = pyqtSignal()
+    notify_ble_devices_signal = pyqtSignal(list)
     notify_traceroute_signal = pyqtSignal(list, list, list)
     notify_channels_signal = pyqtSignal()
     notify_nodes_update = pyqtSignal(MeshtasticNode)
@@ -66,15 +68,19 @@ class MeshtasticManager(QObject, threading.Thread):
         self._interface: Optional[meshtastic.serial_interface.SerialInterface] = None
         self._is_serial_connected = False
         self._is_tcp_connected = False
+        self._is_ble_connected = False
 
     def is_connected(self) -> bool:
-        return self._is_serial_connected or self._is_tcp_connected
+        return self._is_serial_connected or self._is_tcp_connected or self._is_ble_connected
 
     def is_serial_connected(self) -> bool:
         return self._is_serial_connected
 
     def is_tcp_connected(self) -> bool:
         return self._is_tcp_connected
+
+    def is_ble_connected(self) -> bool:
+        return self._is_ble_connected
 
     def set_store(self, store: MeshtasticDataStore) -> None:
         self._data = store
@@ -84,6 +90,11 @@ class MeshtasticManager(QObject, threading.Thread):
 
     def get_meshtastic_devices(self) -> List[str]:
         return list_serial_ports()
+
+    @run_in_thread
+    def ble_scan_devices(self) -> None:
+        devices = BLEInterface.scan()
+        self.notify_ble_devices_signal.emit(devices)
 
     @run_in_thread
     def connect_device(self, connection_kind:ConnectionKind, target:str, load_db: bool = True) -> bool:
@@ -98,6 +109,8 @@ class MeshtasticManager(QObject, threading.Thread):
                 if target.startswith("http://"):
                     target = target.replace("http://", "")
                 self._interface = meshtastic.tcp_interface.TCPInterface(hostname=target)
+            if connection_kind == ConnectionKind.BLE:
+                self._interface = meshtastic.ble_interface.BLEInterface(target)
         except Exception as e:
             trace = f"Failed to connect to Meshtastic device {target}: {str(e)}"
             self.notify_frontend_signal.emit(MessageLevel.ERROR, trace)
@@ -110,6 +123,8 @@ class MeshtasticManager(QObject, threading.Thread):
                 self._is_serial_connected = True
             if connection_kind == ConnectionKind.TCP:
                 self._is_tcp_connected = True
+            if connection_kind == ConnectionKind.BLE:
+                self._is_ble_connected = True
             self.retrieve_channels()
 
             node = self._interface.getMyNodeInfo()
@@ -148,6 +163,7 @@ class MeshtasticManager(QObject, threading.Thread):
             trace = f"Meshtastic device disconnected."
             self._is_serial_connected = False
             self._is_tcp_connected = False
+            self._is_ble_connected = False
             self.notify_frontend_signal.emit(MessageLevel.INFO, trace)
             res = True
         finally:

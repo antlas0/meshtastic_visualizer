@@ -49,6 +49,7 @@ class ConnectionKind(enum.Enum):
     UNKNOWN=0
     SERIAL=1
     TCP=2
+    BLE=3
 
 def create_getter(field_name):
     def getter(self):
