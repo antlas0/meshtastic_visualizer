@@ -52,6 +52,7 @@ class MeshtasticManager(QObject, threading.Thread):
     notify_new_packet = pyqtSignal(Packet)
     notify_message_signal = pyqtSignal()
     notify_ble_devices_signal = pyqtSignal(list)
+    notify_serial_devices_signal = pyqtSignal(list)
     notify_traceroute_signal = pyqtSignal(list, list, list)
     notify_channels_signal = pyqtSignal()
     notify_nodes_update = pyqtSignal(MeshtasticNode)
@@ -88,8 +89,10 @@ class MeshtasticManager(QObject, threading.Thread):
     def get_data_store(self) -> MeshtasticDataStore:
         return self._data
 
-    def get_meshtastic_devices(self) -> List[str]:
-        return list_serial_ports()
+    @run_in_thread
+    def serial_scan_devices(self) -> List[str]:
+        devices = list_serial_ports()
+        self.notify_serial_devices_signal.emit(devices)
 
     @run_in_thread
     def ble_scan_devices(self) -> None:

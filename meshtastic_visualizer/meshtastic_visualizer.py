@@ -39,6 +39,7 @@ from .mapper import Mapper
 class MeshtasticQtApp(QtWidgets.QMainWindow):
     connect_device_signal = pyqtSignal(ConnectionKind, str, bool)
     disconnect_device_signal = pyqtSignal()
+    scan_serial_devices_signal = pyqtSignal()
     scan_ble_devices_signal = pyqtSignal()
     get_nodes_signal = pyqtSignal()
     send_message_signal = pyqtSignal(MeshtasticMessage)
@@ -90,7 +91,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._current_output_folder = self._settings.value("output_folder", os.getcwd())
         self._store = MeshtasticDataStore()
         self._manager = MeshtasticManager()
-        self._update_meshtastic_serial_devices()
         self.setup_ui()
 
         self._manager.set_store(self._store)
@@ -127,6 +127,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.update_channels_table)
         self._manager.notify_nodes_update.connect(
             self.update_nodes)
+        self._manager.notify_serial_devices_signal.connect(self._update_meshtastic_serial_devices)
         self._manager.notify_ble_devices_signal.connect(self._update_meshtastic_ble_devices)
         self._mqtt_manager.notify_nodes_update.connect(
             self.update_nodes)
@@ -136,6 +137,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.connect_device_signal.connect(self._manager.connect_device)
         self.disconnect_device_signal.connect(self._manager.disconnect_device)
         self.scan_ble_devices_signal.connect(self._manager.ble_scan_devices)
+        self.scan_serial_devices_signal.connect(self._manager.serial_scan_devices)
         self.send_message_signal.connect(self._manager.send_text_message)
         self.retrieve_channels_signal.connect(self._manager.retrieve_channels)
         self.get_nodes_signal.connect(self.update_nodes_map)
@@ -176,10 +178,25 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if loglevel.value == MessageLevel.INFO.value or loglevel.value == MessageLevel.UNKNOWN.value:
             self.notification_bar.setText(message)
 
-    def _update_meshtastic_serial_devices(self) -> None:
-        self.device_combobox.clear()
-        for i, device in enumerate(self._manager.get_meshtastic_devices()):
-            self.device_combobox.insertItem(i, device)
+    def _request_meshtastic_serial_devices(self) -> None:
+        self.set_status(MessageLevel.INFO, "Scanning serial devices.")
+        self.serial_scan_button.setText("⌛ Serial Scan")
+        self.serial_devices_combobox.clear()
+        self.serial_connect_button.setEnabled(False)
+        self.serial_scan_button.setEnabled(False)
+        self.scan_serial_devices_signal.emit()
+
+    def _update_meshtastic_serial_devices(self, devices:list) -> None:
+        if len(devices) == 1:
+            self.serial_devices_combobox.insertItem(0, devices[0])
+            self.serial_devices_combobox.setCurrentText(devices[0])
+        else:
+            for i, device in enumerate(devices):
+                self.serial_devices_combobox.insertItem(i, device)
+        self.set_status(MessageLevel.INFO, f"Found {len(devices)} serial device(s).")
+        self.serial_scan_button.setText("🔍 Serial Scan")
+        self.serial_connect_button.setEnabled(True)
+        self.serial_scan_button.setEnabled(True)
 
     def _request_meshtastic_ble_devices(self) -> None:
         self.set_status(MessageLevel.INFO, "Scanning bluetooth devices.")
@@ -203,7 +220,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def setup_ui(self) -> None:
         self.mynodeinfo_refresh_button.clicked.connect(self._manager.get_local_node_infos)
-        self.device_combobox.setCurrentText(self._settings.value("serial_port", ""))
+        if self._settings.value("serial_port", ""):
+            self.serial_devices_combobox.insertItem(0, self._settings.value("serial_port", ""))
+            self.serial_devices_combobox.setCurrentText(self._settings.value("serial_port", ""))
         if self._settings.value("ble_address", ""):
             self.ble_address_combobox.insertItem(0, self._settings.value("ble_address", ""))
             self.ble_address_combobox.setCurrentText(self._settings.value("ble_address", ""))
@@ -215,7 +234,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.output_folder_button.clicked.connect(self.choose_output_folder)
         self.output_folder_label.setReadOnly(True)
         self.output_folder_label.setText(os.path.basename(self._current_output_folder))
-        self.serial_scan_button.clicked.connect(self._update_meshtastic_serial_devices)
+        self.serial_scan_button.clicked.connect(self._request_meshtastic_serial_devices)
         self.ble_scan_button.clicked.connect(self._request_meshtastic_ble_devices)
         self.serial_disconnect_button.clicked.connect(self.disconnect_device)
         self.tcp_disconnect_button.clicked.connect(self.disconnect_device)
@@ -482,14 +501,15 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.serial_scan_button.setEnabled(False)
         self.serial_connect_button.setEnabled(False)
         self.serial_disconnect_button.setEnabled(False)
-        device_path = self.device_combobox.currentText()
+        device_path = self.serial_devices_combobox.currentText()
         if device_path:
             self.set_status(MessageLevel.INFO, f"Connecting to {device_path}.")
             self.connect_device_signal.emit(ConnectionKind.SERIAL, device_path, self.load_nodedb_checkbox.isChecked())
-            self._settings.setValue("serial_port", self.device_combobox.currentText())
+            self._settings.setValue("serial_port", self.serial_devices_combobox.currentText())
         else:
             self.set_status(MessageLevel.ERROR, f"Cannot connect. Please specify a device path.")
             self.serial_connect_button.setEnabled(True)
+            self.serial_scan_button.setEnabled(True)
 
     def connect_device_tcp(self):
         self.connection_tabs.setTabEnabled(0, False);
@@ -524,9 +544,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.connect_device_signal.emit(ConnectionKind.BLE, ble_address, self.load_nodedb_checkbox_ter.isChecked())
 
     def disconnect_device(self) -> None:
-        for i, device in enumerate(self._manager.get_meshtastic_devices()):
-            self.device_combobox.clear()
-            self.device_combobox.insertItem(i, device)
         self.disconnect_device_signal.emit()
 
     def update_traceroute(

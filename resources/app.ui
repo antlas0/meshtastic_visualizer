@@ -1063,7 +1063,7 @@
          <string>▶️ Connect</string>
         </property>
        </widget>
-       <widget class="QComboBox" name="device_combobox">
+       <widget class="QComboBox" name="serial_devices_combobox">
         <property name="geometry">
          <rect>
           <x>10</x>
