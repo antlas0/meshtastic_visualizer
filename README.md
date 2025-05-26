@@ -8,6 +8,11 @@ Main framework used is PyQt6.
 Linux compatible, debian based tested (should work on Windows, compatibility not ensured).
 
 ## Features
+| Connection | Serial | TCP | Bluetooth |
+|---|---|---|---|
+|Availability|✅|✅|✅|
+
+
 | Feature | Using local device | Using MQTT |
 |---|---|---|
 | Display nodes configuration (PK, hopsaway,...)|✅|✅|
