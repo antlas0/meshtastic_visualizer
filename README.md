@@ -19,7 +19,8 @@ Linux compatible, debian based tested (should work on Windows, compatibility not
 | Export nodes (json) |✅|✅|
 | Export messages and packets (json) |✅|✅|
 | Export telemetry metrics (json) |✅|✅|
-| Export events logs |✅|✅|
+| Export mqtt logs |-|✅|
+| Export radio serial console |✅|-|
 | Nodes telemetry metrics plotting (CHutil, power,...) |✅|✅|
 | Packets RF metrics plotting (RSSI, SNR,...) |✅|✅|
 
