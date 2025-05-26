@@ -15,7 +15,6 @@ USER runner
 COPY meshtastic_visualizer meshtastic_visualizer
 COPY setup.py setup.py
 COPY requirements.txt requirements.txt
-COPY bin bin
 COPY resources resources
 
 RUN python -m venv --copies .venv
