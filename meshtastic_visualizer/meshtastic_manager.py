@@ -49,6 +49,7 @@ class MeshtasticManager(QObject, threading.Thread):
     notify_frontend_signal = pyqtSignal(MessageLevel, str)
     refresh_ui_signal = pyqtSignal()
     notify_local_device_configuration_signal = pyqtSignal(str)
+    notify_log_line = pyqtSignal(str)
     notify_new_packet = pyqtSignal(Packet)
     notify_message_signal = pyqtSignal()
     notify_ble_devices_signal = pyqtSignal(list)
@@ -96,7 +97,12 @@ class MeshtasticManager(QObject, threading.Thread):
 
     @run_in_thread
     def ble_scan_devices(self) -> None:
-        devices = BLEInterface.scan()
+        try:
+            devices = BLEInterface.scan()
+        except Exception:
+            self.notify_frontend_signal.emit(MessageLevel.ERROR, "Not able to scan devices")
+            devices = []
+
         self.notify_ble_devices_signal.emit(devices)
 
     @run_in_thread
@@ -120,6 +126,7 @@ class MeshtasticManager(QObject, threading.Thread):
             self.refresh_ui_signal.emit()
         else:
             # Subscribe to received message events
+            pub.subscribe(self.on_log, "meshtastic.log.line") 
             pub.subscribe(self.on_receive, "meshtastic.receive")
             trace = f"Successfully connected to Meshtastic device {target}"
             if connection_kind == ConnectionKind.SERIAL:
@@ -227,20 +234,17 @@ class MeshtasticManager(QObject, threading.Thread):
 
         self._data.set_local_node_config(n)
 
+    def on_log(self, interface, line:str) -> None:
+        self.notify_log_line.emit(line)
+
     def on_receive(self, packet, interface):
-        if "decoded" not in packet:
-            return
-        if "portnum" not in packet["decoded"]:
-            return
-
-        decoded = packet['decoded']
-
-        if 'payload' not in decoded or not isinstance(
-                decoded['payload'], bytes):
-            return
-
-        if decoded["portnum"] == portnums_pb2.UNKNOWN_APP:
-            return
+        try:
+            decoded = packet['decoded']
+        except KeyError:
+            # encrypted packet
+            decoded = {} 
+            decoded["payload"] = ""
+            decoded["portnum"] = "UNKNOWN_APP"
 
         nodes_to_update: list = []
 
@@ -255,7 +259,7 @@ class MeshtasticManager(QObject, threading.Thread):
             pid=packet["id"],
             from_id=self._node_id_from_num(packet['from']),
             to_id=self._node_id_from_num(packet['to']),
-            is_encrypted=packet["pkiEncrypted"] if "pkiEncrypted" in packet else False,
+            is_encrypted=True if "encrypted" in packet else False,
             payload=decoded['payload'],
             decoded=str(decoded).replace("\n", " "),
             port_num=decoded["portnum"],
@@ -637,7 +641,10 @@ class MeshtasticManager(QObject, threading.Thread):
     def send_position(self) -> None:
         try:
             node_infos = self._interface.getMyNodeInfo()
-            self._interface.sendPosition(latitude=node_infos["position"]["latitude"], longitude=node_infos["position"]["longitude"])
+            if not "position" in node_infos or not node_infos["position"]:
+                self.notify_frontend_signal.emit(MessageLevel.ERROR, f"Could not send position: not found.")
+            else:
+                self._interface.sendPosition(latitude=node_infos["position"]["latitude"], longitude=node_infos["position"]["longitude"])
         except Exception as e:
             self.notify_frontend_signal.emit(MessageLevel.ERROR, f"Could not send position: {e}")
         else:

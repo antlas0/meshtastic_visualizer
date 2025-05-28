@@ -19,7 +19,6 @@ setup(
     name="meshtastic_visualizer",
     version="1.7.0",
     packages=find_packages(),
-    scripts=['bin/meshtastic_visualizer'],
     install_requires=requirements,
     classifiers=[
         "Programming Language :: Python :: 3",

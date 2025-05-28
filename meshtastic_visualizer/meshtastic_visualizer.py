@@ -2,6 +2,7 @@
 
 
 import os
+import re
 import json
 from threading import Lock
 from datetime import datetime
@@ -129,6 +130,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.update_nodes)
         self._manager.notify_serial_devices_signal.connect(self._update_meshtastic_serial_devices)
         self._manager.notify_ble_devices_signal.connect(self._update_meshtastic_ble_devices)
+        self._manager.notify_log_line.connect(self._update_device_logs)
         self._mqtt_manager.notify_nodes_update.connect(
             self.update_nodes)
         self._mqtt_manager.notify_mqtt_logs.connect(
@@ -151,12 +153,15 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.export_nodes_button.pressed.connect(self.export_nodes)
         self.export_node_metrics_button.pressed.connect(self.export_node_metrics)
         self.clear_mqtt_button.pressed.connect(self.mqtt_output_textedit.clear)
+        self.clear_console_button.pressed.connect(self.console_logs_textedit.clear)
         self.clear_messages_button.pressed.connect(self.clear_messages_table)
         self.clear_messages_button.pressed.connect(self._store.clear_messages)
         self.clear_nodes_button.pressed.connect(self.clear_nodes)
         self.clear_node_metrics_button.pressed.connect(self.clear_nodes_metrics)
         self.clear_packets_button.pressed.connect(self.clear_packets)
         self.export_mqtt_button.pressed.connect(self.export_mqtt_logs)
+        self.export_console_button.pressed.connect(self.export_console_logs)
+        self.start_pause_console_button.clicked.connect(self._update_console_button)
         for i, metric in enumerate(
                 self._store.get_node_metrics_fields()):
             self.nm_metric_combobox.insertItem(
@@ -177,6 +182,16 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         if loglevel.value == MessageLevel.INFO.value or loglevel.value == MessageLevel.UNKNOWN.value:
             self.notification_bar.setText(message)
+
+    def _update_device_logs(self, line:str) -> None:
+        if not self.start_pause_console_button.isChecked():
+            try:
+                ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+                result = ansi_escape.sub('', line)
+            except Exception as e:
+                pass
+            else:
+                self.console_logs_textedit.append(result)
 
     def _request_meshtastic_serial_devices(self) -> None:
         self.set_status(MessageLevel.INFO, "Scanning serial devices.")
@@ -1216,7 +1231,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def update_device_details(self, configuration: dict):
         self.output_textedit.setText(configuration)
         cursor = QTextCursor(self.output_textedit.textCursor())
-        cursor.setPosition(len(self.output_textedit.toPlainText()))
+        cursor.setPosition(0)
         self.output_textedit.setTextCursor(cursor)
 
     def update_received_mqtt_log(self, log: str):
@@ -1257,6 +1272,19 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             absp = os.path.abspath(fpath)
             trace = f"<a href='file://{absp}'>Exported mqtt logs to file: {fpath}</a>"
             self.set_status(MessageLevel.INFO, trace)
+
+    def export_console_logs(self) -> None:
+        nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
+        fpath = os.path.join(self._current_output_folder, f"console_logs_{nnow}.log")
+        with open(fpath, "w") as text_file:
+            text_file.write(self.console_logs_textedit.toPlainText())
+            absp = os.path.abspath(fpath)
+            trace = f"<a href='file://{absp}'>Exported console logs to file: {fpath}</a>"
+            self.set_status(MessageLevel.INFO, trace)
+
+    def _update_console_button(self, activated:bool) -> None:
+        if not activated: self.start_pause_console_button.setText("⏸️")
+        if activated: self.start_pause_console_button.setText("▶️")
 
     def export_packets(self) -> None:
         packets = self._store.get_radio_packets() + self._store.get_mqtt_packets()
