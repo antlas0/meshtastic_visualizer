@@ -42,18 +42,14 @@ $ docker run -it \
     --volume="/var/run/dbus/:/var/run/dbus/" \
     --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
     --device=/dev/ttyACM0 \
-    meshtastic_visualizer:latest \
-    python -m meshtastic_visualizer
+    meshtastic_visualizer:latest
 ```
 
 ## How to install and run
 
 To install on your computer:
 ```bash
-$ python3 -m venv .venv
-$ source .venv/bin/activate
-$ python -m pip install -r requirements.txt
-$ python -m meshtastic_visualizer
+$ uv run meshtastic_visualizer.py
 ```
 Note: If you rely on Wayland, you may experience Qt event not properly managed. To fall back on a `X11` session, provide the following environment variable when launching the application: `XDG_SESSION_TYPE=x11`.
 Otherwise, you can try `QT_QPA_PLATFORM=xcb`, by having previously installed `libxcb-cursor0` package.
