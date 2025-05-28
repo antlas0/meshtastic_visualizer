@@ -4,6 +4,7 @@
 import hashlib
 import io
 import folium
+from typing import Optional
 from folium.plugins import MousePosition, MeasureControl
 
 
@@ -12,16 +13,23 @@ from .resources import CHARGING_TRESHOLD
 class Mapper:
     """class that manages the map
     """
-    def __init__(self) -> None:
+    def __init__(self, custom_tiles_uri:Optional[str]=None) -> None:
         self._map = None
-        self.create_map()
 
-    def create_map(self) -> None:
+        self.create_map(custom_tiles_uri)
+
+    def create_map(self, custom_tiles_uri:Optional[str]=None) -> None:
         """create a map with initial parameters
         """
         if self._map:
             del self._map
-        self._map = folium.Map(zoom_start=7, control_scale=True, no_touch=True)
+
+        params = {}
+        if custom_tiles_uri:
+            params["tiles"] = custom_tiles_uri
+            params["attr"] = "Custom Tiles"
+
+        self._map = folium.Map(zoom_start=7, control_scale=True, no_touch=True, **params)
         MousePosition().add_to(self._map)
         MeasureControl().add_to(self._map)
 
@@ -52,13 +60,13 @@ class Mapper:
         color = '#' + hash_object.hexdigest()[:6]
         return color
 
-    def update(self, nodes: list) -> None:
+    def update(self, nodes: list, custom_tiles_uri:Optional[str]=None) -> None:
         """update map with nodes
 
         Args:
             nodes (list): nodes
         """
-        self.create_map()
+        self.create_map(custom_tiles_uri)
 
         if nodes is None or not nodes:
             return

@@ -16,14 +16,13 @@ import pyqtgraph as pg
 from pyqtgraph import DateAxisItem
 from dataclasses import asdict
 
-from .meshtastic_manager import MeshtasticManager
+from .manager import MeshtasticManager
 from .resources import MessageLevel, \
     MeshtasticMessage, \
     MeshtasticNode, \
     Packet, \
     TEXT_MESSAGE_MAX_CHARS, \
     MeshtasticMQTTClientSettings, \
-    MAINWINDOW_STYLESHEET, \
     TIME_FORMAT, \
     DEFAULT_TRACEROUTE_CHANNEL, \
     ConnectionKind, \
@@ -32,8 +31,8 @@ from .resources import MessageLevel, \
     BROADCAST_NAME
 from .node_actions_widget import NodeActionsWidget
 
-from .meshtastic_mqtt import MeshtasticMQTT
-from .meshtastic_datastore import MeshtasticDataStore
+from .mqtt import MeshtasticMQTT
+from .datastore import MeshtasticDataStore
 from .mapper import Mapper
 
 
@@ -58,8 +57,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                             QtCore.Qt.WindowType.WindowCloseButtonHint | QtCore.Qt.WindowType.WindowMinimizeButtonHint)
         self.setFixedSize(self.size())
         self.show()
+        self._settings = QSettings("antlas0", "meshtastic_visualizer")
 
         self._map = None
+        self._map_custom_tiles_uri = self._settings.value("map_custom_tiles_uri", "")
         self._local_board_ln = ""
         self._telemetry_plot_widget = pg.PlotWidget()
         self._telemetry_plot_widget.plotItem.getViewBox().setMouseMode(pg.ViewBox.RectMode)
@@ -83,7 +84,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             symbolSize=8,
             hoverable=True)
         self._packets_plot_widget.addItem(self._packets_plot_item)
-        self._settings = QSettings("antlas0", "meshtastic_visualizer")
 
         # Variables
         self.status_var: str = ""
@@ -137,6 +137,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.update_received_mqtt_log)
 
         self.connect_device_signal.connect(self._manager.connect_device)
+        self.connect_device_signal.connect(self.clear_messages_table)
         self.disconnect_device_signal.connect(self._manager.disconnect_device)
         self.scan_ble_devices_signal.connect(self._manager.ble_scan_devices)
         self.scan_serial_devices_signal.connect(self._manager.serial_scan_devices)
@@ -173,8 +174,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.nodes_filter_linedit.textChanged.connect(self.update_nodes)
         self.shortcut_filter_combobox.currentTextChanged.connect(self.update_nodes)
         self.mqtt_connect_button.pressed.connect(self.connect_mqtt)
-        self.mqtt_disconnect_button.pressed.connect(
-            self._mqtt_manager.disconnect_mqtt)
+        self.mqtt_disconnect_button.pressed.connect(self._mqtt_manager.disconnect_mqtt)
 
     def set_status(self, loglevel: MessageLevel, message: str) -> None:
         if loglevel.value == MessageLevel.ERROR.value:
@@ -318,12 +318,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             }
             widget[p].setBackground('w')
             widget[p].getPlotItem().getAxis('left').setPen(pg.mkPen(color='k'))
-            widget[p].getPlotItem().getAxis(
-                'bottom').setPen(pg.mkPen(color='k'))
-            widget[p].getPlotItem().getAxis(
-                'left').setTextPen(pg.mkPen(color='k'))
-            widget[p].getPlotItem().getAxis(
-                'bottom').setTextPen(pg.mkPen(color='k'))
+            widget[p].getPlotItem().getAxis('bottom').setPen(pg.mkPen(color='k'))
+            widget[p].getPlotItem().getAxis('left').setTextPen(pg.mkPen(color='k'))
+            widget[p].getPlotItem().getAxis('bottom').setTextPen(pg.mkPen(color='k'))
             widget[p].addLegend()
             widget[p].setMouseEnabled(x=False, y=False)
             widget[p].setAxisItems({'bottom': DateAxisItem()})
@@ -364,9 +361,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packetmedium_combobox.insertItem(0, "All")
         self.packetmedium_combobox.insertItem(1, "Radio")
         self.packetmedium_combobox.insertItem(2, "MQTT")
-        self.packetmedium_combobox.currentIndexChanged.connect(
-            self.update_packets_filtered)
-        self.setStyleSheet(MAINWINDOW_STYLESHEET)
+        self.packetmedium_combobox.currentIndexChanged.connect(self.update_packets_filtered)
+
+        self.activate_custom_tiles_checkbox.setChecked(False)
+        self.custom_tiles_uri_linedit.setVisible(False)
+        self.activate_custom_tiles_checkbox.stateChanged.connect(self.activate_custom_tiles)
+        self.custom_tiles_uri_linedit.textChanged.connect(self.update_custom_tiles)
 
     def choose_output_folder(self):
         dialog = QFileDialog(self)
@@ -587,7 +587,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.traceroute_table.resizeColumnsToContents()
         self.traceroute_table.resizeRowsToContents()
 
-
     def update_text_message_length(self):
         current_text = self.message_textedit.toPlainText()
 
@@ -611,15 +610,24 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         long_name = self._store.get_long_name_from_id(node_id)
         self.nm_node_label.setText(long_name)
 
+    def activate_custom_tiles(self, activate:bool) -> None:
+        self.custom_tiles_uri_linedit.setText(self._map_custom_tiles_uri)
+        self.custom_tiles_uri_linedit.setVisible(activate)
+
+    def update_custom_tiles(self) -> None:
+        uri = self.custom_tiles_uri_linedit.text()
+        self._settings.setValue("map_custom_tiles_uri", uri)
+        self._map_custom_tiles_uri = uri
+
     def init_map(self):
-        self._map = Mapper()
+        self._map = Mapper(custom_tiles_uri=self._map_custom_tiles_uri)
         self.update_map_in_widget()
 
     def update_map_in_widget(self):
         self.nodes_map.setHtml(self._map.convert2html())
 
     def update_nodes_map(self):
-        self._map.update(self._store.get_nodes())
+        self._map.update(self._store.get_nodes(), self._map_custom_tiles_uri)
         self.update_map_in_widget()
 
     def clean_plot(self, kind: str = "") -> None:
@@ -951,11 +959,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                             if data == "None":
                                 data = ""
                     if col_idx == 9:  # insert widget in cell
-                        btn = QPushButton("See packets")
-                        btn.setEnabled(True)
-                        btn.setStyleSheet("QPushButton{font-size: 10pt;}")
-                        self.mesh_table.setCellWidget(row_idx, col_idx, btn)
-                        btn.clicked.connect(lambda: self.explore_packets(self.mesh_table.item(self.mesh_table.indexAt(self.sender().pos()).row(),2).text()))
+                        if self._store.has_seen_node_id(row_data["ID"]):
+                            btn = QPushButton("See packets")
+                            btn.setEnabled(True)
+                            btn.setStyleSheet("QPushButton{font-size: 9pt;}")
+                            self.mesh_table.setCellWidget(row_idx, col_idx, btn)
+                            btn.clicked.connect(lambda: self.explore_packets(self.mesh_table.item(self.mesh_table.indexAt(self.sender().pos()).row(),2).text()))
                     else:
                         data = str(value)
                         if data == "None":

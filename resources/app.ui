@@ -25,7 +25,7 @@
   <property name="font">
    <font>
     <family>Freesans</family>
-    <pointsize>10</pointsize>
+    <pointsize>9</pointsize>
    </font>
   </property>
   <property name="windowTitle">
@@ -41,7 +41,7 @@
    <property name="font">
     <font>
      <family>Freesans</family>
-     <pointsize>10</pointsize>
+     <pointsize>9</pointsize>
     </font>
    </property>
    <widget class="QTabWidget" name="tabWidget">
@@ -67,12 +67,12 @@
     </property>
     <property name="font">
      <font>
-      <family>Liberation sans</family>
-      <pointsize>10</pointsize>
+      <family>Freesans</family>
+      <pointsize>9</pointsize>
      </font>
     </property>
     <property name="styleSheet">
-     <string notr="true">font-family: Liberation sans, emoji one</string>
+     <string notr="true">font-family: Freesans, Emoji One;</string>
     </property>
     <property name="currentIndex">
      <number>0</number>
@@ -80,8 +80,8 @@
     <widget class="QWidget" name="tab_device">
      <property name="font">
       <font>
-       <family>Liberation sans</family>
-       <pointsize>10</pointsize>
+       <family>Freesans</family>
+       <pointsize>9</pointsize>
       </font>
      </property>
      <attribute name="title">
@@ -104,8 +104,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="title">
@@ -134,8 +134,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
          <weight>75</weight>
          <bold>true</bold>
         </font>
@@ -173,8 +173,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="text">
@@ -210,8 +210,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
          <weight>75</weight>
          <bold>true</bold>
         </font>
@@ -249,8 +249,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="text">
@@ -320,8 +320,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
          <weight>75</weight>
          <bold>true</bold>
         </font>
@@ -353,8 +353,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="text">
@@ -387,8 +387,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
          <weight>75</weight>
          <bold>true</bold>
         </font>
@@ -420,8 +420,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="text">
@@ -451,8 +451,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
          <weight>75</weight>
          <bold>true</bold>
         </font>
@@ -472,8 +472,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="text">
@@ -494,8 +494,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="toolTip">
@@ -516,8 +516,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
       </widget>
@@ -533,8 +533,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="title">
@@ -556,8 +556,8 @@
            <widget class="QLabel" name="label_12">
             <property name="font">
              <font>
-              <family>Liberation sans</family>
-              <pointsize>10</pointsize>
+              <family>Freesans</family>
+              <pointsize>9</pointsize>
              </font>
             </property>
             <property name="text">
@@ -569,8 +569,8 @@
            <widget class="QLineEdit" name="mqtt_host_linedit">
             <property name="font">
              <font>
-              <family>Liberation sans</family>
-              <pointsize>10</pointsize>
+              <family>Freesans</family>
+              <pointsize>9</pointsize>
              </font>
             </property>
             <property name="text">
@@ -589,8 +589,8 @@
             </property>
             <property name="font">
              <font>
-              <family>Liberation sans</family>
-              <pointsize>10</pointsize>
+              <family>Freesans</family>
+              <pointsize>9</pointsize>
              </font>
             </property>
             <property name="text">
@@ -602,8 +602,8 @@
            <widget class="QSpinBox" name="mqtt_port_spinbox">
             <property name="font">
              <font>
-              <family>Liberation sans</family>
-              <pointsize>10</pointsize>
+              <family>Freesans</family>
+              <pointsize>9</pointsize>
              </font>
             </property>
             <property name="minimum">
@@ -625,8 +625,8 @@
            <widget class="QLabel" name="label_13">
             <property name="font">
              <font>
-              <family>Liberation sans</family>
-              <pointsize>10</pointsize>
+              <family>Freesans</family>
+              <pointsize>9</pointsize>
              </font>
             </property>
             <property name="text">
@@ -638,8 +638,8 @@
            <widget class="QLineEdit" name="mqtt_username_linedit">
             <property name="font">
              <font>
-              <family>Liberation sans</family>
-              <pointsize>10</pointsize>
+              <family>Freesans</family>
+              <pointsize>9</pointsize>
              </font>
             </property>
             <property name="text">
@@ -655,8 +655,8 @@
            <widget class="QLabel" name="label_17">
             <property name="font">
              <font>
-              <family>Liberation sans</family>
-              <pointsize>10</pointsize>
+              <family>Freesans</family>
+              <pointsize>9</pointsize>
              </font>
             </property>
             <property name="text">
@@ -668,8 +668,8 @@
            <widget class="QLineEdit" name="mqtt_password_linedit">
             <property name="font">
              <font>
-              <family>Liberation sans</family>
-              <pointsize>10</pointsize>
+              <family>Freesans</family>
+              <pointsize>9</pointsize>
              </font>
             </property>
             <property name="text">
@@ -685,8 +685,8 @@
            <widget class="QLabel" name="label_14">
             <property name="font">
              <font>
-              <family>Liberation sans</family>
-              <pointsize>10</pointsize>
+              <family>Freesans</family>
+              <pointsize>9</pointsize>
              </font>
             </property>
             <property name="text">
@@ -698,8 +698,8 @@
            <widget class="QLineEdit" name="mqtt_topic_linedit">
             <property name="font">
              <font>
-              <family>Liberation sans</family>
-              <pointsize>10</pointsize>
+              <family>Freesans</family>
+              <pointsize>9</pointsize>
              </font>
             </property>
             <property name="text">
@@ -715,8 +715,8 @@
            <widget class="QLabel" name="label_16">
             <property name="font">
              <font>
-              <family>Liberation sans</family>
-              <pointsize>10</pointsize>
+              <family>Freesans</family>
+              <pointsize>9</pointsize>
              </font>
             </property>
             <property name="text">
@@ -728,8 +728,8 @@
            <widget class="QLineEdit" name="mqtt_key_linedit">
             <property name="font">
              <font>
-              <family>Liberation sans</family>
-              <pointsize>10</pointsize>
+              <family>Freesans</family>
+              <pointsize>9</pointsize>
              </font>
             </property>
             <property name="text">
@@ -752,8 +752,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="toolTip">
@@ -774,8 +774,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="toolTip">
@@ -810,8 +810,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="title">
@@ -847,8 +847,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="readOnly">
@@ -883,8 +883,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="title">
@@ -901,8 +901,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="readOnly">
@@ -920,7 +920,7 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
+         <family>Freesans</family>
          <pointsize>9</pointsize>
         </font>
        </property>
@@ -994,8 +994,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="title">
@@ -1012,8 +1012,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="toolTip">
@@ -1034,8 +1034,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="toolTip">
@@ -1054,8 +1054,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="tabPosition">
@@ -1082,8 +1082,8 @@
         </property>
         <property name="font">
          <font>
-          <family>Liberation sans</family>
-          <pointsize>10</pointsize>
+          <family>Freesans</family>
+          <pointsize>9</pointsize>
          </font>
         </property>
         <property name="toolTip">
@@ -1104,8 +1104,8 @@
         </property>
         <property name="font">
          <font>
-          <family>Liberation sans</family>
-          <pointsize>10</pointsize>
+          <family>Freesans</family>
+          <pointsize>9</pointsize>
          </font>
         </property>
         <property name="toolTip">
@@ -1129,8 +1129,8 @@
         </property>
         <property name="font">
          <font>
-          <family>Liberation sans</family>
-          <pointsize>10</pointsize>
+          <family>Freesans</family>
+          <pointsize>9</pointsize>
          </font>
         </property>
         <property name="toolTip">
@@ -1151,8 +1151,8 @@
         </property>
         <property name="font">
          <font>
-          <family>Liberation sans</family>
-          <pointsize>10</pointsize>
+          <family>Freesans</family>
+          <pointsize>9</pointsize>
          </font>
         </property>
         <property name="toolTip">
@@ -1176,8 +1176,8 @@
         </property>
         <property name="font">
          <font>
-          <family>Liberation sans</family>
-          <pointsize>10</pointsize>
+          <family>Freesans</family>
+          <pointsize>9</pointsize>
          </font>
         </property>
         <property name="toolTip">
@@ -1203,8 +1203,8 @@
         </property>
         <property name="font">
          <font>
-          <family>Liberation sans</family>
-          <pointsize>10</pointsize>
+          <family>Freesans</family>
+          <pointsize>9</pointsize>
          </font>
         </property>
         <property name="toolTip">
@@ -1225,8 +1225,8 @@
         </property>
         <property name="font">
          <font>
-          <family>Liberation sans</family>
-          <pointsize>10</pointsize>
+          <family>Freesans</family>
+          <pointsize>9</pointsize>
          </font>
         </property>
         <property name="placeholderText">
@@ -1244,8 +1244,8 @@
         </property>
         <property name="font">
          <font>
-          <family>Liberation sans</family>
-          <pointsize>10</pointsize>
+          <family>Freesans</family>
+          <pointsize>9</pointsize>
          </font>
         </property>
         <property name="toolTip">
@@ -1266,8 +1266,8 @@
         </property>
         <property name="font">
          <font>
-          <family>Liberation sans</family>
-          <pointsize>10</pointsize>
+          <family>Freesans</family>
+          <pointsize>9</pointsize>
          </font>
         </property>
         <property name="toolTip">
@@ -1296,8 +1296,8 @@
         </property>
         <property name="font">
          <font>
-          <family>Liberation sans</family>
-          <pointsize>10</pointsize>
+          <family>Freesans</family>
+          <pointsize>9</pointsize>
          </font>
         </property>
         <property name="toolTip">
@@ -1318,8 +1318,8 @@
         </property>
         <property name="font">
          <font>
-          <family>Liberation sans</family>
-          <pointsize>10</pointsize>
+          <family>Freesans</family>
+          <pointsize>9</pointsize>
          </font>
         </property>
         <property name="toolTip">
@@ -1340,8 +1340,8 @@
         </property>
         <property name="font">
          <font>
-          <family>Liberation sans</family>
-          <pointsize>10</pointsize>
+          <family>Freesans</family>
+          <pointsize>9</pointsize>
          </font>
         </property>
         <property name="toolTip">
@@ -1365,8 +1365,8 @@
         </property>
         <property name="font">
          <font>
-          <family>Liberation sans</family>
-          <pointsize>10</pointsize>
+          <family>Freesans</family>
+          <pointsize>9</pointsize>
          </font>
         </property>
         <property name="toolTip">
@@ -1387,8 +1387,8 @@
         </property>
         <property name="font">
          <font>
-          <family>Liberation sans</family>
-          <pointsize>10</pointsize>
+          <family>Freesans</family>
+          <pointsize>9</pointsize>
          </font>
         </property>
         <property name="toolTip">
@@ -1404,8 +1404,8 @@
     <widget class="QWidget" name="tab">
      <property name="font">
       <font>
-       <family>Liberation sans</family>
-       <pointsize>10</pointsize>
+       <family>Freesans</family>
+       <pointsize>9</pointsize>
       </font>
      </property>
      <attribute name="title">
@@ -1422,8 +1422,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="title">
@@ -1459,8 +1459,8 @@
          <widget class="QLabel" name="nm_node_label">
           <property name="font">
            <font>
-            <family>Liberation sans</family>
-            <pointsize>10</pointsize>
+            <family>Freesans</family>
+            <pointsize>9</pointsize>
            </font>
           </property>
           <property name="text">
@@ -1470,12 +1470,6 @@
         </item>
         <item>
          <widget class="QComboBox" name="nm_metric_combobox">
-          <property name="font">
-           <font>
-            <family>Liberation sans</family>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
           <property name="toolTip">
            <string>Select a telemetry metric.</string>
           </property>
@@ -1494,8 +1488,8 @@
           </property>
           <property name="font">
            <font>
-            <family>Liberation sans</family>
-            <pointsize>10</pointsize>
+            <family>Freesans</family>
+            <pointsize>9</pointsize>
            </font>
           </property>
           <property name="text">
@@ -1554,8 +1548,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="text">
@@ -1593,8 +1587,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="text">
@@ -1612,8 +1606,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="text">
@@ -1634,8 +1628,8 @@
         <widget class="QLineEdit" name="nodes_filter_linedit">
          <property name="font">
           <font>
-           <family>Liberation sans</family>
-           <pointsize>10</pointsize>
+           <family>Freesans</family>
+           <pointsize>9</pointsize>
           </font>
          </property>
          <property name="toolTip">
@@ -1650,12 +1644,6 @@
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
-         </property>
-         <property name="font">
-          <font>
-           <family>Liberation sans</family>
-           <pointsize>10</pointsize>
-          </font>
          </property>
          <property name="toolTip">
           <string>Filter by predefined filters.</string>
@@ -1691,8 +1679,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
      </widget>
@@ -1723,8 +1711,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="title">
@@ -1741,8 +1729,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="toolTip">
@@ -1754,8 +1742,8 @@
     <widget class="QWidget" name="tab_2">
      <property name="font">
       <font>
-       <family>Liberation sans</family>
-       <pointsize>10</pointsize>
+       <family>Freesans</family>
+       <pointsize>9</pointsize>
       </font>
      </property>
      <attribute name="title">
@@ -1772,8 +1760,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="selectionBehavior">
@@ -1811,8 +1799,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="toolTip">
@@ -1849,8 +1837,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="toolTip">
@@ -1884,8 +1872,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="title">
@@ -1911,8 +1899,8 @@
           </property>
           <property name="font">
            <font>
-            <family>Liberation sans</family>
-            <pointsize>10</pointsize>
+            <family>Freesans</family>
+            <pointsize>9</pointsize>
            </font>
           </property>
           <property name="text">
@@ -1924,8 +1912,8 @@
          <widget class="QComboBox" name="pm_metric_combobox">
           <property name="font">
            <font>
-            <family>Liberation sans</family>
-            <pointsize>10</pointsize>
+            <family>Freesans</family>
+            <pointsize>9</pointsize>
            </font>
           </property>
           <property name="toolTip">
@@ -1940,8 +1928,8 @@
          <widget class="QPushButton" name="pm_update_button">
           <property name="font">
            <font>
-            <family>Liberation sans</family>
-            <pointsize>10</pointsize>
+            <family>Freesans</family>
+            <pointsize>9</pointsize>
            </font>
           </property>
           <property name="text">
@@ -1973,8 +1961,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="text">
@@ -2021,8 +2009,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="text">
@@ -2059,8 +2047,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="text">
@@ -2097,8 +2085,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="text">
@@ -2135,8 +2123,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="text">
@@ -2173,8 +2161,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="text">
@@ -2211,8 +2199,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="text">
@@ -2249,8 +2237,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="text">
@@ -2287,8 +2275,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="text">
@@ -2325,8 +2313,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="text">
@@ -2344,8 +2332,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="text">
@@ -2382,8 +2370,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="text">
@@ -2421,8 +2409,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="toolTip">
@@ -2433,8 +2421,8 @@
     <widget class="QWidget" name="tab_messages">
      <property name="font">
       <font>
-       <family>Liberation sans</family>
-       <pointsize>10</pointsize>
+       <family>Freesans</family>
+       <pointsize>9</pointsize>
       </font>
      </property>
      <attribute name="title">
@@ -2451,8 +2439,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
      </widget>
@@ -2467,8 +2455,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="text">
@@ -2486,13 +2474,16 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="textElideMode">
        <enum>Qt::ElideNone</enum>
       </property>
+      <attribute name="horizontalHeaderCascadingSectionResizes">
+       <bool>false</bool>
+      </attribute>
      </widget>
      <widget class="QWidget" name="horizontalLayoutWidget_4">
       <property name="geometry">
@@ -2508,8 +2499,8 @@
         <widget class="QLabel" name="remaining_chars_label">
          <property name="font">
           <font>
-           <family>Liberation sans</family>
-           <pointsize>10</pointsize>
+           <family>Freesans</family>
+           <pointsize>9</pointsize>
           </font>
          </property>
          <property name="text">
@@ -2562,8 +2553,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="toolTip">
@@ -2590,8 +2581,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
         <weight>75</weight>
         <bold>true</bold>
        </font>
@@ -2604,8 +2595,8 @@
     <widget class="QWidget" name="tab_nodes">
      <property name="font">
       <font>
-       <family>Liberation sans</family>
-       <pointsize>10</pointsize>
+       <family>Freesans</family>
+       <pointsize>9</pointsize>
       </font>
      </property>
      <attribute name="title">
@@ -2622,8 +2613,8 @@
       </property>
       <property name="font">
        <font>
-        <family>Liberation sans</family>
-        <pointsize>10</pointsize>
+        <family>Freesans</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="title">
@@ -2652,8 +2643,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Liberation sans</family>
-         <pointsize>10</pointsize>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="toolTip">
@@ -2684,6 +2675,47 @@
         </item>
        </layout>
       </widget>
+      <widget class="QCheckBox" name="activate_custom_tiles_checkbox">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="geometry">
+        <rect>
+         <x>140</x>
+         <y>10</y>
+         <width>91</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Custom tiles</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="custom_tiles_uri_linedit">
+       <property name="geometry">
+        <rect>
+         <x>230</x>
+         <y>10</y>
+         <width>181</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string>Current path where downloads are exported.</string>
+       </property>
+      </widget>
      </widget>
     </widget>
    </widget>
@@ -2702,7 +2734,7 @@
        <property name="font">
         <font>
          <family>Freesans</family>
-         <pointsize>10</pointsize>
+         <pointsize>9</pointsize>
         </font>
        </property>
        <property name="lineWidth">

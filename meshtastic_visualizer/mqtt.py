@@ -26,7 +26,7 @@ from .resources import run_in_thread, \
     MQTTPacket, \
     TIME_FORMAT
 
-from .meshtastic_datastore import MeshtasticDataStore
+from .datastore import MeshtasticDataStore
 
 
 # Enable logging but set to ERROR level to suppress debug/info messages

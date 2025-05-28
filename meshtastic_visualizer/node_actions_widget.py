@@ -12,7 +12,7 @@ class NodeActionsWidget(QWidget):
 
         if not is_local:
             btn = QPushButton("Traceroute")
-            btn.setStyleSheet("QPushButton{font-size: 10pt;}")
+            btn.setStyleSheet("QPushButton{font-size: 9pt;}")
             btn.setEnabled(True)
             btn.clicked.connect(lambda: callback_traceroute(self._node_id))
             layout.addWidget(btn)
@@ -20,13 +20,13 @@ class NodeActionsWidget(QWidget):
         # only add these button if this is the local node
         if is_local:
             btn = QPushButton("Send position")
-            btn.setStyleSheet("QPushButton{font-size: 10pt;}")
+            btn.setStyleSheet("QPushButton{font-size: 9pt;}")
             btn.setEnabled(True)
             btn.clicked.connect(callback_position)
             layout.addWidget(btn)
 
             btn = QPushButton("Send telemetry")
-            btn.setStyleSheet("QPushButton{font-size: 10pt;}")
+            btn.setStyleSheet("QPushButton{font-size: 9pt;}")
             btn.setEnabled(True)
             btn.clicked.connect(callback_telemetry)
             layout.addWidget(btn)

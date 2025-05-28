@@ -33,7 +33,7 @@ from .resources import run_in_thread, \
     sneaky_to_camel
 
 
-from .meshtastic_datastore import MeshtasticDataStore
+from .datastore import MeshtasticDataStore
 
 
 # Enable logging but set to ERROR level to suppress debug/info messages
