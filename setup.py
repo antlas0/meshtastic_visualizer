@@ -17,7 +17,7 @@ requirements = parse_requirements('requirements.txt')
 
 setup(
     name="meshtastic_visualizer",
-    version="1.7.0",
+    version="1.7.1",
     packages=find_packages(),
     install_requires=requirements,
     classifiers=[
