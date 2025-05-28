@@ -287,6 +287,12 @@
          <height>16777215</height>
         </size>
        </property>
+       <property name="font">
+        <font>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
+        </font>
+       </property>
        <property name="value">
         <number>0</number>
        </property>
