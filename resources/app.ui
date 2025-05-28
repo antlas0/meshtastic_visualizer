@@ -34,6 +34,9 @@
   <property name="styleSheet">
    <string notr="true">font-family: Freesans, Emoji One;</string>
   </property>
+  <property name="locale">
+   <locale language="English" country="UnitedKingdom"/>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <property name="font">
     <font>
