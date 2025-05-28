@@ -97,7 +97,12 @@ class MeshtasticManager(QObject, threading.Thread):
 
     @run_in_thread
     def ble_scan_devices(self) -> None:
-        devices = BLEInterface.scan()
+        try:
+            devices = BLEInterface.scan()
+        except Exception:
+            self.notify_frontend_signal.emit(MessageLevel.ERROR, "Not able to scan devices")
+            devices = []
+
         self.notify_ble_devices_signal.emit(devices)
 
     @run_in_thread
