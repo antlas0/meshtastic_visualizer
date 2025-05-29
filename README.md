@@ -57,8 +57,24 @@ Otherwise, you can try `QT_QPA_PLATFORM=xcb`, by having previously installed `li
 
 ## Todo
 A lot ! Please fill an issue to add ideas or raise bugs.
-Code cleaning and going deeper in factorization becomes more and more needed :)
 
+Here is a list of things it could be intetesting to work on:
+
+#### App features
+
+ - [ ] Code factorisation
+ - [x] Custom tile server
+ - [ ] Theming
+ - [ ] Quick node actions (shutdown,... TBD)
+ - [ ] Traceroute results: review graphical display as not optimal
+ - [ ] Map: add layer for only "online" nodes
+ - [ ] Map: review "relay node" layer as not easily scalable
+
+#### Packaging
+
+ - [ ] Automate non-regression build
+ - [ ] Add backend unitary testing
+ - [ ] Make Docker image available without having to build it
 
 ## Contributing
 Please open a Pull Request.
