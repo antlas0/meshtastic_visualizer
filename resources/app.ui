@@ -1651,6 +1651,12 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="font">
+          <font>
+           <family>Freesans</family>
+           <pointsize>9</pointsize>
+          </font>
+         </property>
          <property name="toolTip">
           <string>Filter by predefined filters.</string>
          </property>
