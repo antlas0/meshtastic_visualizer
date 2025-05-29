@@ -265,7 +265,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
             )
 
             if received_packet.hop_limit is not None and received_packet.hop_start is not None:
-                received_packet.hopsaway = received_packet.hop_start - received_packet.hop_limit
+                received_packet.hopsaway = max(0, received_packet.hop_start - received_packet.hop_limit)
             for f in ["relay_node", "next_hop"]:
                 if getattr(se.packet, f) != 0:
                     setattr(received_packet, f, f"{getattr(se.packet, f):0x}")
@@ -412,8 +412,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
 
             self._store.store_or_update_node(node_from)
             self._store.update_node_rx_counter(node_from)
-            node_from.hopsaway = (
-                int(se.packet.hop_start) - int(se.packet.hop_limit))
+            node_from.hopsaway = max(0, int(se.packet.hop_start) - int(se.packet.hop_limit))
             if node_from.hopsaway is not None and node_from.hopsaway == 0:
                 self._store.add_neighbor(node_from.id, se.gateway_id)
             self.notify_nodes_update.emit(node_from)
