@@ -1476,6 +1476,12 @@
         </item>
         <item>
          <widget class="QComboBox" name="nm_metric_combobox">
+          <property name="font">
+           <font>
+            <family>Freesans</family>
+            <pointsize>9</pointsize>
+           </font>
+          </property>
           <property name="toolTip">
            <string>Select a telemetry metric.</string>
           </property>
