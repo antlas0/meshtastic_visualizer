@@ -37,7 +37,7 @@ $ git checkout v1.8
 ```
 
 ## How to install and run
-
+[uv](https://github.com/astral-sh/uv) is used to manage dependencies, venv and packaging.
 To install dependencies and run on your computer:
 ```bash
 $ uv run meshtastic_visualizer.py
