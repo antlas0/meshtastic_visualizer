@@ -29,6 +29,24 @@ Linux compatible, debian based tested (should work on Windows, compatibility not
 | Nodes telemetry metrics plotting (CHutil, power,...) |✅|✅|
 | Packets RF metrics plotting (RSSI, SNR,...) |✅|✅|
 
+## How to donwload
+
+```bash
+$ git clone https://github.com/antlas0/meshtastic_visualizer.git
+$ git checkout v1.8
+```
+
+## How to install and run
+
+To install dependencies and run on your computer:
+```bash
+$ uv run meshtastic_visualizer.py
+```
+
+Note: If you rely on Wayland, you may experience Qt event not properly managed. To fall back on a `X11` session, provide the following environment variable when launching the application: `XDG_SESSION_TYPE=x11`.
+Otherwise, you can try `QT_QPA_PLATFORM=xcb`, by having previously installed `libxcb-cursor0` package.
+
+
 ## How to run with Docker
 
 Based on X11, build the dockerfile and run the docker container. This example assumes your node is accessible at `/dev/ttyACM0`.
@@ -44,16 +62,6 @@ $ docker run -it \
     --device=/dev/ttyACM0 \
     meshtastic_visualizer:latest
 ```
-
-## How to install and run
-
-To install on your computer:
-```bash
-$ uv run meshtastic_visualizer.py
-```
-Note: If you rely on Wayland, you may experience Qt event not properly managed. To fall back on a `X11` session, provide the following environment variable when launching the application: `XDG_SESSION_TYPE=x11`.
-Otherwise, you can try `QT_QPA_PLATFORM=xcb`, by having previously installed `libxcb-cursor0` package.
-
 
 ## Todo
 A lot ! Please fill an issue to add ideas or raise bugs.
