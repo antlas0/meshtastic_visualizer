@@ -5,7 +5,6 @@ description = "Qt desktop application to send messages, inspect packets, metrics
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "colorama==0.4.6",
     "cryptography>=45.0.3",
     "folium==0.17.0",
     "meshtastic==2.6.3",
