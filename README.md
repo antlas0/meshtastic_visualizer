@@ -30,7 +30,7 @@ Linux compatible, debian based tested (should work on Windows, compatibility not
 | Packets RF metrics plotting (RSSI, SNR,...) |✅|✅|
 | Custom tiles server |✅|✅|
 
-## How to donwload
+## How to download
 
 ```bash
 $ git clone https://github.com/antlas0/meshtastic_visualizer.git
