@@ -28,6 +28,7 @@ Linux compatible, debian based tested (should work on Windows, compatibility not
 | Export radio serial console |✅|-|
 | Nodes telemetry metrics plotting (CHutil, power,...) |✅|✅|
 | Packets RF metrics plotting (RSSI, SNR,...) |✅|✅|
+| Custom tiles server |✅|✅|
 
 ## How to donwload
 
@@ -62,6 +63,32 @@ $ docker run -it \
     --device=/dev/ttyACM0 \
     meshtastic_visualizer:latest
 ```
+
+## How to use a local tiles server
+To setup a local tiles server, one solution is to use Docker to run a server and point to it from the application.
+
+To import and setup the server, we can rely on [openstreetmap-tile-server](https://github.com/Overv/openstreetmap-tile-server). Globally we will:
+* Download the needed tiles in `.pbf` format along with the polylines in `.poly` format, from [https://download.geofabrik.de](https://download.geofabrik.de). Here is an example for all [France](https://download.geofabrik.de/europe/france.html).
+* Import them in a Docker volume
+```bash
+docker run \
+    -v /absolute/path/to/france.osm.pbf:/data/region.osm.pbf \
+    -v /absolute/path/to/france.poly:/data/region.poly \
+    -v osm-data:/data/database/ \
+    overv/openstreetmap-tile-server \
+    import
+```
+* Run the tile server with this volume, in this case it will be binded to `0.0.0.0:8080`
+```bash
+docker run \
+    -p 8080:80 \
+    -v osm-data:/data/database/ \
+    -d overv/openstreetmap-tile-server \
+    run
+```
+* Give to the applicaiton the tiles request `http://127.0.0.1:8080/tile/{z}/{x}/{y}.png`.
+![Capture d’écran du 2025-06-05 15-46-54](https://github.com/user-attachments/assets/8ee0e3a1-730e-4d4c-8ad5-bbb55a1d771b)
+
 
 ## Todo
 A lot ! Please fill an issue to add ideas or raise bugs.
