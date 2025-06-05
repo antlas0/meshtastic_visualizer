@@ -1273,23 +1273,33 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._settings.setValue("mqtt_key", m.key)
         self.mqtt_connect_signal.emit(m)
 
+    def write_to_file(self, path:str, data:str, kind:str="") -> bool:
+        res = False
+        try:
+            text_file = open(path, "w")
+        except Exception as e:
+            self.set_status(MessageLevel.ERROR, f"Could not write to {path}: {e}")
+        else:
+            text_file.write(data)
+            absp = os.path.abspath(path)
+            trace = f"<a href='file://{absp}'>Exported {kind} logs to file: {path}</a>"
+            self.set_status(MessageLevel.INFO, trace)
+            res = True
+            text_file.close()
+        finally:
+            pass
+
+        return res
+
     def export_mqtt_logs(self) -> None:
         nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
         fpath = os.path.join(self._current_output_folder, f"mqtt_logs_{nnow}.log")
-        with open(fpath, "w") as text_file:
-            text_file.write(self.mqtt_output_textedit.toPlainText())
-            absp = os.path.abspath(fpath)
-            trace = f"<a href='file://{absp}'>Exported mqtt logs to file: {fpath}</a>"
-            self.set_status(MessageLevel.INFO, trace)
+        self.write_to_file(fpath, self.mqtt_output_textedit.toPlainText(), "mqtt")
 
     def export_console_logs(self) -> None:
         nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
         fpath = os.path.join(self._current_output_folder, f"console_logs_{nnow}.log")
-        with open(fpath, "w") as text_file:
-            text_file.write(self.console_logs_textedit.toPlainText())
-            absp = os.path.abspath(fpath)
-            trace = f"<a href='file://{absp}'>Exported console logs to file: {fpath}</a>"
-            self.set_status(MessageLevel.INFO, trace)
+        self.write_to_file(fpath, self.console_logs_textedit.toPlainText(), "console")
 
     def _update_console_button(self, activated:bool) -> None:
         if not activated: self.start_pause_console_button.setText("⏸️")
@@ -1309,11 +1319,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         data_json = json.dumps(packets_list, indent=4)
         nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
         fpath = os.path.join(self._current_output_folder, f"packet_{nnow}.json")
-        with open(fpath, "w") as json_file:
-            json_file.write(data_json)
-            absp = os.path.abspath(fpath)
-            trace = f"<a href='file://{absp}'>Exported packets to file: {fpath}</a>"
-            self.set_status(MessageLevel.INFO, trace)
+        self.write_to_file(fpath, data_json, "packets")
 
     def export_chat(self) -> None:
         messages = self._store.get_messages()
@@ -1322,11 +1328,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         data_json = json.dumps(messages, indent=4)
         nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
         fpath = os.path.join(self._current_output_folder, f"messages_{nnow}.json")
-        with open(fpath, "w") as json_file:
-            json_file.write(data_json)
-            absp = os.path.abspath(fpath)
-            trace = f"<a href='file://{absp}'>Exported chat to file: {fpath}</a>"
-            self.set_status(MessageLevel.INFO, trace)
+        self.write_to_file(fpath, data_json, "messages")
 
     def export_nodes(self) -> None:
         nodes = self._store.get_nodes().values()
@@ -1335,11 +1337,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         data_json = json.dumps(nodes, indent=4)
         nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")
         fpath = os.path.join(self._current_output_folder, f"nodes_{nnow}.json")
-        with open(fpath, "w") as json_file:
-            json_file.write(data_json)
-            absp = os.path.abspath(fpath)
-            trace = f"<a href='file://{absp}'>Exported nodes to file: {fpath}</a>"
-            self.set_status(MessageLevel.INFO, trace)
+        self.write_to_file(fpath, data_json, "nodes")
 
     def export_node_metrics(self) -> None:
         metric_names = self._store.get_node_metrics_fields()
@@ -1356,11 +1354,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             metrics["metric"][metric] = self._store.get_node_metrics(self._store.get_id_from_long_name(node_id), metric)
         data_json = json.dumps(metrics, indent=4)
         fpath = os.path.join(self._current_output_folder, f"node_{node_id}_metrics_{nnow.strftime('%Y-%m-%d__%H_%M_%S')}.json")
-        with open(fpath, "w") as json_file:
-            json_file.write(data_json)
-            absp = os.path.abspath(fpath)
-            trace = f"<a href='file://{absp}'>Exported node {node_id} metrics to file: {fpath}</a>"
-            self.set_status(MessageLevel.INFO, trace)
+        self.write_to_file(fpath, data_json, f"node {node_id} metrics")
 
     def closeEvent(self, event) -> None:
         self.quit()
