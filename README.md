@@ -78,7 +78,7 @@ $ docker run \
     overv/openstreetmap-tile-server \
     import
 ```
-* Run the tile server with this volume, in this case it will be bound to `0.0.0.0:8080`
+* Run the tiles server with this volume, in this case it will be bound to `0.0.0.0:8080`
 ```bash
 $ docker run \
     -p 8080:80 \
@@ -86,7 +86,7 @@ $ docker run \
     -d overv/openstreetmap-tile-server \
     run
 ```
-* Give to the applicaiton the tiles request `http://127.0.0.1:8080/tile/{z}/{x}/{y}.png`.
+* Give to the application the tiles request `http://127.0.0.1:8080/tile/{z}/{x}/{y}.png`.
 ![Capture d’écran du 2025-06-05 15-46-54](https://github.com/user-attachments/assets/8ee0e3a1-730e-4d4c-8ad5-bbb55a1d771b)
 
 
