@@ -71,7 +71,7 @@ To import and setup the server, we can rely on [openstreetmap-tile-server](https
 * Download the needed tiles in `.pbf` format along with the polylines in `.poly` format, from [https://download.geofabrik.de](https://download.geofabrik.de). Here is an example for all [France](https://download.geofabrik.de/europe/france.html).
 * Import them in a Docker volume
 ```bash
-docker run \
+$ docker run \
     -v /absolute/path/to/france.osm.pbf:/data/region.osm.pbf \
     -v /absolute/path/to/france.poly:/data/region.poly \
     -v osm-data:/data/database/ \
@@ -80,7 +80,7 @@ docker run \
 ```
 * Run the tile server with this volume, in this case it will be binded to `0.0.0.0:8080`
 ```bash
-docker run \
+$ docker run \
     -p 8080:80 \
     -v osm-data:/data/database/ \
     -d overv/openstreetmap-tile-server \
