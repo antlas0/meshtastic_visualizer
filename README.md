@@ -100,6 +100,7 @@ Here is a list of things it could be intetesting to work on:
 
  - [ ] Code factorisation
  - [x] Custom tile server
+ - [ ] Offline map
  - [ ] Theming
  - [ ] Quick node actions (shutdown,... TBD)
  - [ ] Traceroute results: review graphical display as not optimal
