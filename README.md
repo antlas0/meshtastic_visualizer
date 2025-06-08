@@ -94,7 +94,9 @@ $ docker run \
 ### Considerations for an offline map
 I would appreciate providing this, but this is currently off the roadmap as `folium` package does not [provide this feature](https://github.com/python-visualization/folium/issues/1368).
 
-Worth to mention that the `offline_folium` [package](https://github.com/robintw/offline_folium) is intented to overcome this, but only partially at the moment (not all map widgets are supported). Based on that, next steps would be to iterate over all map widgets used in the application, submit a PR to `offline_folium` to support them. Then implement the dedicated procedure to download locally JS and CSS files. Adding this feature in the application in this context would imply rethinking a bit the distribution as well due to the `offline_folium` [pre-run steps](https://github.com/robintw/offline_folium?tab=readme-ov-file#quickstart).
+Worth to mention that the `offline_folium` [package](https://github.com/robintw/offline_folium) is intented to overcome this, but only partially at the moment (not all map widgets are supported). Based on that, next steps would be to iterate over all map widgets used in the application, submit a PR to `offline_folium` to support them (other choice would be to insource this package). 
+
+Then implement the dedicated procedure to download locally JS and CSS files. Adding this feature in the application in this context would imply rethinking a bit the distribution due to the `offline_folium` [pre-run steps](https://github.com/robintw/offline_folium?tab=readme-ov-file#quickstart).
 
 This is not a technical issue, as even with more complexity the feature could become available, but rather an energy / time spent issue. This may change in the future.
 
