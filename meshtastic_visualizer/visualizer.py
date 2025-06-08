@@ -7,6 +7,7 @@ import json
 from threading import Lock
 from datetime import datetime
 from typing import List, Optional
+from importlib_resources import files
 from PyQt6 import QtCore
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtGui import QTextCursor
@@ -52,7 +53,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def __init__(self):
         self._lock = Lock()
         super(MeshtasticQtApp, self).__init__()
-        uic.loadUi('resources/app.ui', self)
+        self._resources_dir = files(None)
+        ui_file = self._resources_dir.joinpath("resources/app.ui")
+        uic.loadUi(ui_file, self)
         self.setWindowFlags(QtCore.Qt.WindowType.CustomizeWindowHint |
                             QtCore.Qt.WindowType.WindowCloseButtonHint | QtCore.Qt.WindowType.WindowMinimizeButtonHint)
         self.setFixedSize(self.size())

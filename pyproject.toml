@@ -3,10 +3,11 @@ name = "meshtastic-visualizer"
 version = "1.8.0"
 description = "Qt desktop application to send messages, inspect packets, metrics from your Meshtastic node."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
     "cryptography>=45.0.3",
     "folium==0.17.0",
+    "importlib-resources>=6.5.2",
     "meshtastic==2.6.3",
     "paho-mqtt>=2.1.0",
     "protobuf==5.27.3",
@@ -16,4 +17,14 @@ dependencies = [
     "pyqtgraph>=0.13.7",
     "pyserial==3.5",
 ]
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"
+
+[project.gui-scripts]
+meshtastic_visualizer = "meshtastic_visualizer:main"
 

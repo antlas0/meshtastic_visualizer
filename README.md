@@ -41,7 +41,7 @@ $ git checkout v1.8
 [uv](https://github.com/astral-sh/uv) is used to manage dependencies, venv and packaging.
 To install dependencies and run on your computer:
 ```bash
-$ uv run meshtastic_visualizer.py
+$ uv run meshtastic_visualizer
 ```
 
 Note: If you rely on Wayland, you may experience Qt event not properly managed. To fall back on a `X11` session, provide the following environment variable when launching the application: `XDG_SESSION_TYPE=x11`.
