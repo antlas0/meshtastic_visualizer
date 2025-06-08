@@ -65,6 +65,7 @@ $ docker run -it \
 ```
 
 ## How to use a local tiles server
+
 To setup a local tiles server, one solution is to use Docker to run a server and point to it from the application.
 
 To import and setup the server, we can rely on [openstreetmap-tile-server](https://github.com/Overv/openstreetmap-tile-server). Globally we will:
@@ -90,6 +91,13 @@ $ docker run \
 * Give to the application the tiles request `http://127.0.0.1:8080/tile/{z}/{x}/{y}.png`.
 ![Capture d’écran du 2025-06-05 15-46-54](https://github.com/user-attachments/assets/8ee0e3a1-730e-4d4c-8ad5-bbb55a1d771b)
 
+### Considerations for an offline map
+I would appreciate providing this, but this is currently off the roadmap as `folium` package does not [provide this feature](https://github.com/python-visualization/folium/issues/1368).
+
+Worth to mention that the `offline_folium` [package](https://github.com/robintw/offline_folium) is intented to overcome this, but only partially at the moment (not all map widgets are supported). Based on that, next steps would be to iterate over all map widgets used in the application, submit a PR to `offline_folium` to support them. Then implement the dedicated procedure to download locally JS and CSS files. Adding this feature in the application in this context would imply rethinking a bit the distribution as well due to the `offline_folium` [pre-run steps](https://github.com/robintw/offline_folium?tab=readme-ov-file#quickstart).
+
+This is not a technical issue, as even with more complexity the feature could become available, but rather an energy / time spent issue. This may change in the future.
+
 
 ## Todo
 A lot ! Please fill an issue to add ideas or raise bugs.
@@ -100,7 +108,7 @@ Here is a list of things it could be intetesting to work on:
 
  - [ ] Code factorisation
  - [x] Custom tile server
- - [ ] Offline map
+ - [ ] ~Offline map~
  - [ ] Theming
  - [ ] Quick node actions (shutdown,... TBD)
  - [ ] Traceroute results: review graphical display as not optimal
