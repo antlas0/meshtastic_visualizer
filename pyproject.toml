@@ -21,11 +21,9 @@ dependencies = [
 [tool.uv]
 package = true
 
-
 [build-system]
 requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
-data = "resources"
 
 [project.gui-scripts]
 meshtastic_visualizer = "meshtastic_visualizer:main"
