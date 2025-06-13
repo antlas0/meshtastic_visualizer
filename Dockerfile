@@ -24,4 +24,4 @@ COPY pyproject.toml pyproject.toml
 RUN uv python install 3.11
 RUN uv python pin 3.11
 RUN uv run true
-ENTRYPOINT ["uv", "run", "meshtastic_visualizer.py"]
+ENTRYPOINT ["uv", "run", "meshtastic_visualizer"]
