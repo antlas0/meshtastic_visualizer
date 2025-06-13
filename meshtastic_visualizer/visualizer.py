@@ -13,8 +13,6 @@ from PyQt6 import QtWidgets, uic
 from PyQt6.QtGui import QTextCursor
 from PyQt6.QtWidgets import QTableWidgetItem, QTreeWidgetItem, QPushButton, QFileDialog
 from PyQt6.QtCore import pyqtSignal, QSettings
-import pyqtgraph as pg
-from pyqtgraph import DateAxisItem
 from dataclasses import asdict
 
 from .manager import MeshtasticManager
@@ -31,7 +29,7 @@ from .resources import MessageLevel, \
     BROADCAST_ADDR, \
     BROADCAST_NAME
 from .node_actions_widget import NodeActionsWidget
-
+from .graphs import MeshtasticGraphs, GraphKind
 from .mqtt import MeshtasticMQTT
 from .datastore import MeshtasticDataStore
 from .mapper import Mapper
@@ -65,28 +63,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._map = None
         self._map_custom_tiles_uri = self._settings.value("map_custom_tiles_uri", "")
         self._local_board_ln = ""
-        self._telemetry_plot_widget = pg.PlotWidget()
-        self._telemetry_plot_widget.plotItem.getViewBox().setMouseMode(pg.ViewBox.RectMode)
-        self._packets_plot_widget = pg.PlotWidget()
-        self._packets_plot_widget.plotItem.getViewBox().setMouseMode(pg.ViewBox.RectMode)
-        self._telemetry_plot_item = pg.ScatterPlotItem(
-            pen=pg.mkPen(
-                '#007aff',
-                width=1),
-            symbol='o',
-            symbolPen='b',
-            symbolSize=8,
-            hoverable=True)
-        self._telemetry_plot_widget.addItem(self._telemetry_plot_item)
-        self._packets_plot_item = pg.ScatterPlotItem(
-            pen=pg.mkPen(
-                '#007aff',
-                width=1),
-            symbol='o',
-            symbolPen='b',
-            symbolSize=8,
-            hoverable=True)
-        self._packets_plot_widget.addItem(self._packets_plot_item)
+        self._graphs = MeshtasticGraphs()
 
         # Variables
         self.status_var: str = ""
@@ -110,10 +87,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.refresh_status_header)
         self._mqtt_manager.notify_frontend_signal.connect(
             self.refresh_status_header)
-        self._manager.notify_nodes_metrics_signal.connect(
-            self.update_nodes_metrics)
-        self._mqtt_manager.notify_nodes_metrics_signal.connect(
-            self.update_nodes_metrics)
+        self._manager.notify_nodes_metrics_signal.connect(self.update_nodes_telemetry_metrics)
+        self._mqtt_manager.notify_nodes_metrics_signal.connect(self.update_nodes_telemetry_metrics)
         self._manager.notify_local_device_configuration_signal.connect(
             self.update_device_details)
         self._manager.notify_new_packet.connect(
@@ -266,7 +241,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.refresh_map_button.clicked.connect(self.get_nodes)
         self.send_button.clicked.connect(self.send_message)
         self.nm_update_button.setEnabled(False)
-        self.nm_update_button.pressed.connect(self.update_nodes_metrics)
+        self.nm_update_button.pressed.connect(self.update_nodes_telemetry_metrics)
         self.nm_metric_combobox.currentTextChanged.connect(
             self.update_node_metrics_buttons)
         self.pm_update_button.pressed.connect(self.update_packets_metrics)
@@ -306,35 +281,15 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                               "2-hops", "3-hops", "4-hops", "5-hops", "6-hops", "7-hops"]):
             self.shortcut_filter_combobox.insertItem(i, f)
 
-        for p in ["telemetry", "packets"]:
-            widget = {
-                "telemetry": self._telemetry_plot_widget,
-                "packets": self._packets_plot_widget,
-            }
-            layout = {
-                "telemetry": self.telemetry_plot_layout,
-                "packets": self.packets_plot_layout,
-            }
-            plot_item = {
-                "telemetry": self._telemetry_plot_item,
-                "packets": self._packets_plot_item,
-            }
-            widget[p].setBackground('w')
-            widget[p].getPlotItem().getAxis('left').setPen(pg.mkPen(color='k'))
-            widget[p].getPlotItem().getAxis('bottom').setPen(pg.mkPen(color='k'))
-            widget[p].getPlotItem().getAxis('left').setTextPen(pg.mkPen(color='k'))
-            widget[p].getPlotItem().getAxis('bottom').setTextPen(pg.mkPen(color='k'))
-            widget[p].addLegend()
-            widget[p].setMouseEnabled(x=False, y=False)
-            widget[p].setAxisItems({'bottom': DateAxisItem()})
-            layout[p].addWidget(widget[p])
-            plot_item[p] = widget[p].plot(
-                pen=pg.mkPen(
-                    '#007aff',
-                    width=1),
-                symbol='o',
-                symbolPen='b',
-                symbolSize=8)
+
+        self._graphs.setup()
+        layout = {
+            GraphKind.TELEMETRY_TIMELINE: self.telemetry_plot_layout,
+            GraphKind.PACKETS_TIMELINE: self.packets_plot_layout,
+        }
+
+        for kind in [GraphKind.PACKETS_TIMELINE, GraphKind.TELEMETRY_TIMELINE]:
+            layout[kind].addWidget(self._graphs.get_plot_widget(kind))
 
         self.mqtt_disconnect_button.setEnabled(False)
         self.nodes_total_lcd.setDecMode()
@@ -395,18 +350,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.nodes_total_lcd.display(0)
         self.nodes_gps_lcd.display(0)
         self.nodes_recently_lcd.display(0)
-        self._telemetry_plot_item.setData(
-            x=None,
-            y=None)
-        self._telemetry_plot_widget.setTitle("No data")
+        self.clean_plot()
 
     def clear_nodes_metrics(self) -> None:
         self._store.clear_nodes_metrics()
         self.nm_node_label.clear()
-        self._telemetry_plot_item.setData(
-            x=None,
-            y=None)
-        self._telemetry_plot_widget.setTitle("No data")
+        self.clean_plot()
 
     def clear_packets(self) -> None:
         self._store.clear_radio_packets()
@@ -416,10 +365,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packettype_combobox.insertItem(0, "All")
         self.packetsource_combobox.clear()
         self.packetsource_combobox.insertItem(0, "All")
-        self._packets_plot_item.setData(
-            x=None,
-            y=None)
-        self._packets_plot_widget.setTitle("No data")
+        self.clean_plot()
         self.reset_node_packets_counters()
 
     def _get_meshtastic_message_header_fields(self) -> dict:
@@ -633,57 +579,42 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._map.update(self._store.get_nodes(), self._map_custom_tiles_uri)
         self.update_map_in_widget()
 
-    def clean_plot(self, kind: str = "") -> None:
-        to_clean = [kind]
-        if not kind:
-            to_clean = ["telemetry", "packets"]
-        for p in to_clean:
-            widget = {
-                "telemetry": self._telemetry_plot_widget,
-                "packets": self._packets_plot_widget,
-            }
-            plot_item = {
-                "telemetry": self._telemetry_plot_item,
-                "packets": self._packets_plot_item,
-            }
-            plot_item[p].setData(
-                x=None,
-                y=None)
-            widget[p].setTitle("No data")
+    def clean_plot(self, kind: GraphKind = GraphKind.UNKNOWN) -> None:
+        if kind == GraphKind.UNKNOWN:
+            self._graphs.clean_plot(GraphKind.TELEMETRY_TIMELINE)
+            self._graphs.clean_plot(GraphKind.PACKETS_TIMELINE)
+        else:
+            self._graphs.clean_plot(kind)
 
     def update_node_metrics_buttons(self) -> None:
         self.nm_update_button.setEnabled(True)
 
-    def update_nodes_metrics(self) -> str:
+    def update_nodes_telemetry_metrics(self) -> str:
         self.nm_update_button.setEnabled(False)
         node_id = self._store.get_id_from_long_name(self.nm_node_label.text())
         metric_name = self.nm_metric_combobox.currentText()
         if not node_id or not metric_name:
-            self.clean_plot(kind="telemetry")
+            self.clean_plot(kind=GraphKind.TELEMETRY_TIMELINE)
             return
-        self.refresh_plot(
-            node_id=node_id,
-            metric_name=metric_name,
-            kind="telemetry")
+        self.refresh_plot(node_id=node_id, metric_name=metric_name, kind=GraphKind.TELEMETRY_TIMELINE)
 
     def update_packets_metrics(self) -> str:
-        node_id = self._store.get_id_from_long_name(
-            self.packetsource_combobox.currentText())
+        node_id = self._store.get_id_from_long_name(self.packetsource_combobox.currentText())
         metric_name = self.pm_metric_combobox.currentText()
         if not node_id or not metric_name:
-            self.clean_plot(kind="packets")
+            self.clean_plot(kind=GraphKind.PACKETS_TIMELINE)
             return
-        self.refresh_plot(
-            node_id=node_id,
-            metric_name=metric_name,
-            kind="packets")
+        kind = GraphKind.PACKETS_TIMELINE
+        # if self.pm_histogram_checkbox.isChecked():
+        #     kind = GraphKind.PACKETS_HISTOGRAM
+        self.refresh_plot(node_id=node_id, metric_name=metric_name, kind=kind)
 
-    def refresh_plot(self, node_id: str, metric_name: str, kind: str) -> None:
+    def refresh_plot(self, node_id: str, metric_name: str, kind: GraphKind) -> None:
         self._lock.acquire()
         metric = None
-        if kind == "telemetry":
+        if kind == GraphKind.TELEMETRY_TIMELINE:
             metric = self._store.get_node_metrics(node_id, metric_name)
-        elif kind == "packets":
+        elif kind == GraphKind.PACKETS_TIMELINE:
             metric = self._store.get_packet_metrics(node_id, metric_name, self.packettype_combobox.currentText())
         else:
             self.clean_plot(kind=kind)
@@ -693,46 +624,18 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.clean_plot(kind=kind)
             self._lock.release()
             return
-        if len(
-                list(
-                    filter(
-                lambda x: x is not None,
-                metric["value"]))) == 0:
+        if len(list(filter(lambda x: x is not None, metric["value"]))) == 0:
             self.clean_plot(kind=kind)
             self._lock.release()
             return
 
-        if len(
-            metric["timestamp"]) == len(
-            metric["value"]) and len(
-                metric["value"]) > 0:
-
-            target_widget = {
-                "telemetry": self._telemetry_plot_widget,
-                "packets": self._packets_plot_widget,
-            }
-            target_item = {
-                "telemetry": self._telemetry_plot_item,
-                "packets": self._packets_plot_item,
-            }
-            none_indexes = [
-                i for i, v in enumerate(
-                    metric["value"]) if v is None]
+        if len(metric["timestamp"]) == len(metric["value"]) and len(metric["value"]) > 0:
+            none_indexes = [ i for i, v in enumerate(metric["value"]) if v is None]
             for i in reversed(none_indexes):
                 metric["timestamp"].pop(i)
                 metric["value"].pop(i)
-
-            target_item[kind].setData(
-                x=metric["timestamp"],
-                y=metric["value"])
-            target_widget[kind].getPlotItem().getViewBox().setRange(
-                xRange=(min(metric["timestamp"]), max(metric["timestamp"])),
-                yRange=(min(metric["value"]), max(metric["value"])),
-            )
-            target_widget[kind].setLabel('left', "value", units='')
-            target_widget[kind].setLabel('bottom', 'Timestamp', units='')
-            target_widget[kind].setTitle(
-                f'{metric_name} vs time for node {self._store.get_long_name_from_id(node_id)}')
+            if kind == GraphKind.PACKETS_TIMELINE or kind == GraphKind.TELEMETRY_TIMELINE:
+                self._graphs.generate_timeline(metric_name=metric_name, timestamp=metric["timestamp"], data=metric["value"], kind=kind, long_name=self._store.get_long_name_from_id(node_id))
         self._lock.release()
 
     def send_message(self):
@@ -775,7 +678,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packetsource_combobox.setCurrentText("All")
         self.packettype_combobox.setCurrentText("All")
         self.packetmedium_combobox.setCurrentText("All")
-        self.clean_plot(kind="packets")
+        self.clean_plot(GraphKind.PACKETS_TIMELINE)
         if self._store.has_seen_node_id(node_id):
             self.tabWidget.setCurrentIndex(2)
             self.packetsource_combobox.setCurrentText(node_id)
