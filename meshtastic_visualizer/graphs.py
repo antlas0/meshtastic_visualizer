@@ -16,9 +16,6 @@ class MeshtasticGraphs:
         self._telemetry_plot_widget.plotItem.getViewBox().setMouseMode(pg.ViewBox.RectMode)
         self._packets_plot_widget = pg.PlotWidget()
         self._packets_plot_widget.plotItem.getViewBox().setMouseMode(pg.ViewBox.RectMode)
-        # self._packets_timeline_plot_item = pg.ScatterPlotItem(pen=pg.mkPen('#007aff', width=1), symbol='o', symbolPen='b', symbolSize=8)
-        # self._telemetry_timeline_plot_item = pg.ScatterPlotItem(pen=pg.mkPen('#007aff', width=1), symbol='o', symbolPen='b', symbolSize=8)
-
         self._telemetry_timeline_plot_item = self._telemetry_plot_widget.plot(pen=pg.mkPen('#007aff', width=1), symbol='o', symbolPen='b', symbolSize=8)
         self._packets_timeline_plot_item = self._packets_plot_widget.plot(pen=pg.mkPen('#007aff', width=1), symbol='o', symbolSize=8)
 
@@ -40,6 +37,7 @@ class MeshtasticGraphs:
             widget.getPlotItem().getAxis('bottom').setTextPen(pg.mkPen(color='k'))
             widget.addLegend()
             widget.setMouseEnabled(x=False, y=False)
+            widget.setAxisItems({'bottom': DateAxisItem()})
 
         return True
     
@@ -61,4 +59,3 @@ class MeshtasticGraphs:
         widget.setLabel('left', "value", units='')
         widget.setLabel('bottom', 'Timestamp', units='')
         widget.setTitle(f'{metric_name} vs time for node {long_name}')
-        widget.setAxisItems({'bottom': DateAxisItem()})
