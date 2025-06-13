@@ -19,8 +19,6 @@ USER runner
 
 
 COPY meshtastic_visualizer meshtastic_visualizer
-COPY meshtastic_visualizer.py meshtastic_visualizer.py
-COPY resources resources
 COPY pyproject.toml pyproject.toml
 
 RUN uv python install 3.11
