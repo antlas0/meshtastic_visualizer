@@ -31,11 +31,11 @@ Linux compatible, debian based tested (should work on Windows, compatibility not
 | Custom tiles server |✅|✅|
 
 ### Packets investigations
-For path analysis and RF experimentation, the `packets` tab provides filters to inspect precisely the following categories:
+For path analysis and RF experimentation, the `Packets` tab provides filters to inspect precisely the following categories:
 * Radio vs MQTT packets
 * Source node
 * Detected `PORT_NUM`
-* Relay node (one byte) that requires `2.6.X` firmware to be installed on nodes.
+* Relay node (one byte) that requires `2.6.X` firmware on relayers.
 This is particularly helpful when debugging RF links. The average value is updated accordingly.
 
 
