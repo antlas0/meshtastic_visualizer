@@ -4,6 +4,7 @@
 import os
 import re
 import json
+import numpy as np
 from threading import Lock
 from datetime import datetime
 from typing import List, Optional
@@ -311,6 +312,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packets_treewidget.setTextElideMode(QtCore.Qt.TextElideMode.ElideNone)
         self.packets_treewidget.setHeaderLabels(["Packet", "Details"])
         self.packettype_combobox.insertItem(0, "All")
+        self.pm_relay_node_combobox.insertItem(0, "All")
+        self.pm_relay_node_combobox.setCurrentText("All")
+        self.pm_metric_average_number.display(0)
         self.packettype_combobox.currentIndexChanged.connect(
             self.update_packets_filtered)
         self.packetsource_combobox.insertItem(0, "All")
@@ -365,6 +369,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packettype_combobox.insertItem(0, "All")
         self.packetsource_combobox.clear()
         self.packetsource_combobox.insertItem(0, "All")
+        self.pm_relay_node_combobox.clear()
+        self.pm_relay_node_combobox.insertItem(0, "All")
+        self.pm_metric_average_number.display(0)
         self.clean_plot()
         self.reset_node_packets_counters()
 
@@ -569,7 +576,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._map_custom_tiles_uri = uri
 
     def init_map(self):
-        self._map = Mapper(custom_tiles_uri=self._map_custom_tiles_uri)
+        self._map = Mapper(store=self._store, custom_tiles_uri=self._map_custom_tiles_uri)
         self.update_map_in_widget()
 
     def update_map_in_widget(self):
@@ -601,21 +608,19 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def update_packets_metrics(self) -> str:
         node_id = self._store.get_id_from_long_name(self.packetsource_combobox.currentText())
         metric_name = self.pm_metric_combobox.currentText()
+        relay_node = self.pm_relay_node_combobox.currentText()
         if not node_id or not metric_name:
             self.clean_plot(kind=GraphKind.PACKETS_TIMELINE)
             return
-        kind = GraphKind.PACKETS_TIMELINE
-        # if self.pm_histogram_checkbox.isChecked():
-        #     kind = GraphKind.PACKETS_HISTOGRAM
-        self.refresh_plot(node_id=node_id, metric_name=metric_name, kind=kind)
+        self.refresh_plot(node_id=node_id, metric_name=metric_name, relay_node=relay_node, kind=GraphKind.PACKETS_TIMELINE)
 
-    def refresh_plot(self, node_id: str, metric_name: str, kind: GraphKind) -> None:
+    def refresh_plot(self, node_id: str, metric_name: str, relay_node:Optional[str]=None, kind:GraphKind=GraphKind.UNKNOWN) -> None:
         self._lock.acquire()
         metric = None
         if kind == GraphKind.TELEMETRY_TIMELINE:
             metric = self._store.get_node_metrics(node_id, metric_name)
         elif kind == GraphKind.PACKETS_TIMELINE:
-            metric = self._store.get_packet_metrics(node_id, metric_name, self.packettype_combobox.currentText())
+            metric = self._store.get_packet_metrics(node_id=node_id, metric=metric_name, port_num=self.packettype_combobox.currentText(), relay_node=relay_node)
         else:
             self.clean_plot(kind=kind)
             self._lock.release()
@@ -634,8 +639,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             for i in reversed(none_indexes):
                 metric["timestamp"].pop(i)
                 metric["value"].pop(i)
-            if kind == GraphKind.PACKETS_TIMELINE or kind == GraphKind.TELEMETRY_TIMELINE:
-                self._graphs.generate_timeline(metric_name=metric_name, timestamp=metric["timestamp"], data=metric["value"], kind=kind, long_name=self._store.get_long_name_from_id(node_id))
+            self._graphs.generate_timeline(metric_name=metric_name, timestamp=metric["timestamp"], data=metric["value"], kind=kind, long_name=self._store.get_long_name_from_id(node_id))
+            self.pm_metric_average_number.display(round(float(np.mean(metric["value"])), 1))
         self._lock.release()
 
     def send_message(self):
@@ -678,6 +683,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packetsource_combobox.setCurrentText("All")
         self.packettype_combobox.setCurrentText("All")
         self.packetmedium_combobox.setCurrentText("All")
+        self.pm_relay_node_combobox.clear()
+        self.pm_relay_node_combobox.insertItem(0, "All")
+        self.pm_relay_node_combobox.setCurrentText("All")
+        self.pm_metric_average_number.display(0)
         self.clean_plot(GraphKind.PACKETS_TIMELINE)
         if self._store.has_seen_node_id(node_id):
             self.tabWidget.setCurrentIndex(2)
@@ -1056,6 +1065,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         for i, packet in enumerate(packets):
             if packet.from_id not in inserted:
                 inserted.append(packet.from_id)
+
             if self.packettype_combobox.findText(packet.port_num) == -1:
                 self.packettype_combobox.insertItem(
                     10000, packet.port_num)  # insert last
@@ -1106,15 +1116,24 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         filtered_packets = self.apply_packets_filter(packets)
 
+        self.pm_relay_node_combobox.clear()
+        self.pm_relay_node_combobox.insertItem(0, "All")
+        self.pm_relay_node_combobox.setCurrentText("All")
         for packet in filtered_packets:
             packet.date2str()
+
+            if packet.relay_node is not None and self.pm_relay_node_combobox.findText(str(packet.relay_node)) == -1:
+                self.pm_relay_node_combobox.insertItem(10000, packet.relay_node)
+
             if str(packet.date) in alreading_existing_packets:
                 continue
+
             category_item = QTreeWidgetItem([str(packet.date), ""])
             self.packets_treewidget.addTopLevelItem(category_item)
             for sub_item, value in asdict(packet).items():
                 sub_item_widget = QTreeWidgetItem([str(sub_item), str(value)])
                 category_item.addChild(sub_item_widget)
+
         self.packets_treewidget.resizeColumnToContents(0)
 
         filtered_packets_number = len(filtered_packets)
