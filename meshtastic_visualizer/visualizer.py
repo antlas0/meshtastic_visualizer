@@ -1119,6 +1119,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.pm_relay_node_combobox.clear()
         self.pm_relay_node_combobox.insertItem(0, "All")
         self.pm_relay_node_combobox.setCurrentText("All")
+        self.pm_metric_average_number.display(0)
+
         for packet in filtered_packets:
             packet.date2str()
 
