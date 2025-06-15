@@ -383,7 +383,7 @@ class MeshtasticDataStore(Thread):
         self._lock.release()
         return res.copy()
 
-    def get_packet_metrics(self, node_id: str, metric: str, port_num:str="all") -> Dict:
+    def get_packet_metrics(self, node_id: str, metric: str, port_num:str="all", relay_node:Optional[str]="all") -> Dict:
         self._lock.acquire()
         res: Dict[str, List[Any]] = {}
 
@@ -392,6 +392,8 @@ class MeshtasticDataStore(Thread):
         filtered = list(filter(lambda x: x.from_id == node_id, packets))
         if port_num.lower() != "all":
             filtered = list(filter(lambda x: x.port_num == port_num, filtered))
+        if relay_node is not None and relay_node.lower() != "all":
+            filtered = list(filter(lambda x: x.relay_node == relay_node, filtered))
 
         if len(filtered) == 0:
             res = {}

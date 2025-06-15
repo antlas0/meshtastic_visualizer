@@ -30,6 +30,15 @@ Linux compatible, debian based tested (should work on Windows, compatibility not
 | Packets RF metrics plotting (RSSI, SNR,...) |✅|✅|
 | Custom tiles server |✅|✅|
 
+### Packets investigations
+For path analysis and RF experimentation, the `Packets` tab provides filters to inspect precisely the following categories:
+* Radio vs MQTT packets
+* Source node
+* Detected `PORT_NUM`
+* Relay node (one byte) that requires `2.6.X` firmware on relayers.
+This is particularly helpful when debugging RF links. The average value is updated accordingly.
+
+
 ## How to download
 
 ```bash
@@ -115,7 +124,7 @@ Here is a list of things it could be intetesting to work on:
  - [ ] Quick node actions (shutdown,... TBD)
  - [ ] Traceroute results: review graphical display as not optimal
  - [ ] Map: add layer for only "online" nodes
- - [ ] Map: review "relay node" layer as not easily scalable
+ - [x] Map: review "relay node" layer as not easily scalable
 
 #### Packaging
 

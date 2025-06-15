@@ -1902,7 +1902,7 @@
         <rect>
          <x>10</x>
          <y>220</y>
-         <width>221</width>
+         <width>343</width>
          <height>28</height>
         </rect>
        </property>
@@ -1939,6 +1939,41 @@
           </property>
           <property name="placeholderText">
            <string>Metric</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_31">
+          <property name="maximumSize">
+           <size>
+            <width>60</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <family>Freesans</family>
+            <pointsize>9</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Relay Node</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="pm_relay_node_combobox">
+          <property name="font">
+           <font>
+            <family>Freesans</family>
+            <pointsize>9</pointsize>
+           </font>
+          </property>
+          <property name="toolTip">
+           <string>Choose a metric.</string>
+          </property>
+          <property name="placeholderText">
+           <string>Relay</string>
           </property>
          </widget>
         </item>
@@ -2380,9 +2415,9 @@
       <widget class="QLabel" name="traceroute_label_5">
        <property name="geometry">
         <rect>
-         <x>300</x>
+         <x>310</x>
          <y>140</y>
-         <width>101</width>
+         <width>91</width>
          <height>20</height>
         </rect>
        </property>
@@ -2413,6 +2448,35 @@
        </property>
        <property name="format">
         <string>%v</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_32">
+       <property name="geometry">
+        <rect>
+         <x>550</x>
+         <y>230</y>
+         <width>51</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <family>Freesans</family>
+         <pointsize>9</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Average</string>
+       </property>
+      </widget>
+      <widget class="QLCDNumber" name="pm_metric_average_number">
+       <property name="geometry">
+        <rect>
+         <x>600</x>
+         <y>220</y>
+         <width>81</width>
+         <height>31</height>
+        </rect>
        </property>
       </widget>
      </widget>
