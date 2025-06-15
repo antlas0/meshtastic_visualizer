@@ -1077,6 +1077,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def update_packets_filtered(self) -> None:
         self.reset_node_packets_counters()
         self.packets_treewidget.clear()
+        self.pm_metric_average_number.display(0)
+        self.clean_plot(GraphKind.PACKETS_TIMELINE)
         self.update_packet_received(MeshtasticNode())
 
     def update_packet_received(self, packet:Optional[Packet]) -> None:
@@ -1119,7 +1121,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.pm_relay_node_combobox.clear()
         self.pm_relay_node_combobox.insertItem(0, "All")
         self.pm_relay_node_combobox.setCurrentText("All")
-        self.pm_metric_average_number.display(0)
 
         for packet in filtered_packets:
             packet.date2str()
