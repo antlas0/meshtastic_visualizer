@@ -7,14 +7,16 @@ import folium
 from typing import Optional
 from folium.plugins import MousePosition, MeasureControl
 
+from .datastore import MeshtasticDataStore
 
 from .resources import CHARGING_TRESHOLD
 
 class Mapper:
     """class that manages the map
     """
-    def __init__(self, custom_tiles_uri:Optional[str]=None) -> None:
+    def __init__(self, store:MeshtasticDataStore, custom_tiles_uri:Optional[str]=None) -> None:
         self._map = None
+        self._store = store
 
         self.create_map(custom_tiles_uri)
 
@@ -47,7 +49,7 @@ class Mapper:
         del data
         return html
 
-    def _link_color(self, node_id: str) -> str:
+    def _link_color(self, snr: int) -> str:
         """returns a color from node condition
 
         Args:
@@ -56,8 +58,15 @@ class Mapper:
         Returns:
             str: color code
         """
-        hash_object = hashlib.md5(node_id.encode())
-        color = '#' + hash_object.hexdigest()[:6]
+        if snr > -20:
+            color = "#279b07"
+        elif snr > -60:
+            color = "#e5f71d"
+        elif snr > -80:
+            color = "#f4a111"
+        else:
+            color = "#f73127"
+
         return color
 
     def update(self, nodes: list, custom_tiles_uri:Optional[str]=None) -> None:
@@ -75,7 +84,6 @@ class Mapper:
         links_group = folium.FeatureGroup(name="Links")
         markers: list = []
         links: list = []
-        relays: list = []
 
         # remove any node that does not have full coordinates
         nodes_filtered = {}
@@ -90,60 +98,6 @@ class Mapper:
                 float(
                     x.lat), float(
                     x.lon)] for __, x in nodes_filtered.items()}
-
-        # prepare a dict with relays of node
-        nodes_relays = {}
-        for __, node in nodes_filtered.items():
-            if node.relay_node == node.id[-2:]:
-                continue
-            if node.relay_node is not None and node.relay_node != 0:
-                potential_relays = list(filter(lambda x:node.relay_node == x.id[-2:], nodes_filtered.values()))
-                if len(potential_relays) > 0:
-                    nodes_relays[node.id] = potential_relays
-
-        for node_id, node_relays in nodes_relays.items():
-            rgroup = folium.FeatureGroup(name=f"Relay: {node_id}", show=False)
-
-            strl = []
-            node = nodes_filtered[node_id]
-            if node.long_name:
-                strl.append(f"<b>👤 Name:</b> {node.long_name}</br>")
-            strl.append(f"<b>🆔 id:</b> {node.id}</br>")
-            if node.short_name:
-                strl.append(f"<b>AKA:</b> {node.short_name}</br>")
-            popup_content = "".join(strl)
-            popup = folium.Popup(popup_content, max_width=300, min_width=250)
-            relay_marker = folium.Marker(
-                location=[
-                    node.lat,
-                    node.lon],
-                tooltip=popup_content,
-                popup=popup,
-                icon=folium.Icon(color="blue"),
-            )
-            relay_marker.add_to(rgroup)
-            for relay in node_relays:
-                if relay.id == node_id:
-                    continue
-                strl = []
-                if relay.long_name:
-                    strl.append(f"<b>👤 Name:</b> {relay.long_name}</br>")
-                strl.append(f"<b>🆔 id:</b> {relay.id}</br>")
-                if relay.short_name:
-                    strl.append(f"<b>AKA:</b> {relay.short_name}</br>")
-                popup_content = "".join(strl)
-                popup = folium.Popup(popup_content, max_width=300, min_width=250)
-                relay_marker = folium.Marker(
-                    location=[
-                        relay.lat,
-                        relay.lon],
-                    tooltip=popup_content,
-                    popup=popup,
-                    icon=folium.Icon(color="orange", icon="tower-observation", prefix="fa"),
-                )
-                relay_marker.add_to(rgroup)
-                rgroup.add_to(self._map)
-                relays.append(rgroup)
 
         for node_id, node in nodes_filtered.items():
             if node.lat is None or node.lon is None:
@@ -200,33 +154,28 @@ class Mapper:
 
             # neighbors
             if node.neighbors is not None:
-                for neighbor in node.neighbors:
+                for neigh_id in node.neighbors:
+                    neigh_node  = self._store.get_node_from_id(neigh_id)
                     # we can trace a link
-                    if neighbor in nodes_coords.keys():
+                    if neigh_node.has_location():
                         link_coords = [
-                            nodes_coords[node.id],
-                            nodes_coords[neighbor],
+                            [float(node.lat), float(node.lon)],
+                            [float(neigh_node.lat), float(neigh_node.lon)],
                         ]
-                        if link_coords[0][0] is not None \
-                                and link_coords[0][1] is not None \
-                                and link_coords[1][0] is not None\
-                                and link_coords[1][1] is not None:
-                            link = folium.PolyLine(
-                                link_coords, color=self._link_color(node.id))
-                            link.add_to(links_group)
-                            links.append(link)
+                        link = folium.PolyLine(link_coords, color=self._link_color(neigh_node.snr))
+                        link.add_to(links_group)
+                        links.append(link)
         if markers:
             markers_group.add_to(self._map)
             markers_lat = [x.location[0] for x in markers]
             markers_lon = [x.location[1] for x in markers]
-            self._map.fit_bounds([[min(markers_lat), min(markers_lon)], [
-                                 max(markers_lat), max(markers_lon)]])
+            self._map.fit_bounds(
+                [[min(markers_lat), min(markers_lon)],
+                 [max(markers_lat), max(markers_lon)]]
+                )
         if links:
             links_group.add_to(self._map)
-        if relays:
-            for g in relays:
-                g.add_to(self._map)
 
-        if links or relays:
+        if links:
             folium.LayerControl().add_to(self._map)   
         del nodes_filtered
