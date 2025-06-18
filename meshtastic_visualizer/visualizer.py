@@ -606,10 +606,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.refresh_plot(node_id=node_id, metric_name=metric_name, kind=GraphKind.TELEMETRY_TIMELINE)
 
     def update_packets_metrics(self) -> str:
-        node_id = self._store.get_id_from_long_name(self.packetsource_combobox.currentText())
+        node_id = self.packetsource_combobox.currentText()
         metric_name = self.pm_metric_combobox.currentText()
         relay_node = self.pm_relay_node_combobox.currentText()
-        if not node_id or not metric_name:
+        if not node_id or node_id == "All" or not metric_name:
             self.clean_plot(kind=GraphKind.PACKETS_TIMELINE)
             return
         self.refresh_plot(node_id=node_id, metric_name=metric_name, relay_node=relay_node, kind=GraphKind.PACKETS_TIMELINE)
@@ -944,6 +944,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             getattr(self, cb).clear()
             for i, channel in enumerate(channels):
                 getattr(self, cb).insertItem(i, channel.name)
+        self.update_messages_table()
 
     def retrieve_channels(self):
         self.retrieve_channels_signal.emit()
@@ -985,7 +986,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def update_received_message(self) -> None:
         if self.tabWidget.currentIndex() != 3:
             self.tabWidget.setTabText(3, "Messages 🔴")
+        self.update_messages_table()
 
+    def update_messages_table(self) -> None:
         headers = self._get_meshtastic_message_header_fields()
         columns = list(headers.keys())
         self.messages_table.setColumnCount(len(columns))
