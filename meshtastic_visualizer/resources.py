@@ -140,6 +140,12 @@ class MeshtasticNode(JsonExporter):
     is_mqtt_gateway: Optional[bool] = None
     relay_node: Optional[str] = None
     next_hop: Optional[str] = None
+    has_telemetry: bool=False
+    has_local_stats: bool=False
+    has_environment: bool=False
+
+    def has_node_info(self) -> bool:
+        return (self.long_name is not None)
 
     def has_location(self) -> bool:
         return (self.lat is not None and self.lon is not None)
@@ -165,6 +171,9 @@ class NodeMetrics:
     num_packets_tx: Optional[float] = None
     num_tx_relay: Optional[float] = None
     num_tx_relay_canceled: Optional[float] = None
+    temperature: Optional[float] = None
+    relative_humidity: Optional[float] = None
+    barometric_pressure: Optional[float] = None
 
 
 @dataclass

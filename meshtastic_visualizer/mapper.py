@@ -49,7 +49,7 @@ class Mapper:
         del data
         return html
 
-    def _link_color(self, snr: int) -> str:
+    def _link_color(self, snr: float) -> str:
         """returns a color from node condition
 
         Args:
@@ -58,11 +58,11 @@ class Mapper:
         Returns:
             str: color code
         """
-        if snr > -20:
+        if snr > 0.0:
             color = "#279b07"
-        elif snr > -60:
+        elif snr > -20.0:
             color = "#e5f71d"
-        elif snr > -80:
+        elif snr > -40.0:
             color = "#f4a111"
         else:
             color = "#f73127"
@@ -92,13 +92,7 @@ class Mapper:
                 and details.lon is not None and details.lon != "None":
                 nodes_filtered[node_id] = details
 
-        # in case of links tracing, pre-create a dict(node_id, [lat, lon])
-        nodes_coords = {
-            x.id: [
-                float(
-                    x.lat), float(
-                    x.lon)] for __, x in nodes_filtered.items()}
-
+        # display nodes
         for node_id, node in nodes_filtered.items():
             if node.lat is None or node.lon is None:
                 continue
@@ -152,17 +146,25 @@ class Mapper:
             marker.add_to(markers_group)
             markers.append(marker)
 
-            # neighbors
-            if node.neighbors is not None:
-                for neigh_id in node.neighbors:
+        # neighbors of local node
+        local_node = list(filter(lambda x: x.is_local, nodes.values()))
+        if len(local_node) == 1:
+            local_node = local_node[0]
+            if local_node.neighbors is not None:
+                for neigh_id in local_node.neighbors:
                     neigh_node  = self._store.get_node_from_id(neigh_id)
                     # we can trace a link
                     if neigh_node.has_location():
                         link_coords = [
-                            [float(node.lat), float(node.lon)],
+                            [float(local_node.lat), float(local_node.lon)],
                             [float(neigh_node.lat), float(neigh_node.lon)],
                         ]
-                        link = folium.PolyLine(link_coords, color=self._link_color(neigh_node.snr))
+                        color = "grey"
+                        tooltip = None
+                        if neigh_node.hopsaway == 0:
+                            color = self._link_color(neigh_node.snr)
+                            tooltip = f"SNR: {neigh_node.snr}"
+                        link = folium.PolyLine(link_coords, color=color, tooltip=tooltip)
                         link.add_to(links_group)
                         links.append(link)
         if markers:

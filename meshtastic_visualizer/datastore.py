@@ -232,12 +232,11 @@ class MeshtasticDataStore(Thread):
         if me == my_neighbor:
             return
         self._lock.acquire()
-        for k, v in {me: my_neighbor, my_neighbor: me}.items():
-            if k in self.nodes.keys() and self.nodes[k].neighbors is None:
-                self.nodes[k].neighbors = []
+        if me in self.nodes.keys():
+            if self.nodes[me].neighbors is None:
+                self.nodes[me].neighbors = []
+            self.nodes[me].neighbors.append(my_neighbor)
 
-            if k in self.nodes.keys() and v not in self.nodes[k].neighbors:
-                self.nodes[k].neighbors.append(v)
         self._lock.release()
 
     def get_nodes(self) -> dict:
@@ -349,6 +348,9 @@ class MeshtasticDataStore(Thread):
             "num_tx_relay_canceled",
             "channel_utilization",
             "battery_level",
+            "temperature",
+            "relative_humidity",
+            "barometric_pressure",
         ]
 
     def get_packet_metrics_fields(self) -> list:

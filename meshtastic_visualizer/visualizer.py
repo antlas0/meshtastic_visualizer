@@ -295,7 +295,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.mqtt_disconnect_button.setEnabled(False)
         self.nodes_total_lcd.setDecMode()
         self.nodes_gps_lcd.setDecMode()
-        self.node_packets_number.setDecMode()
+        self.node_external_packets_number.setDecMode()
+        self.node_external_decoded_packets_number.setDecMode()
         self.nodes_recently_lcd.setDecMode()
         self.ipaddress_textedit.setText(self._settings.value("tcp", "http://192.168.1.1"))
         self.mqtt_host_linedit.setText(self._settings.value("mqtt_host", ""))
@@ -696,6 +697,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packetmedium_combobox.blockSignals(False)
         self.packettype_combobox.blockSignals(False)
 
+    def see_node_in_map(self, node_id:str) -> None:
+        if self._store.has_seen_node_id(node_id) and self._store.get_node_from_id(node_id).has_location():
+            self.tabWidget.setCurrentIndex(4)
+            self._map.focus_on_node()
+
     def reset_node_packets_counters(self) -> None:
         self.messages_packets_number.setRange(0, 1)
         self.messages_packets_number.setValue(0)
@@ -719,7 +725,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.rangetest_packets_number.setValue(0)
         self.mapreport_packets_number.setRange(0, 1)
         self.mapreport_packets_number.setValue(0)
-        self.node_packets_number.display(0)
+        self.unknown_packets_number.setRange(0, 1)
+        self.unknown_packets_number.setValue(0)
+        self.node_external_packets_number.display(0)
+        self.node_external_decoded_packets_number.display(0)
 
     def update_nodes(self, node:MeshtasticNode) -> None:
         self.update_local_node_config()
@@ -786,6 +795,16 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 status_line.append("🖥️")
             else:
                 status_line.append("📡")
+            if node.has_node_info():
+                status_line.append("👤")
+            if node.has_telemetry:
+                status_line.append("🔋")
+            if node.has_local_stats:
+                status_line.append("⚙️")
+            if node.has_environment:
+                status_line.append("☀️")
+            if node.has_location():
+                status_line.append("📍")
 
             row.update(
                 {
@@ -1166,7 +1185,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.rangetest_packets_number.setValue(len(list(filter(lambda x: x.port_num == PacketInfoType.PCK_RANGE_TEST_APP.value, filtered_packets))))
             self.mapreport_packets_number.setRange(0, filtered_packets_number)
             self.mapreport_packets_number.setValue(len(list(filter(lambda x: x.port_num == PacketInfoType.PCK_MAP_REPORT_APP.value, filtered_packets))))
-            self.node_packets_number.display(filtered_packets_number)
+            self.unknown_packets_number.setRange(0, filtered_packets_number)
+            self.unknown_packets_number.setValue(len(list(filter(lambda x: x.is_encrypted == True, filtered_packets))))
+            self.node_external_packets_number.display(len(list(filter(lambda x: x.from_id != self._local_board_id, filtered_packets))))
+            self.node_external_decoded_packets_number.display(len(list(filter(lambda x: x.is_encrypted == True, filtered_packets))))
 
     def update_device_details(self, configuration: dict):
         self.output_textedit.setText(configuration)

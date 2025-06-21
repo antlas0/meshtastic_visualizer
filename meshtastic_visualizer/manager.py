@@ -318,12 +318,20 @@ class MeshtasticManager(QObject, threading.Thread):
                     nm.channel_utilization = round(env.device_metrics.channel_utilization, 2)
                     nm.voltage = round(env.device_metrics.voltage, 2)
                     nm.uptime = env.device_metrics.uptime_seconds
+                    node_from.has_telemetry = True
 
                 if env.HasField("local_stats"):
                     nm.num_packets_tx = env.local_stats.num_packets_tx
                     nm.num_tx_relay = env.local_stats.num_tx_relay
                     nm.num_tx_relay_canceled = env.local_stats.num_tx_relay_canceled
                     node_from.tx_counter = (env.local_stats.num_packets_tx + env.local_stats.num_tx_relay)
+                    node_from.has_local_stats=True
+
+                if env.HasField("environment_metrics"):
+                    nm.temperature = env.environment_metrics.temperature
+                    nm.relative_humidity = env.environment_metrics.relative_humidity
+                    nm.barometric_pressure = env.environment_metrics.barometric_pressure
+                    node_from.has_environment = True
 
                 self._data.store_or_update_node_metrics(nm)
                 self.notify_nodes_metrics_signal.emit()
