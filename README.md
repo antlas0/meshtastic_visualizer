@@ -118,7 +118,7 @@ Here is a list of things it could be intetesting to work on:
 #### App features
 
  - [ ] Code factorisation
- - [ ] Decode environment metrics
+ - [x] Decode environment metrics
  - [x] Custom tile server
  - [ ] ~Offline map~
  - [ ] Theming
