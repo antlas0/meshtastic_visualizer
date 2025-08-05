@@ -13,6 +13,13 @@ TIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 CHARGING_TRESHOLD = 4.2
 DEFAULT_TRACEROUTE_CHANNEL = 0
 
+def str2bool(s:str) -> bool:
+    res = {
+        "true": True,
+        "false": False,
+    }
+    return res.get(s.lower(), False)
+
 def sneaky_to_camel(s:str) -> str:
     res = re.sub(r'_([a-z])', lambda match: match.group(1).upper(),s)
     return res
