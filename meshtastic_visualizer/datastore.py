@@ -351,6 +351,8 @@ class MeshtasticDataStore(Thread):
             "temperature",
             "relative_humidity",
             "barometric_pressure",
+            "lat",
+            "lon",
         ]
 
     def get_packet_metrics_fields(self) -> list:
