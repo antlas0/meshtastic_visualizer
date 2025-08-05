@@ -2,6 +2,7 @@
 
 
 import hashlib
+import datetime
 import io
 import folium
 from typing import Optional
@@ -82,7 +83,9 @@ class Mapper:
 
         markers_group = folium.FeatureGroup(name="Stations")
         links_group = folium.FeatureGroup(name="Links")
+        traces_group = folium.FeatureGroup(name="Traces")
         markers: list = []
+        traces: dict = {}
         links: list = []
 
         # remove any node that does not have full coordinates
@@ -96,6 +99,33 @@ class Mapper:
         for node_id, node in nodes_filtered.items():
             if node.lat is None or node.lon is None:
                 continue
+
+            # create lat,lon trace
+            # check if moving or not
+            try:
+                timestamp = self._store.get_node_metrics(node_id, "lat")["timestamp"]
+                lat = self._store.get_node_metrics(node_id, "lat")["value"]
+                lon = self._store.get_node_metrics(node_id, "lon")["value"]
+            except KeyError:
+                pass
+            else:
+                if lat and lon and len(set(lat)) > 1  and len(set(lon)) > 1:
+                    for i, elt in enumerate(timestamp):
+                        if lat[i] is None or lon[i] is None:
+                            continue
+                        if i >= len(timestamp)-1:
+                            continue
+                        trace_coords = [
+                            [float(lat[i]), float(lon[i])],
+                            [float(lat[i+1]), float(lon[i+1])],
+                        ]
+                        tooltip = datetime.datetime.fromtimestamp(elt).strftime("%Y-%m-%d %H:%M:%S%z")
+                        trace = folium.PolyLine(trace_coords, color="blue", tooltip=tooltip, dash_array="10")
+                        trace.add_to(traces_group)
+                        if not node_id in traces:
+                            traces[node_id] = []
+                        traces[node_id].append(trace)
+
             icon_name:str = "tower-cell"
             strl = []
             if node.long_name:
@@ -178,6 +208,9 @@ class Mapper:
         if links:
             links_group.add_to(self._map)
 
-        if links:
+        if traces:
+            traces_group.add_to(self._map)
+
+        if links or traces:
             folium.LayerControl().add_to(self._map)   
         del nodes_filtered
