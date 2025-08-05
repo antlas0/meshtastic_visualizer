@@ -384,6 +384,10 @@ class MeshtasticDataStore(Thread):
                 values = [getattr(x, metric) for x in self.metrics[node_id]]
                 res["timestamp"] = timestamp
                 res["value"] = values
+                none_indexes = [ i for i, v in enumerate(res["value"]) if v is None]
+                for i in reversed(none_indexes):
+                    res["timestamp"].pop(i)
+                    res["value"].pop(i)
         self._lock.release()
         return res.copy()
 
