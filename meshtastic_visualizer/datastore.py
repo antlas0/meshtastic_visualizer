@@ -135,6 +135,13 @@ class MeshtasticDataStore(Thread):
         self._lock.release()
         return res
 
+    def has_node_traceroute(self, node_id:str) -> bool:
+        res = False
+        self._lock.acquire()
+        res = (node_id in self.nodes.keys()) and (self.nodes[node_id].last_traceroute is not None)
+        self._lock.release()
+        return res
+
     def has_node_id(self, node_id:str) -> bool:
         res = False
         self._lock.acquire()
