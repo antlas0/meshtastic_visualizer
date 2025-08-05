@@ -54,7 +54,6 @@ class MeshtasticManager(QObject, threading.Thread):
     notify_message_signal = pyqtSignal()
     notify_ble_devices_signal = pyqtSignal(list)
     notify_serial_devices_signal = pyqtSignal(list)
-    notify_traceroute_signal = pyqtSignal(list, list, list)
     notify_channels_signal = pyqtSignal()
     notify_nodes_update = pyqtSignal(MeshtasticNode)
     notify_nodes_metrics_signal = pyqtSignal()
@@ -295,6 +294,10 @@ class MeshtasticManager(QObject, threading.Thread):
 
         node_from.lastseen = datetime.datetime.now()
 
+        nm = NodeMetrics(
+            node_id=node_from.id,
+            timestamp=int(round(datetime.datetime.now().timestamp())),
+        )
         if decoded["portnum"] == PacketInfoType.PCK_TELEMETRY_APP.value:
             env = telemetry_pb2.Telemetry()
             try:
@@ -303,10 +306,6 @@ class MeshtasticManager(QObject, threading.Thread):
                 pass
             else:
                 node_from.lastseen = datetime.datetime.now()
-                nm = NodeMetrics(
-                    node_id=node_from.id,
-                    timestamp=int(round(datetime.datetime.now().timestamp())),
-                )
                 if env.HasField("device_metrics"):
                     node_from.txairutil = round(env.device_metrics.air_util_tx, 2)
                     node_from.battery_level = round(env.device_metrics.battery_level)
@@ -333,9 +332,6 @@ class MeshtasticManager(QObject, threading.Thread):
                     nm.barometric_pressure = env.environment_metrics.barometric_pressure
                     node_from.has_environment = True
 
-                self._data.store_or_update_node_metrics(nm)
-                self.notify_nodes_metrics_signal.emit()
-
         if decoded["portnum"] == PacketInfoType.PCK_POSITION_APP.value:
             position = mesh_pb2.Position()
             try:
@@ -345,11 +341,13 @@ class MeshtasticManager(QObject, threading.Thread):
                 pass
             else:
                 if position.latitude_i != 0 and position.longitude_i != 0:
-                    node_from.lat = str(
-                        round(position.latitude_i * 1e-7, 7))
-                    node_from.lon = str(
-                        round(position.longitude_i * 1e-7, 7))
+                    lat = round(position.latitude_i * 1e-7, 7)
+                    lon = round(position.longitude_i * 1e-7, 7)
+                    node_from.lat = str(lat)
+                    node_from.lon = str(lon)
                     node_from.alt = str(position.altitude)
+                    nm.lat = lat
+                    nm.lon = lon
 
         if decoded["portnum"] == PacketInfoType.PCK_ROUTING_APP.value:
             ack_label = decoded["routing"]["errorReason"]
@@ -394,18 +392,24 @@ class MeshtasticManager(QObject, threading.Thread):
                             for x in decoded["traceroute"]["snrBack"]]
             except Exception:
                 pass
+            else:
 
-            l = list(route)
-            l.pop(0)
-            for hop, node_id in enumerate(l):
+                l = list(route)
+                l.pop(0)
+                for hop, node_id in enumerate(l):
+                    nodes_to_update.append(
+                        MeshtasticNode(
+                            id=node_id,
+                            hopsaway=hop,
+                        )
+                    )
+                route_longname = [self._data.get_long_name_from_id(x) for x in route]
                 nodes_to_update.append(
                     MeshtasticNode(
-                        id=node_id,
-                        hopsaway=hop,
+                        id=node_from.id,
+                        last_traceroute=" -> ".join(route_longname) + "\n\nSNR towards:\n" + " -> ".join(snr_towards) + "\n\nSNR back:\n" + " <- ".join(snr_back),
                     )
                 )
-
-            self.notify_traceroute_signal.emit(route, snr_towards, snr_back)
         if decoded["portnum"] == PacketInfoType.PCK_NODEINFO_APP.value:
             info = mesh_pb2.User()
             try:
@@ -462,6 +466,10 @@ class MeshtasticManager(QObject, threading.Thread):
 
                 self._data.store_or_update_messages(m)
                 self.notify_message_signal.emit()
+
+        if nm.has_data():
+            self._data.store_or_update_node_metrics(nm)
+            self.notify_nodes_metrics_signal.emit()
 
         # update node whose packet was received
         self._data.store_or_update_node(node_from)

@@ -12,7 +12,7 @@ from importlib_resources import files
 from PyQt6 import QtCore
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtGui import QTextCursor
-from PyQt6.QtWidgets import QTableWidgetItem, QTreeWidgetItem, QPushButton, QFileDialog
+from PyQt6.QtWidgets import QTableWidgetItem, QTreeWidgetItem, QPushButton, QFileDialog, QMessageBox, QGridLayout
 from PyQt6.QtCore import pyqtSignal, QSettings
 from dataclasses import asdict
 
@@ -28,8 +28,11 @@ from .resources import MessageLevel, \
     ConnectionKind, \
     PacketInfoType, \
     BROADCAST_ADDR, \
-    BROADCAST_NAME
+    BROADCAST_NAME, \
+    str2bool
+
 from .node_actions_widget import NodeActionsWidget
+from .packet_viewer_widget import PacketViewerWidget
 from .graphs import MeshtasticGraphs, GraphKind
 from .mqtt import MeshtasticMQTT
 from .datastore import MeshtasticDataStore
@@ -63,6 +66,13 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         self._map = None
         self._map_custom_tiles_uri = self._settings.value("map_custom_tiles_uri", "")
+       
+        self.activate_custom_tiles_checkbox.setChecked(str2bool(self._settings.value("map_activate_custom_tiles_checkbox", "False")))
+        self.custom_tiles_uri_linedit.setText(self._settings.value("map_custom_tiles_uri", ""))
+        self.activate_custom_tiles(self.activate_custom_tiles_checkbox.isChecked())
+        self.activate_custom_tiles_checkbox.stateChanged.connect(self.activate_custom_tiles)
+        self.custom_tiles_uri_linedit.textChanged.connect(self.update_custom_tiles)
+
         self._local_board_ln = ""
         self._graphs = MeshtasticGraphs()
 
@@ -88,8 +98,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.refresh_status_header)
         self._mqtt_manager.notify_frontend_signal.connect(
             self.refresh_status_header)
-        self._manager.notify_nodes_metrics_signal.connect(self.update_nodes_telemetry_metrics)
-        self._mqtt_manager.notify_nodes_metrics_signal.connect(self.update_nodes_telemetry_metrics)
         self._manager.notify_local_device_configuration_signal.connect(
             self.update_device_details)
         self._manager.notify_new_packet.connect(
@@ -100,7 +108,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.update_received_message)
         self._mqtt_manager.notify_new_packet.connect(
             self.update_packet_received)
-        self._manager.notify_traceroute_signal.connect(self.update_traceroute)
         self._manager.notify_channels_signal.connect(
             self.update_channels_list)
         self._manager.notify_channels_signal.connect(
@@ -249,7 +256,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.messagechannel_combobox.textActivated.connect(
             self.update_received_message
         )
-        self.mesh_table.cellClicked.connect(self.mesh_table_is_clicked)
         self.message_textedit.textChanged.connect(
             self.update_text_message_length)
         self.remaining_chars_label.setText(
@@ -260,9 +266,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             len(self._get_meshtastic_message_header_fields().keys()))
         self.messages_table.setHorizontalHeaderLabels(
             list(self._get_meshtastic_message_header_fields().values()))
-        self.traceroute_table.setColumnCount(3)
-        self.traceroute_table.setHorizontalHeaderLabels(
-            ["Id", "SNR To", "SNR Back"])
         self.batterylevel_progressbar.hide()
         self.serial_connect_button.setEnabled(True)
         self.serial_disconnect_button.setEnabled(False)
@@ -325,11 +328,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packetmedium_combobox.insertItem(1, "Radio")
         self.packetmedium_combobox.insertItem(2, "MQTT")
         self.packetmedium_combobox.currentIndexChanged.connect(self.update_packets_filtered)
-
-        self.activate_custom_tiles_checkbox.setChecked(False)
-        self.custom_tiles_uri_linedit.setVisible(False)
-        self.activate_custom_tiles_checkbox.stateChanged.connect(self.activate_custom_tiles)
-        self.custom_tiles_uri_linedit.textChanged.connect(self.update_custom_tiles)
 
     def choose_output_folder(self):
         dialog = QFileDialog(self)
@@ -518,32 +516,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def disconnect_device(self) -> None:
         self.disconnect_device_signal.emit()
 
-    def update_traceroute(
-            self,
-            route: list,
-            snr_towards: list,
-            snr_back: list) -> None:
-        self.traceroute_table.clear()
-        self.traceroute_table.setRowCount(0)
-        self.traceroute_table.setColumnCount(3)
-        self.traceroute_table.setHorizontalHeaderLabels(
-            ["Id", "SNR To", "SNR Back"])
-        for hop in route:
-            device = self._store.get_long_name_from_id(hop)
-            row_position = self.traceroute_table.rowCount()
-            self.traceroute_table.insertRow(row_position)
-            self.traceroute_table.setItem(
-                row_position, 0, QTableWidgetItem(device))
-    
-        for i in range(len(snr_towards)):
-            self.traceroute_table.setItem(
-                i, 1, QTableWidgetItem("↓" + str(snr_towards[i])))
-        for i in range(len(snr_back)):
-            self.traceroute_table.setItem(
-                i, 2, QTableWidgetItem("↑" + str(snr_back[i])))
-        self.traceroute_table.resizeColumnsToContents()
-        self.traceroute_table.resizeRowsToContents()
-
     def update_text_message_length(self):
         current_text = self.message_textedit.toPlainText()
 
@@ -561,15 +533,29 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.remaining_chars_label.setText(
             f"{remaining_chars}/{TEXT_MESSAGE_MAX_CHARS}")
 
-    def mesh_table_is_clicked(self, row, column) -> None:
-        node_id = self.mesh_table.item(row, 2).text()
+    def view_telemetry(self, node_id:str) -> None:
+        self.clean_plot(kind=GraphKind.TELEMETRY_TIMELINE)
         self.update_node_metrics_buttons()
         long_name = self._store.get_long_name_from_id(node_id)
         self.nm_node_label.setText(long_name)
 
+    def view_traceroute(self, node_id:str) -> None:
+        node = self._store.get_node_from_id(node_id)
+        dlg = QMessageBox(self)
+        dlg.setModal(True)
+        longname = node.long_name if node.long_name is not None else node.id
+        dlg.setWindowTitle(f"Traceroute to {longname}")
+        dlg.setText(node.last_traceroute)
+        dlg.findChild(QGridLayout).setColumnMinimumWidth(1,len(dlg.informativeText()) * dlg.fontMetrics().averageCharWidth())
+        dlg.exec()        
+
     def activate_custom_tiles(self, activate:bool) -> None:
-        self.custom_tiles_uri_linedit.setText(self._map_custom_tiles_uri)
         self.custom_tiles_uri_linedit.setVisible(activate)
+        self._settings.setValue("map_activate_custom_tiles_checkbox", self.activate_custom_tiles_checkbox.isChecked())
+        if activate:
+            self._map_custom_tiles_uri = self._settings.value("map_custom_tiles_uri", "")
+        else:
+            self._map_custom_tiles_uri = ""
 
     def update_custom_tiles(self) -> None:
         uri = self.custom_tiles_uri_linedit.text()
@@ -612,6 +598,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         relay_node = self.pm_relay_node_combobox.currentText()
         if not node_id or node_id == "All" or not metric_name:
             self.clean_plot(kind=GraphKind.PACKETS_TIMELINE)
+            self.pm_metric_average_number.display(0)
             return
         self.refresh_plot(node_id=node_id, metric_name=metric_name, relay_node=relay_node, kind=GraphKind.PACKETS_TIMELINE)
 
@@ -636,12 +623,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             return
 
         if len(metric["timestamp"]) == len(metric["value"]) and len(metric["value"]) > 0:
-            none_indexes = [ i for i, v in enumerate(metric["value"]) if v is None]
-            for i in reversed(none_indexes):
-                metric["timestamp"].pop(i)
-                metric["value"].pop(i)
             self._graphs.generate_timeline(metric_name=metric_name, timestamp=metric["timestamp"], data=metric["value"], kind=kind, long_name=self._store.get_long_name_from_id(node_id))
-            self.pm_metric_average_number.display(round(float(np.mean(metric["value"])), 1))
+            if kind == GraphKind.PACKETS_TIMELINE:
+                self.pm_metric_average_number.display(round(float(np.mean(metric["value"])), 1))
         self._lock.release()
 
     def send_message(self):
@@ -884,6 +868,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                                     callback_traceroute=self.traceroute,
                                     callback_telemetry=lambda: self.send_telemetry_signal.emit(),
                                     callback_position=lambda: self.send_position_signal.emit(),
+                                    callback_view_traceroute=self.view_traceroute,
+                                    has_traceroute=self._store.has_node_traceroute(row_data["ID"]),
                                     is_local=is_local,
                                     node_id=row_data["ID"]
                                     )
@@ -894,11 +880,16 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                                 data = ""
                     if col_idx == 9:  # insert widget in cell
                         if self._store.has_seen_node_id(row_data["ID"]):
-                            btn = QPushButton("See packets")
-                            btn.setEnabled(True)
-                            btn.setStyleSheet("QPushButton{font-size: 9pt;}")
-                            self.mesh_table.setCellWidget(row_idx, col_idx, btn)
-                            btn.clicked.connect(lambda: self.explore_packets(self.mesh_table.item(self.mesh_table.indexAt(self.sender().pos()).row(),2).text()))
+                            self.mesh_table.setCellWidget(
+                                row_idx,
+                                col_idx,
+                                PacketViewerWidget(
+                                    parent=self,
+                                    callback_packet_viewer=self.explore_packets,
+                                    callback_telemetry_viewer=self.view_telemetry,
+                                    node_id=row_data["ID"],
+                                )
+                            )
                     else:
                         data = str(value)
                         if data == "None":
@@ -988,12 +979,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             dest_id: str = "",
             maxhops: int = 5,
             dummy: bool = False):
-        self.traceroute_table.setRowCount(0)
-        self.traceroute_table.setColumnCount(3)
-        self.traceroute_table.setHorizontalHeaderLabels(
-            ["Id", "SNR To", "SNR Back"])
-        self.traceroute_signal.emit(
-            dest_id, DEFAULT_TRACEROUTE_CHANNEL, maxhops)
+        self.traceroute_signal.emit(dest_id, DEFAULT_TRACEROUTE_CHANNEL, maxhops)
 
     def update_message_combobox(self) -> None:
         already_present = [self.messagechannel_combobox.itemText(i) for i in range(self.messagechannel_combobox.count())]
