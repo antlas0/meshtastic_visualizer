@@ -150,6 +150,7 @@ class MeshtasticNode(JsonExporter):
     has_telemetry: bool=False
     has_local_stats: bool=False
     has_environment: bool=False
+    last_traceroute: Optional[str] = None
 
     def has_node_info(self) -> bool:
         return (self.long_name is not None)
