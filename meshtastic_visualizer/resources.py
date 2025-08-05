@@ -182,6 +182,27 @@ class NodeMetrics:
     temperature: Optional[float] = None
     relative_humidity: Optional[float] = None
     barometric_pressure: Optional[float] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+
+    def has_data(self) -> bool:
+        return any(
+            [
+                self.uptime is not None,
+                self.voltage is not None,
+                self.air_util_tx is not None,
+                self.channel_utilization is not None,
+                self.battery_level is not None,
+                self.num_packets_tx is not None,
+                self.num_tx_relay is not None,
+                self.num_tx_relay_canceled is not None,
+                self.temperature is not None,
+                self.relative_humidity is not None,
+                self.barometric_pressure is not None,
+                self.lat is not None,
+                self.lon is not None,
+            ]
+        )
 
 
 @dataclass
