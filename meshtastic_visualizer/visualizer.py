@@ -620,18 +620,23 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             return
 
         message = self.message_textedit.toPlainText()
-        recipient = self.messagechannel_combobox.currentText() # channel or DM ?
-        if recipient in self.get_channel_names():
+        potential_dest = self.messagechannel_combobox.currentText() # channel or DM ?
+        recipient = ""
+        if potential_dest in self.get_channel_names():
             # channel broadcast
             try:
                 channel_index = self._store.get_channel_index_from_name(recipient)
                 recipient = BROADCAST_NAME
             except Exception as e:
-                raise e
+                self.set_status(MessageLevel.ERROR, f"Error trying to send message: {e}")
+                return
         else:
             # DM
-            recipient = self._store.get_id_from_short_name(self.messagechannel_combobox.currentText())
+            recipient = self._store.get_id_from_short_name(potential_dest)
             channel_index = 0 # not really meaningful
+            if not recipient:
+                self.set_status(MessageLevel.ERROR, f"Unknown node {potential_dest}")
+                return
 
         # Update timeout before sending
         if message:
