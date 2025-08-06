@@ -1000,8 +1000,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         else:
             # DM
             def __filter_dm(self, message, short_name):
+                sn = self._store.get_id_from_short_name(short_name)
+                if not sn:
+                    return False
                 if (message.to_id != BROADCAST_ADDR and message.to_id != BROADCAST_NAME) and \
-                    (message.from_id == self._store.get_id_from_short_name(short_name) or message.to_id == self._store.get_id_from_short_name(short_name)):
+                    (message.from_id == sn or message.to_id == sn):
                     return True
                 return False
 
