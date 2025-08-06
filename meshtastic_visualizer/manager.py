@@ -512,9 +512,6 @@ class MeshtasticManager(QObject, threading.Thread):
         message.pki_encrypted = False
         if message.to_id != BROADCAST_NAME:
             message.pki_encrypted = True
-            if not self._data.has_node_id(self._data.get_id_from_short_name(message.to_id)):
-                self.notify_frontend_signal.emit(MessageLevel.ERROR, f"Node id unknown {message.to_id}")
-                return
 
         try:
             sent_packet = self._interface.sendData(
