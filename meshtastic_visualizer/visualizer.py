@@ -17,6 +17,7 @@ from PyQt6.QtCore import pyqtSignal, QSettings
 from dataclasses import asdict
 
 from .manager import MeshtasticManager
+from .messages_view import MessagesView
 from .resources import MessageLevel, \
     MeshtasticMessage, \
     MeshtasticNode, \
@@ -123,7 +124,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.update_received_mqtt_log)
 
         self.connect_device_signal.connect(self._manager.connect_device)
-        self.connect_device_signal.connect(self.clear_messages_table)
+        self.connect_device_signal.connect(self._messages_view.clear_messages)
         self.disconnect_device_signal.connect(self._manager.disconnect_device)
         self.scan_ble_devices_signal.connect(self._manager.ble_scan_devices)
         self.scan_serial_devices_signal.connect(self._manager.serial_scan_devices)
@@ -141,7 +142,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.export_node_metrics_button.pressed.connect(self.export_node_metrics)
         self.clear_mqtt_button.pressed.connect(self.mqtt_output_textedit.clear)
         self.clear_console_button.pressed.connect(self.console_logs_textedit.clear)
-        self.clear_messages_button.pressed.connect(self.clear_messages_table)
+        self.clear_messages_button.pressed.connect(self._messages_view.clear_messages)
         self.clear_messages_button.pressed.connect(self._store.clear_messages)
         self.clear_nodes_button.pressed.connect(self.clear_nodes)
         self.clear_node_metrics_button.pressed.connect(self.clear_nodes_metrics)
@@ -261,11 +262,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.remaining_chars_label.setText(
             f"{TEXT_MESSAGE_MAX_CHARS}/{TEXT_MESSAGE_MAX_CHARS}")
         self.init_map()
-        self.messages_table.setTextElideMode(QtCore.Qt.TextElideMode.ElideNone)
-        self.messages_table.setColumnCount(
-            len(self._get_meshtastic_message_header_fields().keys()))
-        self.messages_table.setHorizontalHeaderLabels(
-            list(self._get_meshtastic_message_header_fields().values()))
         self.batterylevel_progressbar.hide()
         self.serial_connect_button.setEnabled(True)
         self.serial_disconnect_button.setEnabled(False)
@@ -328,6 +324,8 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packetmedium_combobox.insertItem(1, "Radio")
         self.packetmedium_combobox.insertItem(2, "MQTT")
         self.packetmedium_combobox.currentIndexChanged.connect(self.update_packets_filtered)
+        self._messages_view = MessagesView(self._store)
+        self.message_view_layout.addWidget(self._messages_view)
 
     def choose_output_folder(self):
         dialog = QFileDialog(self)
@@ -340,9 +338,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 self._settings.setValue("output_folder", self._current_output_folder)
                 self.refresh_status_header(MessageLevel.INFO, f"Output directory is set to: {self._current_output_folder}")
                 self.output_folder_label.setText(os.path.basename(self._current_output_folder))
-
-    def clear_messages_table(self) -> None:
-        self.messages_table.setRowCount(0)
 
     def clear_nodes(self) -> None:
         self._store.clear_nodes()
@@ -373,15 +368,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.pm_metric_average_number.display(0)
         self.clean_plot()
         self.reset_node_packets_counters()
-
-    def _get_meshtastic_message_header_fields(self) -> dict:
-        return {
-            "date": "Date",
-            "ack": "Ack",
-            "pki_encrypted": "Encrypted",
-            "from_id": "From",
-            "content": "Message",
-        }
 
     def remove_notification_badge(self, index):
         if index == 3:
@@ -864,7 +850,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                                 row_idx,
                                 col_idx,
                                 NodeActionsWidget(
-                                    parent=self,
+                                    parent=self.mesh_table,
                                     callback_traceroute=self.traceroute,
                                     callback_telemetry=lambda: self.send_telemetry_signal.emit(),
                                     callback_position=lambda: self.send_position_signal.emit(),
@@ -887,6 +873,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                                     parent=self,
                                     callback_packet_viewer=self.explore_packets,
                                     callback_telemetry_viewer=self.view_telemetry,
+                                    has_telemetry=self._store.has_node_metrics(row_data["ID"]),
                                     node_id=row_data["ID"],
                                 )
                             )
@@ -954,7 +941,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             getattr(self, cb).clear()
             for i, channel in enumerate(channels):
                 getattr(self, cb).insertItem(i, channel.name)
-        self.update_messages_table()
+        self.update_messages_view()
 
     def retrieve_channels(self):
         self.retrieve_channels_signal.emit()
@@ -973,6 +960,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.batterylevel_progressbar.setValue(cfg.battery_level)
         self.batterylevel_progressbar.show()
         self.id_label.setText(str(cfg.id))
+        self._messages_view.set_local_board_id(self._local_board_id)
 
     def traceroute(
             self,
@@ -992,14 +980,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def update_received_message(self) -> None:
         if self.tabWidget.currentIndex() != 3:
             self.tabWidget.setTabText(3, "Messages 🔴")
-        self.update_messages_table()
+        self.update_messages_view()
 
-    def update_messages_table(self) -> None:
-        headers = self._get_meshtastic_message_header_fields()
-        columns = list(headers.keys())
-        self.messages_table.setColumnCount(len(columns))
-        self.messages_table.setHorizontalHeaderLabels(headers.values())
-
+    def update_messages_view(self) -> None:
         channels = self._store.get_channels()
         messages = self._store.get_messages()
 
@@ -1011,63 +994,16 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             filtered_messages = list(filter(lambda x: x.channel_index == current_channel[0].index and (x.to_id == BROADCAST_ADDR or x.to_id == BROADCAST_NAME), messages))
         else:
             # DM
-            def __filter_dm(self, message, node_id):
+            def __filter_dm(self, message, short_name):
                 if (message.to_id != BROADCAST_ADDR and message.to_id != BROADCAST_NAME) and \
-                    (message.from_id == self._store.get_id_from_short_name(node_id) or message.to_id == self._store.get_id_from_short_name(node_id)):
+                    (message.from_id == self._store.get_id_from_short_name(short_name) or message.to_id == self._store.get_id_from_short_name(short_name)):
                     return True
                 return False
 
             filtered_messages = list(filter(lambda x: __filter_dm(self, x, self.messagechannel_combobox.currentText()), messages))
 
-        self.messages_table.setRowCount(len(filtered_messages))
-        rows: list[dict[str, any]] = []
-
-        for message in filtered_messages:
-            message.date2str("%Y-%m-%d %H:%M:%S")
-            data = {}
-            for column in columns:
-                if column == "from_id" or column == "to_id":
-                    data[headers[column]] = self._store.get_short_name_from_id(
-                        getattr(
-                            message, column))
-                elif column == "ack":
-                    label = "❔"
-                    if message.from_id != self._local_board_id:
-                        label = "/"
-                    if getattr(message, "ack_status") is not None:
-                        if getattr(message, "ack_status") is True:
-                            if getattr(message, "ack_by") is not None:
-                                if getattr(
-                                        message,
-                                        "ack_by") != getattr(
-                                        message,
-                                        "to_id"):
-                                    label = "☁️"
-                                else:
-                                    label = "✅"
-                        else:
-                            label = "❌"
-                    data[headers["ack"]] = label
-                elif column == "pki_encrypted":
-                    label = "⚠️"
-                    if getattr(message, column) is True:
-                        label = "🔒"
-                    data[headers[column]] = label
-                else:
-                    data[headers[column]] = getattr(message, column)
-            rows.append(data)
-
-        for row_idx, row_data in enumerate(rows):
-            for col_idx, value in enumerate(row_data.values()):
-                current_item = self.messages_table.item(row_idx, col_idx)
-                if current_item is None:
-                    item = QTableWidgetItem(str(value))
-                    self.messages_table.setItem(row_idx, col_idx, item)
-                    self.messages_table.scrollToItem(item,QtWidgets.QAbstractItemView.ScrollHint.EnsureVisible)
-                elif current_item.text() != value:
-                    current_item.setText(str(value))
-        self.messages_table.resizeColumnsToContents()
-        self.messages_table.resizeRowsToContents()
+        self._messages_view.clear_messages()
+        self._messages_view.update(messages=filtered_messages)
 
     def update_packets_filter(self, packets: List[Packet]) -> None:
         inserted = []
