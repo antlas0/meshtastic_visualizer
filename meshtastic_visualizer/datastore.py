@@ -183,7 +183,7 @@ class MeshtasticDataStore(Thread):
                     lambda x: x.short_name == short_name_or_id,
                     nodes))
             if len(node) != 1:
-                res = short_name_or_id
+                res = ""
             else:
                 res = node[0].id
         self._lock.release()
