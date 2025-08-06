@@ -983,9 +983,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def update_message_combobox(self) -> None:
         already_present = [self.messagechannel_combobox.itemText(i) for i in range(self.messagechannel_combobox.count())]
+        local_sn = self._store.get_short_name_from_id(self._local_board_id)
         for node in self._store.get_nodes().values():
             sn = self._store.get_short_name_from_id(node.id)
-            if sn and sn not in already_present:
+            if sn and sn not in already_present and sn != local_sn:
                 self.messagechannel_combobox.insertItem(self.messagechannel_combobox.count(), sn)
 
     def update_received_message(self) -> None:
