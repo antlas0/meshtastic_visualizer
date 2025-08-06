@@ -16,7 +16,7 @@ class MessageBubble(QFrame):
             QFrame {{
                 background-color: {'#F3F5F2' if is_sender else '#FFFFFF'};
                 border: 1px solid #ddd;
-                border-radius: 3px;
+                border-radius: 0px;
                 padding: 3px;
             }}
             QLabel {{
@@ -35,7 +35,7 @@ class MessageBubble(QFrame):
         # Layouts
         layout = QVBoxLayout(self)
         layout.setSpacing(4)
-        layout.setContentsMargins(10, 8, 10, 8)
+        layout.setContentsMargins(3, 3, 3, 3)
 
         # Metadata (date + encryption status)
         date = message.date.strftime(time_format)
@@ -49,6 +49,7 @@ class MessageBubble(QFrame):
         self.date_label = QLabel(date)
         self.date_label.setObjectName("meta")
         self.date_label.setStyleSheet("color: #888; font-size: 11px;")
+        self.date_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.meta_layout.addWidget(self.encryption_label)
         self.meta_layout.addStretch()
         self.meta_layout.addWidget(self.date_label)
@@ -61,6 +62,7 @@ class MessageBubble(QFrame):
 
         self.content_label = QLabel(message.content)
         self.content_label.setWordWrap(True)
+        self.content_label.setStyleSheet("font-size: 11px; border: none")
         self.content_label.setTextInteractionFlags(
                 Qt.TextInteractionFlag.TextSelectableByMouse | Qt.TextInteractionFlag.TextSelectableByKeyboard
             )
