@@ -2593,28 +2593,6 @@
        <string>Send</string>
       </property>
      </widget>
-     <widget class="QTableWidget" name="messages_table">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>50</y>
-        <width>1131</width>
-        <height>361</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>Freesans</family>
-        <pointsize>9</pointsize>
-       </font>
-      </property>
-      <property name="textElideMode">
-       <enum>Qt::ElideNone</enum>
-      </property>
-      <attribute name="horizontalHeaderCascadingSectionResizes">
-       <bool>false</bool>
-      </attribute>
-     </widget>
      <widget class="QWidget" name="horizontalLayoutWidget_4">
       <property name="geometry">
        <rect>
@@ -2720,6 +2698,21 @@
       <property name="text">
        <string>Recipient</string>
       </property>
+     </widget>
+     <widget class="QWidget" name="verticalLayoutWidget_2">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>50</y>
+        <width>1131</width>
+        <height>361</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="message_view_layout">
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+      </layout>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_nodes">
