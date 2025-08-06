@@ -378,6 +378,12 @@ class MeshtasticDataStore(Thread):
             self.metrics[new_metric.node_id][0]
         self._lock.release()
 
+    def has_node_metrics(self, node_id:str) -> bool:
+        self._lock.acquire()
+        res = (node_id in self.metrics.keys())
+        self._lock.release()
+        return res
+
     def get_node_metrics(self, node_id: str, metric: str) -> Dict:
         self._lock.acquire()
         res: Dict[str, List[Any]] = {}
