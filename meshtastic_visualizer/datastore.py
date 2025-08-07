@@ -242,7 +242,8 @@ class MeshtasticDataStore(Thread):
         if me in self.nodes.keys():
             if self.nodes[me].neighbors is None:
                 self.nodes[me].neighbors = []
-            self.nodes[me].neighbors.append(my_neighbor)
+            if my_neighbor not in self.nodes[me].neighbors:
+                self.nodes[me].neighbors.append(my_neighbor)
 
         self._lock.release()
 
