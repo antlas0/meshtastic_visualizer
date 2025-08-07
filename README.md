@@ -123,9 +123,10 @@ Here is a list of things it could be intetesting to work on:
  - [ ] ~Offline map~
  - [ ] Theming
  - [ ] Quick node actions (shutdown,... TBD)
- - [ ] Traceroute results: review graphical display as not optimal
- - [ ] Map: add layer for only "online" nodes
+ - [x] Traceroute results: review graphical display as not optimal
+ - [x] Map: add layer for only "online" nodes
  - [x] Map: review "relay node" layer as not easily scalable
+ - [ ] Better way to notify messages
 
 #### Packaging
 
