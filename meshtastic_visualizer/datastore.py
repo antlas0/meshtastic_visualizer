@@ -261,7 +261,7 @@ class MeshtasticDataStore(Thread):
 
     def get_messages(self) -> List:
         self._lock.acquire()
-        messages = list(self.messages.values())
+        messages = copy.deepcopy(list(self.messages.values()))
         self._lock.release()
         return messages
 
