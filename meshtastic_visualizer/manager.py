@@ -524,7 +524,7 @@ class MeshtasticManager(QObject, threading.Thread):
                 pkiEncrypted=message.pki_encrypted,
             )
         except Exception as e:
-            self.notify_frontend_signal.emit(MessageLevel.ERROR, f"Could not send message to {message.to_id}")
+            self.notify_frontend_signal.emit(MessageLevel.ERROR, f"Could not send message to {message.to_id}: {e}")
             return
 
         sent_packet = RadioPacket(
