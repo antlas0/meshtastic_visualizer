@@ -625,7 +625,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if potential_dest in self.get_channel_names():
             # channel broadcast
             try:
-                channel_index = self._store.get_channel_index_from_name(recipient)
+                channel_index = self._store.get_channel_index_from_name(potential_dest)
                 recipient = BROADCAST_NAME
             except Exception as e:
                 self.set_status(MessageLevel.ERROR, f"Error trying to send message: {e}")
