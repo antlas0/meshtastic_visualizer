@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout
 
 class PacketViewerWidget(QWidget):
     def __init__(self, parent, callback_packet_viewer, callback_telemetry_viewer, has_telemetry:bool, node_id:str=""):
-        super(PacketViewerWidget,self).__init__(parent)
+        super(PacketViewerWidget,self).__init__()
         self._node_id = node_id
         self.parent = parent
         layout = QHBoxLayout()
