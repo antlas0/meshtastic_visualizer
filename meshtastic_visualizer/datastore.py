@@ -308,13 +308,9 @@ class MeshtasticDataStore(Thread):
                 node.lastseen = node.firstseen
 
             for f in __get_nodes_fields():
-                if getattr(self.nodes[str(node.id)],
-                           f.name) != getattr(node, f.name):
-                    if getattr(
-                            node,
-                            f.name) is not None:
-                        setattr(self.nodes[str(node.id)], f.name,
-                                getattr(node, f.name))
+                if getattr(self.nodes[str(node.id)], f.name) != getattr(node, f.name):
+                    if getattr(node, f.name) is not None:
+                        setattr(self.nodes[str(node.id)], f.name, getattr(node, f.name))
         self._lock.release()
 
     def store_or_update_messages(
