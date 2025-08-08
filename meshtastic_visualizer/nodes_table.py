@@ -49,14 +49,14 @@ class NodesTable:
         self._parent.nodes_total_lcd.display(self._mesh_table.rowCount())
         positioned_nodes = list(
             filter(
-                lambda x: self._mesh_table.item(x, self._table_lat_column_index).text() and self._mesh_table.item(x, self._table_lon_column_index).text(),
+                lambda x: self._mesh_table.item(x, self._table_lat_column_index) and self._mesh_table.item(x, self._table_lat_column_index).text() and self._mesh_table.item(x, self._table_lon_column_index).text(),
                 range(self._mesh_table.rowCount())
                 )
             )
         self._parent.nodes_gps_lcd.display(len(positioned_nodes))
         recently_seen = list(
             filter(
-                lambda x: self._mesh_table.item(x, self._table_rx_column_index).text() and int(self._mesh_table.item(x, self._table_rx_column_index).text().replace("⬊", "")) > 0,
+                lambda x: self._mesh_table.item(x, self._table_rx_column_index) and self._mesh_table.item(x, self._table_rx_column_index).text() and int(self._mesh_table.item(x, self._table_rx_column_index).text().replace("⬊", "")) > 0,
                 range(self._mesh_table.rowCount())
                 )
             )
@@ -75,16 +75,25 @@ class NodesTable:
         for row in range(self._mesh_table.rowCount()):
             should_hide = False
             if self._parent.shortcut_filter_combobox.currentText() == "Recently seen":
-                if not self._mesh_table.item(row, self._table_rx_column_index).text() or int(self._mesh_table.item(row, self._table_rx_column_index).text().replace("⬊", "")) == 0:
+                if not self._mesh_table.item(row, self._table_rx_column_index) \
+                    or not self._mesh_table.item(row, self._table_rx_column_index).text() \
+                        or int(self._mesh_table.item(row, self._table_rx_column_index).text().replace("⬊", "")) == 0:
                     should_hide = True
             if self._parent.shortcut_filter_combobox.currentText() == "Positioned":
-                if not self._mesh_table.item(row, self._table_lat_column_index).text() or not self._mesh_table.item(row, self._table_lon_column_index).text():
+                if not self._mesh_table.item(row, self._table_lat_column_index) \
+                    or not self._mesh_table.item(row, self._table_lon_column_index) \
+                        or not self._mesh_table.item(row, self._table_lat_column_index).text() \
+                            or not self._mesh_table.item(row, self._table_lon_column_index).text():
                     should_hide = True
             if self._parent.shortcut_filter_combobox.currentText() == "Neighbors":
-                if self._mesh_table.item(row, self._table_hops_column_index).text() and int(self._mesh_table.item(row, self._table_hops_column_index).text().replace("✈️", "")) != 0:
+                if not self._mesh_table.item(row, self._table_hops_column_index) \
+                    or not self._mesh_table.item(row, self._table_hops_column_index).text() \
+                         or int(self._mesh_table.item(row, self._table_hops_column_index).text().replace("✈️", "")) != 0:
                     should_hide = True
             if self._parent.shortcut_filter_combobox.currentText() in hopfilter.keys():
-                if not self._mesh_table.item(row, self._table_hops_column_index).text() or int(self._mesh_table.item(row, self._table_hops_column_index).text().replace("✈️", "")) != hopfilter[self._parent.shortcut_filter_combobox.currentText()]:
+                if not self._mesh_table.item(row, self._table_hops_column_index) \
+                    or not self._mesh_table.item(row, self._table_hops_column_index).text() \
+                        or int(self._mesh_table.item(row, self._table_hops_column_index).text().replace("✈️", "")) != hopfilter[self._parent.shortcut_filter_combobox.currentText()]:
                     should_hide = True
             if len(self._parent.nodes_filter_linedit.text()) != 0:
                 pattern = self._parent.nodes_filter_linedit.text().lower()
