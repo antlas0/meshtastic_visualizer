@@ -213,10 +213,11 @@ class Mapper:
         markers_lat = [x.location[0] for x in all_m]
         markers_lon = [x.location[1] for x in all_m]
 
-        self._map.fit_bounds(
-            [[min(markers_lat), min(markers_lon)],
-                [max(markers_lat), max(markers_lon)]]
-            )
+        if markers_lat and markers_lon:
+            self._map.fit_bounds(
+                [[min(markers_lat), min(markers_lon)],
+                    [max(markers_lat), max(markers_lon)]]
+                )
         if links:
             links_group.add_to(self._map)
 
