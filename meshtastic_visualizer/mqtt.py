@@ -408,7 +408,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
             node_from.hopsaway = max(0, int(se.packet.hop_start) - int(se.packet.hop_limit))
             if node_from.hopsaway is not None and node_from.hopsaway == 0:
                 self._store.add_neighbor(node_from.id, se.gateway_id)
-            self.notify_node_update.emit(node_from)
+            self.notify_node_update.emit(self._store.get_node_from_id(node_from.id))
 
     def enqueue_task(self, task, *args, **kwargs):
         self.task_queue.put((task, args, kwargs))
