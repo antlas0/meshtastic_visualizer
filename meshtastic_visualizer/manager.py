@@ -46,16 +46,18 @@ CHUNK_SIZE = 100  # Chunk size in bytes
 
 class MeshtasticManager(QObject, threading.Thread):
 
-    notify_frontend_signal = pyqtSignal(MessageLevel, str)
+    notify_frontend_signal = pyqtSignal(str)
     refresh_ui_signal = pyqtSignal()
+    notify_local_device_info_signal = pyqtSignal(MeshtasticNode)
     notify_local_device_configuration_signal = pyqtSignal(str)
+    notify_device_connected_signal = pyqtSignal(str)
     notify_log_line = pyqtSignal(str)
     notify_new_packet = pyqtSignal(Packet)
     notify_message_signal = pyqtSignal()
     notify_ble_devices_signal = pyqtSignal(list)
     notify_serial_devices_signal = pyqtSignal(list)
     notify_channels_signal = pyqtSignal()
-    notify_nodes_update = pyqtSignal(MeshtasticNode)
+    notify_node_update = pyqtSignal(MeshtasticNode)
     notify_nodes_metrics_signal = pyqtSignal()
 
     def __init__(self):
@@ -99,7 +101,7 @@ class MeshtasticManager(QObject, threading.Thread):
         try:
             devices = BLEInterface.scan()
         except Exception:
-            self.notify_frontend_signal.emit(MessageLevel.ERROR, "Not able to scan devices")
+            self.notify_frontend_signal.emit( "Not able to scan devices")
             devices = []
 
         self.notify_ble_devices_signal.emit(devices)
@@ -121,7 +123,7 @@ class MeshtasticManager(QObject, threading.Thread):
                 self._interface = meshtastic.ble_interface.BLEInterface(target)
         except Exception as e:
             trace = f"Failed to connect to Meshtastic device {target}: {str(e)}"
-            self.notify_frontend_signal.emit(MessageLevel.ERROR, trace)
+            self.notify_frontend_signal.emit( trace)
             self.refresh_ui_signal.emit()
         else:
             # Subscribe to received message events
@@ -138,20 +140,20 @@ class MeshtasticManager(QObject, threading.Thread):
 
             node = self._interface.getMyNodeInfo()
             self._local_board_id = node["user"]["id"]
+            self.notify_device_connected_signal.emit(self._local_board_id)
             self.load_local_nodedb(only_self=(not load_db))
             self.load_local_node_configuration()
             self.get_local_node_details()
-            self.notify_frontend_signal.emit(MessageLevel.INFO, trace)
+            self.notify_frontend_signal.emit(trace)
             res = True
         finally:
             pass
         self.refresh_ui_signal.emit()
         return res
 
-    def get_local_node_infos(self, dummy) -> None:
+    @run_in_thread
+    def refresh_local_node_infos(self) -> None:
         self.load_local_node_configuration()
-        self.get_local_node_details()
-        self.retrieve_channels()
         self.refresh_ui_signal.emit()
 
     @run_in_thread
@@ -167,13 +169,13 @@ class MeshtasticManager(QObject, threading.Thread):
             self._interface = None
         except Exception as e:
             trace = f"Failed to disconnect from Meshtastic device: {str(e)}"
-            self.notify_frontend_signal.emit(MessageLevel.ERROR, trace)
+            self.notify_frontend_signal.emit( trace)
         else:
             trace = f"Meshtastic device disconnected."
             self._is_serial_connected = False
             self._is_tcp_connected = False
             self._is_ble_connected = False
-            self.notify_frontend_signal.emit(MessageLevel.INFO, trace)
+            self.notify_frontend_signal.emit( trace)
             res = True
         finally:
             pass
@@ -229,9 +231,8 @@ class MeshtasticManager(QObject, threading.Thread):
             is_local=True,
             public_key=node["user"]["publicKey"])
 
-        self._local_board_id = node["user"]["id"]
-
         self._data.set_local_node_config(n)
+        self.notify_local_device_info_signal.emit(n)
 
     def on_log(self, interface, line:str) -> None:
         self.notify_log_line.emit(line)
@@ -471,13 +472,15 @@ class MeshtasticManager(QObject, threading.Thread):
             self._data.store_or_update_node_metrics(nm)
             self.notify_nodes_metrics_signal.emit()
 
+        # update nodes consequent to received info
+        for n in nodes_to_update:
+            self._data.store_or_update_node(n)
+            self.notify_node_update.emit(n)
+
         # update node whose packet was received
         self._data.store_or_update_node(node_from)
         self._data.update_node_rx_counter(node_from)
-
-        # update nodes consequent to received info
-        self.update_nodes_info(nodes_to_update)
-        self.notify_nodes_update.emit(node_from)
+        self.notify_node_update.emit(self._data.get_node_from_id(node_from.id))
         self.notify_new_packet.emit(received_packet)
 
     def _extract_route_discovery(self, packet) -> list:
@@ -524,7 +527,7 @@ class MeshtasticManager(QObject, threading.Thread):
                 pkiEncrypted=message.pki_encrypted,
             )
         except Exception as e:
-            self.notify_frontend_signal.emit(MessageLevel.ERROR, f"Could not send message to {message.to_id}: {e}")
+            self.notify_frontend_signal.emit( f"Could not send message to {message.to_id}: {e}")
             return
 
         sent_packet = RadioPacket(
@@ -546,11 +549,6 @@ class MeshtasticManager(QObject, threading.Thread):
         self.notify_new_packet.emit(sent_packet)
         self._data.store_or_update_messages(message)
         self.notify_message_signal.emit()
-
-    @run_in_thread
-    def update_nodes_info(self, nodes: List[MeshtasticNode]) -> None:
-        for n in nodes:
-            self._data.store_or_update_node(n)
 
     @run_in_thread
     def load_local_nodedb(self, only_self: bool = False) -> list:
@@ -599,7 +597,7 @@ class MeshtasticManager(QObject, threading.Thread):
                 )
 
                 self._data.store_or_update_node(n, init=True)
-            self.notify_nodes_update.emit(n)
+                self.notify_node_update.emit(n)
 
     @run_in_thread
     def retrieve_channels(self) -> list:
@@ -622,7 +620,7 @@ class MeshtasticManager(QObject, threading.Thread):
                     )
         except Exception as e:
             trace = f"Failed to get channels: {str(e)}"
-            self.notify_frontend_signal.emit(MessageLevel.ERROR, trace)
+            self.notify_frontend_signal.emit( trace)
             self.notify_channels_signal.emit()
         else:
             self.notify_channels_signal.emit()
@@ -632,9 +630,9 @@ class MeshtasticManager(QObject, threading.Thread):
         try:
             self._interface.sendTelemetry()
         except Exception as e:
-            self.notify_frontend_signal.emit(MessageLevel.ERROR, f"Could not send telemetry")
+            self.notify_frontend_signal.emit( f"Could not send telemetry")
         else:
-            self.notify_frontend_signal.emit(MessageLevel.INFO, f"Telemetry broadcasted.")
+            self.notify_frontend_signal.emit( f"Telemetry broadcasted.")
 
             sent_packet = RadioPacket(
                 date=datetime.datetime.now(),
@@ -655,13 +653,13 @@ class MeshtasticManager(QObject, threading.Thread):
         try:
             node_infos = self._interface.getMyNodeInfo()
             if not "position" in node_infos or not node_infos["position"]:
-                self.notify_frontend_signal.emit(MessageLevel.ERROR, f"Could not send position: not found.")
+                self.notify_frontend_signal.emit( f"Could not send position: not found.")
             else:
                 self._interface.sendPosition(latitude=node_infos["position"]["latitude"], longitude=node_infos["position"]["longitude"])
         except Exception as e:
-            self.notify_frontend_signal.emit(MessageLevel.ERROR, f"Could not send position: {e}")
+            self.notify_frontend_signal.emit( f"Could not send position: {e}")
         else:
-            self.notify_frontend_signal.emit(MessageLevel.INFO, f"Position broadcasted.")
+            self.notify_frontend_signal.emit( f"Position broadcasted.")
 
             sent_packet = RadioPacket(
                 date=datetime.datetime.now(),
@@ -699,9 +697,7 @@ class MeshtasticManager(QObject, threading.Thread):
         except Exception as e:
             print(f"Could not send traceroute: {e}")
         else:
-            self.notify_frontend_signal.emit(
-                MessageLevel.INFO,
-                f"Traceroute sent to {dest}")
+            self.notify_frontend_signal.emit( f"Traceroute sent to {dest}")
 
             sent_packet = RadioPacket(
                 date=datetime.datetime.now(),

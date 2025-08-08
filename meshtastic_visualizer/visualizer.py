@@ -18,6 +18,7 @@ from dataclasses import asdict
 
 from .manager import MeshtasticManager
 from .messages_view import MessagesView
+from .nodes_table import NodesTable
 from .resources import MessageLevel, \
     MeshtasticMessage, \
     MeshtasticNode, \
@@ -32,8 +33,6 @@ from .resources import MessageLevel, \
     BROADCAST_NAME, \
     str2bool
 
-from .node_actions_widget import NodeActionsWidget
-from .packet_viewer_widget import PacketViewerWidget
 from .graphs import MeshtasticGraphs, GraphKind
 from .mqtt import MeshtasticMQTT
 from .datastore import MeshtasticDataStore
@@ -84,6 +83,16 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._current_output_folder = self._settings.value("output_folder", os.getcwd())
         self._store = MeshtasticDataStore()
         self._manager = MeshtasticManager()
+        self._messages_view = MessagesView(self._store)
+        cbs = {
+            "view_telemetry": self.view_telemetry,
+            "send_telemetry": self.send_telemetry_signal.emit,
+            "send_position": self.send_position_signal.emit,
+            "explore_packets": self.explore_packets,
+            "view_traceroute": self.view_traceroute,
+            "traceroute": self.traceroute,
+        }
+        self._nodes_table = NodesTable(self, self.mesh_table, buttons_callbacks=cbs)
         self.setup_ui()
 
         self._manager.set_store(self._store)
@@ -97,6 +106,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._mqtt_manager.refresh_ui_signal.connect(self.refresh_ui)
         self._manager.notify_frontend_signal.connect(
             self.refresh_status_header)
+        self._manager.notify_local_device_info_signal.connect(self.update_local_node_config)
         self._mqtt_manager.notify_frontend_signal.connect(
             self.refresh_status_header)
         self._manager.notify_local_device_configuration_signal.connect(
@@ -113,13 +123,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.update_channels_list)
         self._manager.notify_channels_signal.connect(
             self.update_channels_table)
-        self._manager.notify_nodes_update.connect(
-            self.update_nodes)
+        self._manager.notify_device_connected_signal.connect(self.connected_to_board)
+        self._manager.notify_node_update.connect(self.update_node)
         self._manager.notify_serial_devices_signal.connect(self._update_meshtastic_serial_devices)
         self._manager.notify_ble_devices_signal.connect(self._update_meshtastic_ble_devices)
         self._manager.notify_log_line.connect(self._update_device_logs)
-        self._mqtt_manager.notify_nodes_update.connect(
-            self.update_nodes)
+        self._mqtt_manager.notify_node_update.connect(self.update_node)
         self._mqtt_manager.notify_mqtt_logs.connect(
             self.update_received_mqtt_log)
 
@@ -158,17 +167,13 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 self._store.get_packet_metrics_fields()):
             self.pm_metric_combobox.insertItem(
                 i + 1, metric)
-        self.nodes_filter_linedit.textChanged.connect(self.update_nodes)
-        self.shortcut_filter_combobox.currentTextChanged.connect(self.update_nodes)
+        self.nodes_filter_linedit.textChanged.connect(self._nodes_table.filter_displayed_nodes)
+        self.shortcut_filter_combobox.currentTextChanged.connect(self._nodes_table.filter_displayed_nodes)
         self.mqtt_connect_button.pressed.connect(self.connect_mqtt)
         self.mqtt_disconnect_button.pressed.connect(self._mqtt_manager.disconnect_mqtt)
 
-    def set_status(self, loglevel: MessageLevel, message: str) -> None:
-        if loglevel.value == MessageLevel.ERROR.value:
-            self.notification_bar.setText(message)
-
-        if loglevel.value == MessageLevel.INFO.value or loglevel.value == MessageLevel.UNKNOWN.value:
-            self.notification_bar.setText(message)
+    def set_status(self, message: str) -> None:
+        self.notification_bar.setText(message)
 
     def _update_device_logs(self, line:str) -> None:
         if not self.start_pause_console_button.isChecked():
@@ -181,7 +186,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 self.console_logs_textedit.append(result)
 
     def _request_meshtastic_serial_devices(self) -> None:
-        self.set_status(MessageLevel.INFO, "Scanning serial devices.")
+        self.set_status("Scanning serial devices.")
         self.serial_scan_button.setText("⌛ Serial Scan")
         self.serial_devices_combobox.clear()
         self.serial_connect_button.setEnabled(False)
@@ -195,13 +200,13 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         else:
             for i, device in enumerate(devices):
                 self.serial_devices_combobox.insertItem(i, device)
-        self.set_status(MessageLevel.INFO, f"Found {len(devices)} serial device(s).")
+        self.set_status(f"Found {len(devices)} serial device(s).")
         self.serial_scan_button.setText("🔍 Serial Scan")
         self.serial_connect_button.setEnabled(True)
         self.serial_scan_button.setEnabled(True)
 
     def _request_meshtastic_ble_devices(self) -> None:
-        self.set_status(MessageLevel.INFO, "Scanning bluetooth devices.")
+        self.set_status("Scanning bluetooth devices.")
         self.ble_scan_button.setText("⌛ BLE Scan")
         self.ble_address_combobox.clear()
         self.ble_connect_button.setEnabled(False)
@@ -215,13 +220,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         else:
             for i, device in enumerate(devices):
                 self.ble_address_combobox.insertItem(i, device.address)
-        self.set_status(MessageLevel.INFO, f"Found {len(devices)} bluetooth device(s).")
+        self.set_status(f"Found {len(devices)} bluetooth device(s).")
         self.ble_scan_button.setText("🔍 BLE Scan")
         self.ble_connect_button.setEnabled(True)
         self.ble_scan_button.setEnabled(True)
 
     def setup_ui(self) -> None:
-        self.mynodeinfo_refresh_button.clicked.connect(self._manager.get_local_node_infos)
         if self._settings.value("serial_port", ""):
             self.serial_devices_combobox.insertItem(0, self._settings.value("serial_port", ""))
             self.serial_devices_combobox.setCurrentText(self._settings.value("serial_port", ""))
@@ -272,7 +276,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._action_buttons = [
             self.send_button,
             self.message_textedit,
-            self.mynodeinfo_refresh_button,
         ]
         for button in self._action_buttons:
             button.setEnabled(False)
@@ -324,7 +327,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packetmedium_combobox.insertItem(1, "Radio")
         self.packetmedium_combobox.insertItem(2, "MQTT")
         self.packetmedium_combobox.currentIndexChanged.connect(self.update_packets_filtered)
-        self._messages_view = MessagesView(self._store)
         self.message_view_layout.addWidget(self._messages_view)
 
     def choose_output_folder(self):
@@ -339,11 +341,17 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 self.refresh_status_header(MessageLevel.INFO, f"Output directory is set to: {self._current_output_folder}")
                 self.output_folder_label.setText(os.path.basename(self._current_output_folder))
 
+    def connected_to_board(self, node_id:str) -> None:
+        self.set_local_board_id(node_id)
+
+    def set_local_board_id(self, node_id:str) -> None:
+        self._local_board_id = node_id
+
     def clear_nodes(self) -> None:
         self._store.clear_nodes()
         self._store.clear_nodes_metrics()
         self.update_channels_list()
-        self.mesh_table.setRowCount(0)
+        self._nodes_table.clear()
         self.nm_node_label.clear()
         self.nodes_total_lcd.display(0)
         self.nodes_gps_lcd.display(0)
@@ -438,16 +446,13 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.mqtt_key_linedit.setEnabled(True)
         self._lock.release()
 
-    def refresh_status_header(
-            self,
-            status: MessageLevel = MessageLevel.UNKNOWN,
-            message=None) -> None:
+    def refresh_status_header(self, message:str=None) -> None:
         """
         Update header status bar
         """
         self._lock.acquire()
         if message is not None:
-            self.set_status(status, message)
+            self.set_status(message)
         self._lock.release()
 
     def connect_device_serial(self):
@@ -459,11 +464,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.serial_disconnect_button.setEnabled(False)
         device_path = self.serial_devices_combobox.currentText()
         if device_path:
-            self.set_status(MessageLevel.INFO, f"Connecting to {device_path}.")
+            self.set_status(f"Connecting to {device_path}.")
             self.connect_device_signal.emit(ConnectionKind.SERIAL, device_path, self.load_nodedb_checkbox.isChecked())
             self._settings.setValue("serial_port", self.serial_devices_combobox.currentText())
         else:
-            self.set_status(MessageLevel.ERROR, f"Cannot connect. Please specify a device path.")
+            self.set_status(f"Cannot connect. Please specify a device path.")
             self.serial_connect_button.setEnabled(True)
             self.serial_scan_button.setEnabled(True)
 
@@ -476,13 +481,13 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         ip = self.ipaddress_textedit.text()
         if ip:
             if "https" in ip:
-                self.set_status(MessageLevel.INFO, "Cannot connect through https, only http.")
+                self.set_status("Cannot connect through https, only http.")
                 return
-            self.set_status(MessageLevel.INFO, f"Connecting to {ip}.")
+            self.set_status(f"Connecting to {ip}.")
             self._settings.setValue("tcp", ip)
             self.connect_device_signal.emit(ConnectionKind.TCP, ip, self.load_nodedb_checkbox_bis.isChecked())
         else:
-            self.set_status(MessageLevel.ERROR, f"Cannot connect. Please specify an accessible ip address.")
+            self.set_status(f"Cannot connect. Please specify an accessible ip address.")
 
     def connect_device_ble(self):
         self.connection_tabs.setTabEnabled(0, False);
@@ -493,10 +498,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.ble_disconnect_button.setEnabled(False)
         ble_address = self.ble_address_combobox.currentText()
         if ble_address:
-            self.set_status(MessageLevel.INFO, f"Connecting to {ble_address}.")
+            self.set_status(f"Connecting to {ble_address}.")
             self._settings.setValue("ble_address", self.ble_address_combobox.currentText())
         else:
-            self.set_status(MessageLevel.INFO,f"Connecting to first detected device.")
+            self.set_status("Connecting to first detected device.")
         self.connect_device_signal.emit(ConnectionKind.BLE, ble_address, self.load_nodedb_checkbox_ter.isChecked())
 
     def disconnect_device(self) -> None:
@@ -628,14 +633,14 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
                 channel_index = self._store.get_channel_index_from_name(potential_dest)
                 recipient = BROADCAST_NAME
             except Exception as e:
-                self.set_status(MessageLevel.ERROR, f"Error trying to send message: {e}")
+                self.set_status(f"Error trying to send message: {e}")
                 return
         else:
             # DM
             recipient = self._store.get_id_from_short_name(potential_dest)
             channel_index = 0 # not really meaningful
             if not recipient:
-                self.set_status(MessageLevel.ERROR, f"Unknown node {potential_dest}")
+                self.set_status(f"Unknown node {potential_dest}")
                 return
 
         # Update timeout before sending
@@ -672,11 +677,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.packetmedium_combobox.blockSignals(False)
         self.packettype_combobox.blockSignals(False)
 
-    def see_node_in_map(self, node_id:str) -> None:
-        if self._store.has_seen_node_id(node_id) and self._store.get_node_from_id(node_id).has_location():
-            self.tabWidget.setCurrentIndex(4)
-            self._map.focus_on_node()
-
     def reset_node_packets_counters(self) -> None:
         self.messages_packets_number.setRange(0, 1)
         self.messages_packets_number.setValue(0)
@@ -705,196 +705,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.node_external_packets_number.display(0)
         self.node_external_decoded_packets_number.display(0)
 
-    def update_nodes(self, node:MeshtasticNode) -> None:
-        self.update_local_node_config()
-        nodes = self._store.get_nodes()
-        if not nodes:
-            return
-        self.update_message_combobox() # for DM
-        self.update_nodes_table(nodes)
-
-    def apply_nodes_filter(self, nodes: List[MeshtasticNode]) -> List[MeshtasticNode]:
-        filtered = nodes.values()  # nofilter
-        hopfilter = {
-            "1-hop": 1,
-            "2-hops": 2,
-            "3-hops": 3,
-            "4-hops": 4,
-            "5-hops": 5,
-            "6-hops": 6,
-            "7-hops": 7,
-        }
-        if self.shortcut_filter_combobox.currentText() == "Recently seen":
-            recently_seen = list(filter(lambda x: x.rx_counter > 0,nodes.values()))
-            filtered = recently_seen
-        elif self.shortcut_filter_combobox.currentText() == "Positioned":
-            filtered = list(filter(lambda x: x.has_location(), nodes.values()))
-        elif self.shortcut_filter_combobox.currentText() == "Neighbors":
-            filtered = list(filter(lambda x: x.hopsaway == 0, nodes.values()))
-        elif self.shortcut_filter_combobox.currentText() in hopfilter.keys():
-            filtered = list(filter(lambda x: x.hopsaway == hopfilter[self.shortcut_filter_combobox.currentText()], nodes.values()))
-        if len(self.nodes_filter_linedit.text()) != 0:
-            # first search in long_name, then in id, then in aka
-            pattern = self.nodes_filter_linedit.text()
-            filtered = list(filter(lambda x: pattern.lower() in x.short_name.lower() if x.short_name is not None else False, nodes.values()))
-            if not filtered:
-                filtered = list(filter(lambda x: pattern.lower() in x.long_name.lower() if x.long_name is not None else False,nodes.values()))
-            if not filtered:
-                filtered = list(filter(lambda x: pattern.lower() in x.id.lower(),nodes.values()))
-        return filtered
-
-    def update_nodes_table(self, nodes: List[MeshtasticNode]) -> None:
-        # update LCD widgets
-        self.nodes_total_lcd.display(len(nodes.values()))
-        positioned_nodes = list(
-            filter(
-                lambda x: x.lat is not None and x.lon is not None and x.lat and x.lon,
-                nodes.values()))
-        self.nodes_gps_lcd.display(len(positioned_nodes))
-        recently_seen = list(
-            filter(
-                lambda x: x.rx_counter > 0,
-                nodes.values()))
-        self.nodes_recently_lcd.display(len(recently_seen))
-
-        filtered = self.apply_nodes_filter(nodes)
-
-        # update table
-        rows: list[dict[str, any]] = []
-        for node in filtered:
-            row = {"Status": "", "User": "", "ID": ""}
-
-            status_line = []
-
-            if node.is_mqtt_gateway:
-                status_line.append("🖥️")
-            else:
-                status_line.append("📡")
-            if node.has_node_info():
-                status_line.append("👤")
-            if node.has_telemetry:
-                status_line.append("🔋")
-            if node.has_local_stats:
-                status_line.append("⚙️")
-            if node.has_environment:
-                status_line.append("☀️")
-            if node.has_location():
-                status_line.append("📍")
-
-            row.update(
-                {
-                    "Status": " ".join(status_line),
-                    "User": node.long_name,
-                    "AKA": node.short_name,
-                    "ID": node.id,
-                    "SNR": node.snr if node.snr is not None and node.hopsaway == 0 else "/",
-                    "RSSI": node.rssi if node.rssi is not None and node.hopsaway == 0 else "/",
-                    "Hops": f"✈️{node.hopsaway}" if node.hopsaway is not None else "/",
-                    "RX": f"⬊{node.rx_counter}" if node.rx_counter is not None and node.rx_counter > 0 else "/",
-                    "TX": f"⬈{node.tx_counter}" if node.tx_counter is not None and node.tx_counter > 0 else "/",
-                    "Details": None,
-                    "Action": None,
-                    "Relay node": f"0x{node.relay_node}" if node.relay_node else "/",
-                    "Next hop": f"0x{node.next_hop}" if node.next_hop else "/",
-                    "Role": node.role,
-                    "Hardware": node.hardware,
-                }
-            )
-            node.date2str()
-            row.update(
-                {
-                    "Latitude": node.lat,
-                    "Longitude": node.lon,
-                    "Public key": node.public_key,
-                    "Last seen": node.lastseen,
-                }
-            )
-            rows.append(row)
-
-        rows.sort(key=lambda r: r.get("LastHeard") or "0000", reverse=True)
-
-        columns = [
-            "Status",
-            "User",
-            "ID",
-            "AKA",
-            "SNR",
-            "RSSI",
-            "Hops",
-            "RX",
-            "TX",
-            "Details",
-            "Action",
-            "Relay node",
-            "Next hop",
-            "Role",
-            "Hardware",
-            "Latitude",
-            "Longitude",
-            "Public key",
-            "Last seen",
-        ]
-
-        del nodes
-        self.mesh_table.setRowCount(0)
-        self.mesh_table.setRowCount(len(rows))
-        self.mesh_table.setColumnCount(len(columns))
-        self.mesh_table.setHorizontalHeaderLabels(columns)
-
-        for row_idx, row_data in enumerate(rows):
-            for col_idx, value in enumerate(row_data.values()):
-                current_item = self.mesh_table.item(row_idx, col_idx)
-                current_widget = self.mesh_table.cellWidget(row_idx, col_idx)
-                if current_item is None and current_widget is None:
-                    if col_idx == 10:  # insert widget in cell
-                        if self._manager.is_connected():
-                            # get id to check if node is local
-                            is_local = row_data["ID"] == self._local_board_id
-
-                            self.mesh_table.setCellWidget(
-                                row_idx,
-                                col_idx,
-                                NodeActionsWidget(
-                                    parent=self.mesh_table,
-                                    callback_traceroute=self.traceroute,
-                                    callback_telemetry=lambda: self.send_telemetry_signal.emit(),
-                                    callback_position=lambda: self.send_position_signal.emit(),
-                                    callback_view_traceroute=self.view_traceroute,
-                                    has_traceroute=self._store.has_node_traceroute(row_data["ID"]),
-                                    is_local=is_local,
-                                    node_id=row_data["ID"]
-                                    )
-                                )
-                        else:
-                            data = str(value)
-                            if data == "None":
-                                data = ""
-                    if col_idx == 9:  # insert widget in cell
-                        if self._store.has_seen_node_id(row_data["ID"]):
-                            self.mesh_table.setCellWidget(
-                                row_idx,
-                                col_idx,
-                                PacketViewerWidget(
-                                    parent=self,
-                                    callback_packet_viewer=self.explore_packets,
-                                    callback_telemetry_viewer=self.view_telemetry,
-                                    has_telemetry=self._store.has_node_metrics(row_data["ID"]),
-                                    node_id=row_data["ID"],
-                                )
-                            )
-                    else:
-                        data = str(value)
-                        if data == "None":
-                            data = ""
-                        self.mesh_table.setItem(row_idx, col_idx, QTableWidgetItem(data))
-                if current_item is not None:
-                    if current_item.text() != str(value):
-                        data = str(value)
-                        if data == "None":
-                            data = ""
-                        current_item.setText(data)
-        self.mesh_table.resizeColumnsToContents()
-        self.mesh_table.resizeRowsToContents()
+    def update_node(self, node:MeshtasticNode) -> None:
+        if node.id == self._local_board_id:
+            self._manager.refresh_local_node_infos()
+            self.update_local_node_config(node)
+        self.update_message_combobox(node.id) # for DM
+        self._nodes_table.update(node)
 
     def get_nodes(self):
         self.get_nodes_signal.emit()
@@ -951,20 +767,21 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def retrieve_channels(self):
         self.retrieve_channels_signal.emit()
 
-    def update_local_node_config(self):
-        cfg = self._store.get_local_node_config()
-        if cfg is None:
-            return
-
-        self._local_board_id = cfg.id
-        self._local_board_ln = cfg.long_name
-        self.devicename_label.setText(cfg.long_name)
-        self.publickey_label.setText(cfg.public_key)
-        self.hardware_label.setText(cfg.hardware)
-        self.role_label.setText(cfg.role)
-        self.batterylevel_progressbar.setValue(cfg.battery_level)
-        self.batterylevel_progressbar.show()
-        self.id_label.setText(str(cfg.id))
+    def update_local_node_config(self, node:MeshtasticNode):
+        self._local_board_id = node.id
+        self.id_label.setText(node.id)
+        if node.long_name is not None:
+            self.devicename_label.setText(node.long_name)
+            self._local_board_ln = node.long_name
+        if node.public_key is not None:
+            self.publickey_label.setText(node.public_key)
+        if node.hardware is not None:
+            self.hardware_label.setText(node.hardware)
+        if node.role is not None:
+            self.role_label.setText(node.role)
+        if node.battery_level is not None:
+            self.batterylevel_progressbar.setValue(node.battery_level)
+            self.batterylevel_progressbar.show()
         self._messages_view.set_local_board_id(self._local_board_id)
 
     def traceroute(
@@ -974,13 +791,11 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             dummy: bool = False):
         self.traceroute_signal.emit(dest_id, DEFAULT_TRACEROUTE_CHANNEL, maxhops)
 
-    def update_message_combobox(self) -> None:
-        already_present = [self.messagechannel_combobox.itemText(i) for i in range(self.messagechannel_combobox.count())]
-        local_sn = self._store.get_short_name_from_id(self._local_board_id)
-        for node in self._store.get_nodes().values():
-            sn = self._store.get_short_name_from_id(node.id)
-            if sn and sn not in already_present and sn != local_sn:
-                self.messagechannel_combobox.insertItem(self.messagechannel_combobox.count(), sn)
+    def update_message_combobox(self, node_id:str) -> None:
+        already_present_sns = [self.messagechannel_combobox.itemText(i) for i in range(self.messagechannel_combobox.count())]
+        node_sn = self._store.get_short_name_from_id(node_id)
+        if node_sn not in already_present_sns:
+            self.messagechannel_combobox.insertItem(self.messagechannel_combobox.count(), node_sn)
 
     def update_received_message(self) -> None:
         if self.tabWidget.currentIndex() != 3:
@@ -1162,12 +977,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         try:
             text_file = open(path, "w")
         except Exception as e:
-            self.set_status(MessageLevel.ERROR, f"Could not write to {path}: {e}")
+            self.set_status(f"Could not write to {path}: {e}")
         else:
             text_file.write(data)
             absp = os.path.abspath(path)
             trace = f"<a href='file://{absp}'>Exported {kind} logs to file: {path}</a>"
-            self.set_status(MessageLevel.INFO, trace)
+            self.set_status(trace)
             res = True
             text_file.close()
         finally:

@@ -37,7 +37,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
 
     notify_frontend_signal = pyqtSignal(MessageLevel, str)
     refresh_ui_signal = pyqtSignal()
-    notify_nodes_update = pyqtSignal(MeshtasticNode)
+    notify_node_update = pyqtSignal(MeshtasticNode)
     notify_nodes_metrics_signal = pyqtSignal()
     notify_message_signal = pyqtSignal()
     notify_new_packet = pyqtSignal(Packet)
@@ -424,7 +424,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
             node_from.hopsaway = max(0, int(se.packet.hop_start) - int(se.packet.hop_limit))
             if node_from.hopsaway is not None and node_from.hopsaway == 0:
                 self._store.add_neighbor(node_from.id, se.gateway_id)
-            self.notify_nodes_update.emit(node_from)
+            self.notify_node_update.emit(node_from)
 
     def enqueue_task(self, task, *args, **kwargs):
         self.task_queue.put((task, args, kwargs))
