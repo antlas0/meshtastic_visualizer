@@ -46,11 +46,6 @@ class MeshtasticDataStore(Thread):
         self.local_node_config = config
         self._lock.release()
 
-    def set_local_node_config_field(self, field: str, value: Any) -> None:
-        self._lock.acquire()
-        setattr(self.local_node_config, field, value)
-        self._lock.release()
-
     def get_channels(self) -> Optional[List[Channel]]:
         self._lock.acquire()
         res = copy.copy(self.channels)
