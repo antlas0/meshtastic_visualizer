@@ -11,6 +11,13 @@ class MessageBubble(QFrame):
         self.setMaximumWidth(400)
         self.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Minimum)
 
+        self._notyet_ack_icon = "❔"
+        self._ack_icon = "✅✅"
+        self._no_ack_icon = "❌"
+        self._other_ack_icon = "✅"
+        self._encrypted_icon = "🔒"
+        self._not_encrypted_icon = "⚠️"
+
         # Style the bubble appearance
         self.setStyleSheet(f"""
             QFrame {{
@@ -43,7 +50,7 @@ class MessageBubble(QFrame):
         self.sender_label = QLabel(name)
         self.sender_label.setObjectName("sender")
         self.meta_layout.addWidget(self.sender_label)
-        self.encryption_label = QLabel("🔒" if message.pki_encrypted else "⚠️")
+        self.encryption_label = QLabel(self._encrypted_icon if message.pki_encrypted else self._not_encrypted_icon)
         self.encryption_label.setObjectName("meta")
         self.encryption_label.setStyleSheet("color: #888; font-size: 11px;")
         self.date_label = QLabel(date)
@@ -54,7 +61,7 @@ class MessageBubble(QFrame):
         self.meta_layout.addStretch()
         self.meta_layout.addWidget(self.date_label)
         self.meta_layout.addStretch()
-        self.ack_label = QLabel("❔" if is_sender else "/")
+        self.ack_label = QLabel(self._notyet_ack_icon if is_sender else "/")
         self.ack_label.setStyleSheet("color: #444; font-size: 11px;")
         self.ack_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.meta_layout.addWidget(self.ack_label)
@@ -73,7 +80,7 @@ class MessageBubble(QFrame):
     def update_content(self, name, message: MeshtasticMessage):
         """Update the content of this bubble."""
         self.sender_label.setText(name)
-        self.encryption_label.setText("🔒" if message.pki_encrypted else "⚠️")
+        self.encryption_label.setText(self._encrypted_icon if message.pki_encrypted else self._not_encrypted_icon)
         self.date_label.setText(message.date)
         self.content_label.setText(message.content)
 
@@ -82,11 +89,11 @@ class MessageBubble(QFrame):
             if getattr(message, "ack_status") is True:
                 if getattr(message, "ack_by") is not None:
                     if getattr(message,"ack_by") != getattr(message,"to_id"):
-                        label = "☁️"
+                        label = self._other_ack_icon
                     else:
-                        label = "✅"
+                        label = self._ack_icon
             else:
-                label = "❌"
+                label = self._no_ack_icon
             self.ack_label.setText(label)
 
     def redraw(self) -> None:
