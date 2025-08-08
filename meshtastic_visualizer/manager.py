@@ -20,7 +20,6 @@ from PyQt6.QtCore import pyqtSignal, QObject
 
 from .devices import list_serial_ports
 from .resources import run_in_thread, \
-    MessageLevel, \
     Channel, \
     MeshtasticNode, \
     MeshtasticMessage, \

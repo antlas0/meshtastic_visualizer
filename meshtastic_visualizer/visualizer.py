@@ -19,8 +19,7 @@ from dataclasses import asdict
 from .manager import MeshtasticManager
 from .messages_view import MessagesView
 from .nodes_table import NodesTable
-from .resources import MessageLevel, \
-    MeshtasticMessage, \
+from .resources import MeshtasticMessage, \
     MeshtasticNode, \
     Packet, \
     TEXT_MESSAGE_MAX_CHARS, \
@@ -338,7 +337,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             if len(dialog.selectedFiles()) == 1:
                 self._current_output_folder = dialog.selectedFiles()[0]
                 self._settings.setValue("output_folder", self._current_output_folder)
-                self.refresh_status_header(MessageLevel.INFO, f"Output directory is set to: {self._current_output_folder}")
+                self.refresh_status_header(f"Output directory is set to: {self._current_output_folder}")
                 self.output_folder_label.setText(os.path.basename(self._current_output_folder))
 
     def connected_to_board(self, node_id:str) -> None:

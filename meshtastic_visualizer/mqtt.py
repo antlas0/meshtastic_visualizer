@@ -17,7 +17,6 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 
 from .resources import run_in_thread, \
-    MessageLevel, \
     MeshtasticNode, \
     MeshtasticMessage, \
     NodeMetrics, \
@@ -35,7 +34,7 @@ logging.basicConfig(level=logging.ERROR)
 
 class MeshtasticMQTT(QObject, threading.Thread):
 
-    notify_frontend_signal = pyqtSignal(MessageLevel, str)
+    notify_frontend_signal = pyqtSignal(str)
     refresh_ui_signal = pyqtSignal()
     notify_node_update = pyqtSignal(MeshtasticNode)
     notify_nodes_metrics_signal = pyqtSignal()
@@ -105,13 +104,9 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 self._client.connect(
                     self._mqtt_settings.host, self._mqtt_settings.port, 60)
             except Exception as e:
-                self.notify_frontend_signal.emit(
-                    MessageLevel.ERROR,
-                    f"Could not connect to MQTT server {self._mqtt_settings.host}:{self._mqtt_settings.port}")
+                self.notify_frontend_signal.emit(f"Could not connect to MQTT server {self._mqtt_settings.host}:{self._mqtt_settings.port}")
             else:
-                self.notify_frontend_signal.emit(
-                    MessageLevel.INFO,
-                    f"Succesfully connected to MQTT server {self._mqtt_settings.host}:{self._mqtt_settings.port}")
+                self.notify_frontend_signal.emit(f"Succesfully connected to MQTT server {self._mqtt_settings.host}:{self._mqtt_settings.port}")
                 self._mqtt_thread = threading.Thread(
                     target=self._client.loop_start)
                 self._mqtt_thread.start()
@@ -119,33 +114,22 @@ class MeshtasticMQTT(QObject, threading.Thread):
     def on_connect(self, client, userdata, flags, reason_code, properties):
         if not reason_code.is_failure:
             if self._client.is_connected():
-                self.notify_frontend_signal.emit(
-                    MessageLevel.INFO,
-                    f"Connected to {self._mqtt_settings.host}:{self._mqtt_settings.port}")
+                self.notify_frontend_signal.emit(f"Connected to {self._mqtt_settings.host}:{self._mqtt_settings.port}")
                 try:
                     self._client.subscribe(self._mqtt_settings.topic)
                 except Exception as e:
-                    self.notify_frontend_signal.emit(
-                        MessageLevel.ERROR,
-                        f"Could not subscribe to topic {self._mqtt_settings.topic}")
+                    self.notify_frontend_signal.emit(f"Could not subscribe to topic {self._mqtt_settings.topic}")
                 else:
-                    self.notify_frontend_signal.emit(
-                        MessageLevel.INFO, f"Subscribed to root topic {self._mqtt_settings.topic}")
+                    self.notify_frontend_signal.emit(f"Subscribed to root topic {self._mqtt_settings.topic}")
             else:
-                self.notify_frontend_signal.emit(
-                    MessageLevel.ERROR,
-                    f"Failed to connect to {self._mqtt_settings.host}:{self._mqtt_settings.port}")
+                self.notify_frontend_signal.emit(f"Failed to connect to {self._mqtt_settings.host}:{self._mqtt_settings.port}")
         else:
-            self.notify_frontend_signal.emit(
-                MessageLevel.ERROR,
-                f"Failed to connect to {self._mqtt_settings.host}:{self._mqtt_settings.port}: {reason_code.names[reason_code.value]}")
+            self.notify_frontend_signal.emit(f"Failed to connect to {self._mqtt_settings.host}:{self._mqtt_settings.port}: {reason_code.names[reason_code.value]}")
             time.sleep(2)
         self.refresh_ui_signal.emit()
 
     def on_disconnect(self, client, userdata, flags, reason_code, properties):
-        self.notify_frontend_signal.emit(
-            MessageLevel.INFO,
-            f"Disconnected from {self._mqtt_settings.host}:{self._mqtt_settings.port}")
+        self.notify_frontend_signal.emit( f"Disconnected from {self._mqtt_settings.host}:{self._mqtt_settings.port}")
         self.refresh_ui_signal.emit()
 
     def xor_hash(data: bytes) -> int:
@@ -200,7 +184,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
             pass
         else:
             if len(msg.payload) > self._mqtt_settings.max_msg_len:
-                print(MessageLevel.ERROR, 'Message too long: ' +
+                print('Message too long: ' +
                       str(len(msg.payload)) + ' bytes long, skipping.')
                 return
 

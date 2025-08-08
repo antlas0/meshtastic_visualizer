@@ -24,15 +24,6 @@ def sneaky_to_camel(s:str) -> str:
     res = re.sub(r'_([a-z])', lambda match: match.group(1).upper(),s)
     return res
 
-class MessageLevel(enum.Enum):
-    """
-    Message criticality level
-    displayed in the window
-    """
-    ERROR = 2
-    INFO = 1
-    UNKNOWN = 0
-
 
 class PacketInfoType(enum.Enum):
     """
