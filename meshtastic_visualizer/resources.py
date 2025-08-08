@@ -13,18 +13,16 @@ TIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 CHARGING_TRESHOLD = 4.2
 DEFAULT_TRACEROUTE_CHANNEL = 0
 
+def str2bool(s:str) -> bool:
+    res = {
+        "true": True,
+        "false": False,
+    }
+    return res.get(s.lower(), False)
+
 def sneaky_to_camel(s:str) -> str:
     res = re.sub(r'_([a-z])', lambda match: match.group(1).upper(),s)
     return res
-
-class MessageLevel(enum.Enum):
-    """
-    Message criticality level
-    displayed in the window
-    """
-    ERROR = 2
-    INFO = 1
-    UNKNOWN = 0
 
 
 class PacketInfoType(enum.Enum):
@@ -143,6 +141,7 @@ class MeshtasticNode(JsonExporter):
     has_telemetry: bool=False
     has_local_stats: bool=False
     has_environment: bool=False
+    last_traceroute: Optional[str] = None
 
     def has_node_info(self) -> bool:
         return (self.long_name is not None)
@@ -174,6 +173,27 @@ class NodeMetrics:
     temperature: Optional[float] = None
     relative_humidity: Optional[float] = None
     barometric_pressure: Optional[float] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+
+    def has_data(self) -> bool:
+        return any(
+            [
+                self.uptime is not None,
+                self.voltage is not None,
+                self.air_util_tx is not None,
+                self.channel_utilization is not None,
+                self.battery_level is not None,
+                self.num_packets_tx is not None,
+                self.num_tx_relay is not None,
+                self.num_tx_relay_canceled is not None,
+                self.temperature is not None,
+                self.relative_humidity is not None,
+                self.barometric_pressure is not None,
+                self.lat is not None,
+                self.lon is not None,
+            ]
+        )
 
 
 @dataclass

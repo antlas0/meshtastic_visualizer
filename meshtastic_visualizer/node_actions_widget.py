@@ -3,7 +3,7 @@
 from PyQt6.QtWidgets import QWidget, QPushButton, QHBoxLayout
 
 class NodeActionsWidget(QWidget):
-    def __init__(self, parent, callback_traceroute, callback_telemetry, callback_position, is_local:bool=False, node_id:str=""):
+    def __init__(self, parent, callback_traceroute, callback_telemetry, callback_position, callback_view_traceroute, has_traceroute:bool=False, is_local:bool=False, node_id:str=""):
         super(NodeActionsWidget,self).__init__(parent)
         self._node_id = node_id
         layout = QHBoxLayout()
@@ -16,6 +16,13 @@ class NodeActionsWidget(QWidget):
             btn.setEnabled(True)
             btn.clicked.connect(lambda: callback_traceroute(self._node_id))
             layout.addWidget(btn)
+
+            if has_traceroute:
+                btn = QPushButton("Traceroute logs")
+                btn.setStyleSheet("QPushButton{font-size: 9pt;}")
+                btn.setEnabled(True)
+                btn.clicked.connect(lambda: callback_view_traceroute(self._node_id))
+                layout.addWidget(btn)
 
         # only add these button if this is the local node
         if is_local:

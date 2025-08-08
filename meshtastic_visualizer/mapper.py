@@ -2,6 +2,7 @@
 
 
 import hashlib
+import datetime
 import io
 import folium
 from typing import Optional
@@ -80,10 +81,15 @@ class Mapper:
         if nodes is None or not nodes:
             return
 
-        markers_group = folium.FeatureGroup(name="Stations")
         links_group = folium.FeatureGroup(name="Links")
-        markers: list = []
+        traces_group = folium.FeatureGroup(name="Traces")
+        online_group = folium.FeatureGroup(name="Online")
+        offline_group = folium.FeatureGroup(name="Offline")
+        traces: dict = {}
         links: list = []
+        online: list = []
+        offline: list = []
+
 
         # remove any node that does not have full coordinates
         nodes_filtered = {}
@@ -96,6 +102,33 @@ class Mapper:
         for node_id, node in nodes_filtered.items():
             if node.lat is None or node.lon is None:
                 continue
+
+            # create lat,lon trace
+            # check if moving or not
+            try:
+                timestamp = self._store.get_node_metrics(node_id, "lat")["timestamp"]
+                lat = self._store.get_node_metrics(node_id, "lat")["value"]
+                lon = self._store.get_node_metrics(node_id, "lon")["value"]
+            except KeyError:
+                pass
+            else:
+                if lat and lon and len(set(lat)) > 1  and len(set(lon)) > 1:
+                    for i, elt in enumerate(timestamp):
+                        if lat[i] is None or lon[i] is None:
+                            continue
+                        if i >= len(timestamp)-1:
+                            continue
+                        trace_coords = [
+                            [float(lat[i]), float(lon[i])],
+                            [float(lat[i+1]), float(lon[i+1])],
+                        ]
+                        tooltip = datetime.datetime.fromtimestamp(elt).strftime("%Y-%m-%d %H:%M:%S%z")
+                        trace = folium.PolyLine(trace_coords, color="blue", tooltip=tooltip, dash_array="10")
+                        trace.add_to(traces_group)
+                        if not node_id in traces:
+                            traces[node_id] = []
+                        traces[node_id].append(trace)
+
             icon_name:str = "tower-cell"
             strl = []
             if node.long_name:
@@ -143,8 +176,12 @@ class Mapper:
                 popup=popup,
                 icon=folium.Icon(color=color, icon=icon_name, prefix="fa"),
             )
-            marker.add_to(markers_group)
-            markers.append(marker)
+            if node.rx_counter > 0:
+                marker.add_to(online_group)
+                online.append(marker)
+            else:
+                marker.add_to(offline_group)
+                offline.append(marker)
 
         # neighbors of local node
         local_node = list(filter(lambda x: x.is_local, nodes.values()))
@@ -167,17 +204,25 @@ class Mapper:
                         link = folium.PolyLine(link_coords, color=color, tooltip=tooltip)
                         link.add_to(links_group)
                         links.append(link)
-        if markers:
-            markers_group.add_to(self._map)
-            markers_lat = [x.location[0] for x in markers]
-            markers_lon = [x.location[1] for x in markers]
+        if online:
+            online_group.add_to(self._map)
+        if offline:
+            offline_group.add_to(self._map)
+
+        all_m = online + offline
+        markers_lat = [x.location[0] for x in all_m]
+        markers_lon = [x.location[1] for x in all_m]
+
+        if markers_lat and markers_lon:
             self._map.fit_bounds(
                 [[min(markers_lat), min(markers_lon)],
-                 [max(markers_lat), max(markers_lon)]]
+                    [max(markers_lat), max(markers_lon)]]
                 )
         if links:
             links_group.add_to(self._map)
 
-        if links:
-            folium.LayerControl().add_to(self._map)   
+        if traces:
+            traces_group.add_to(self._map)
+
+        folium.LayerControl().add_to(self._map)   
         del nodes_filtered

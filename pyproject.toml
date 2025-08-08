@@ -1,6 +1,6 @@
 [project]
 name = "meshtastic-visualizer"
-version = "1.8.1"
+version = "1.8.3"
 description = "Qt desktop application to send messages, inspect packets, metrics from your Meshtastic node."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -8,7 +8,7 @@ dependencies = [
     "cryptography>=45.0.3",
     "folium==0.17.0",
     "importlib-resources>=6.5.2",
-    "meshtastic==2.6.3",
+    "meshtastic==2.7.0",
     "paho-mqtt>=2.1.0",
     "protobuf==5.27.3",
     "pubsub==0.1.2",

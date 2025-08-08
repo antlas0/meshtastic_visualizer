@@ -46,11 +46,6 @@ class MeshtasticDataStore(Thread):
         self.local_node_config = config
         self._lock.release()
 
-    def set_local_node_config_field(self, field: str, value: Any) -> None:
-        self._lock.acquire()
-        setattr(self.local_node_config, field, value)
-        self._lock.release()
-
     def get_channels(self) -> Optional[List[Channel]]:
         self._lock.acquire()
         res = copy.copy(self.channels)
@@ -135,6 +130,13 @@ class MeshtasticDataStore(Thread):
         self._lock.release()
         return res
 
+    def has_node_traceroute(self, node_id:str) -> bool:
+        res = False
+        self._lock.acquire()
+        res = (node_id in self.nodes.keys()) and (self.nodes[node_id].last_traceroute is not None)
+        self._lock.release()
+        return res
+
     def has_node_id(self, node_id:str) -> bool:
         res = False
         self._lock.acquire()
@@ -176,7 +178,7 @@ class MeshtasticDataStore(Thread):
                     lambda x: x.short_name == short_name_or_id,
                     nodes))
             if len(node) != 1:
-                res = short_name_or_id
+                res = ""
             else:
                 res = node[0].id
         self._lock.release()
@@ -235,7 +237,8 @@ class MeshtasticDataStore(Thread):
         if me in self.nodes.keys():
             if self.nodes[me].neighbors is None:
                 self.nodes[me].neighbors = []
-            self.nodes[me].neighbors.append(my_neighbor)
+            if my_neighbor not in self.nodes[me].neighbors:
+                self.nodes[me].neighbors.append(my_neighbor)
 
         self._lock.release()
 
@@ -253,7 +256,7 @@ class MeshtasticDataStore(Thread):
 
     def get_messages(self) -> List:
         self._lock.acquire()
-        messages = list(self.messages.values())
+        messages = copy.deepcopy(list(self.messages.values()))
         self._lock.release()
         return messages
 
@@ -305,13 +308,9 @@ class MeshtasticDataStore(Thread):
                 node.lastseen = node.firstseen
 
             for f in __get_nodes_fields():
-                if getattr(self.nodes[str(node.id)],
-                           f.name) != getattr(node, f.name):
-                    if getattr(
-                            node,
-                            f.name) is not None:
-                        setattr(self.nodes[str(node.id)], f.name,
-                                getattr(node, f.name))
+                if getattr(self.nodes[str(node.id)], f.name) != getattr(node, f.name):
+                    if getattr(node, f.name) is not None:
+                        setattr(self.nodes[str(node.id)], f.name, getattr(node, f.name))
         self._lock.release()
 
     def store_or_update_messages(
@@ -351,6 +350,8 @@ class MeshtasticDataStore(Thread):
             "temperature",
             "relative_humidity",
             "barometric_pressure",
+            "lat",
+            "lon",
         ]
 
     def get_packet_metrics_fields(self) -> list:
@@ -369,6 +370,12 @@ class MeshtasticDataStore(Thread):
             self.metrics[new_metric.node_id][0]
         self._lock.release()
 
+    def has_node_metrics(self, node_id:str) -> bool:
+        self._lock.acquire()
+        res = (node_id in self.metrics.keys())
+        self._lock.release()
+        return res
+
     def get_node_metrics(self, node_id: str, metric: str) -> Dict:
         self._lock.acquire()
         res: Dict[str, List[Any]] = {}
@@ -382,6 +389,10 @@ class MeshtasticDataStore(Thread):
                 values = [getattr(x, metric) for x in self.metrics[node_id]]
                 res["timestamp"] = timestamp
                 res["value"] = values
+                none_indexes = [ i for i, v in enumerate(res["value"]) if v is None]
+                for i in reversed(none_indexes):
+                    res["timestamp"].pop(i)
+                    res["value"].pop(i)
         self._lock.release()
         return res.copy()
 
@@ -407,6 +418,10 @@ class MeshtasticDataStore(Thread):
                 values = [getattr(x, metric) for x in filtered]
                 res["timestamp"] = timestamp
                 res["value"] = values
+                none_indexes = [ i for i, v in enumerate(res["value"]) if v is None]
+                for i in reversed(none_indexes):
+                    res["timestamp"].pop(i)
+                    res["value"].pop(i)
         self._lock.release()
         return res.copy()
 
