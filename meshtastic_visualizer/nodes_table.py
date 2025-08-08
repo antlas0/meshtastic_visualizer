@@ -10,6 +10,7 @@ class NodesTable:
         self._parent = parent
         self._buttons_callbacks = buttons_callbacks
         self._mesh_table = table
+        self._default_placeholder = ""
         self._table_ln_column_index = 1
         self._table_id_column_index = 2
         self._table_sn_column_index = 3
@@ -199,13 +200,13 @@ class NodesTable:
                 if self._parent._manager.is_connected():
                     self._mesh_table.setCellWidget(found_row, self._table_action_column_index, row_to_update["Action"])                                
                 else:
-                    self._mesh_table.setItem(found_row, col_idx, QTableWidgetItem(""))
+                    self._mesh_table.setItem(found_row, col_idx, QTableWidgetItem(self._default_placeholder))
             elif col_idx == self._table_details_column_index:
                 if self._parent._store.has_seen_node_id(row_to_update["ID"]):
                     self._mesh_table.setCellWidget(found_row, self._table_details_column_index, row_to_update["Details"]
                     )
                 else:
-                    self._mesh_table.setItem(found_row, col_idx, QTableWidgetItem(""))
+                    self._mesh_table.setItem(found_row, col_idx, QTableWidgetItem(self._default_placeholder))
             else:
                 current_item = self._mesh_table.item(found_row, col_idx)
                 if value is not None:
@@ -213,7 +214,7 @@ class NodesTable:
                         self._mesh_table.setItem(found_row, col_idx, QTableWidgetItem(str(value)))
                 else:
                     if current_item is None:
-                        self._mesh_table.setItem(found_row, col_idx, QTableWidgetItem(""))
+                        self._mesh_table.setItem(found_row, col_idx, QTableWidgetItem(self._default_placeholder))
 
         self._mesh_table.resizeColumnsToContents()
         self._mesh_table.resizeRowsToContents()
