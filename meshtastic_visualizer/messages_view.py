@@ -48,6 +48,9 @@ class MessageBubble(QFrame):
         date = message.date.strftime(time_format)
         self.meta_layout = QHBoxLayout()
         self.sender_label = QLabel(name)
+        self.sender_label.setTextInteractionFlags(
+                Qt.TextInteractionFlag.TextSelectableByMouse | Qt.TextInteractionFlag.TextSelectableByKeyboard
+            )
         self.sender_label.setObjectName("sender")
         self.meta_layout.addWidget(self.sender_label)
         self.encryption_label = QLabel(self._encrypted_icon if message.pki_encrypted else self._not_encrypted_icon)
