@@ -252,10 +252,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.load_nodedb_checkbox_ter.stateChanged.connect(self.load_nodedb_checkbox_bis.setChecked)
         self.refresh_map_button.clicked.connect(self.get_nodes)
         self.send_button.clicked.connect(self.send_message)
-        self.nm_update_button.setEnabled(False)
         self.nm_update_button.pressed.connect(self.update_nodes_telemetry_metrics)
-        self.nm_metric_combobox.currentTextChanged.connect(
-            self.update_node_metrics_buttons)
         self.pm_update_button.pressed.connect(self.update_packets_metrics)
         self.messagechannel_combobox.textActivated.connect(
             self.update_received_message
@@ -525,7 +522,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def view_telemetry(self, node_id:str) -> None:
         self.clean_plot(kind=GraphKind.TELEMETRY_TIMELINE)
-        self.update_node_metrics_buttons()
         long_name = self._store.get_long_name_from_id(node_id)
         self.nm_node_label.setText(long_name)
 
@@ -570,11 +566,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         else:
             self._graphs.clean_plot(kind)
 
-    def update_node_metrics_buttons(self) -> None:
-        self.nm_update_button.setEnabled(True)
-
     def update_nodes_telemetry_metrics(self) -> str:
-        self.nm_update_button.setEnabled(False)
         node_id = self._store.get_id_from_long_name(self.nm_node_label.text())
         metric_name = self.nm_metric_combobox.currentText()
         if not node_id or not metric_name:
