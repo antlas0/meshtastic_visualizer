@@ -11,6 +11,9 @@ class NodesTable:
         self._buttons_callbacks = buttons_callbacks
         self._mesh_table = table
         self._default_placeholder = ""
+        self._rx_icon = "⬊"
+        self._tx_icon = "⬈"
+        self._hops_icon = "✈️"
         self._table_ln_column_index = 1
         self._table_id_column_index = 2
         self._table_sn_column_index = 3
@@ -57,7 +60,7 @@ class NodesTable:
         self._parent.nodes_gps_lcd.display(len(positioned_nodes))
         recently_seen = list(
             filter(
-                lambda x: self._mesh_table.item(x, self._table_rx_column_index) and self._mesh_table.item(x, self._table_rx_column_index).text() and int(self._mesh_table.item(x, self._table_rx_column_index).text().replace("⬊", "")) > 0,
+                lambda x: self._mesh_table.item(x, self._table_rx_column_index) and self._mesh_table.item(x, self._table_rx_column_index).text() and int(self._mesh_table.item(x, self._table_rx_column_index).text().replace(self._rx_icon, "")) > 0,
                 range(self._mesh_table.rowCount())
                 )
             )
@@ -78,7 +81,7 @@ class NodesTable:
             if self._parent.shortcut_filter_combobox.currentText() == "Recently seen":
                 if not self._mesh_table.item(row, self._table_rx_column_index) \
                     or not self._mesh_table.item(row, self._table_rx_column_index).text() \
-                        or int(self._mesh_table.item(row, self._table_rx_column_index).text().replace("⬊", "")) == 0:
+                        or int(self._mesh_table.item(row, self._table_rx_column_index).text().replace(self._rx_icon, "")) == 0:
                     should_hide = True
             if self._parent.shortcut_filter_combobox.currentText() == "Positioned":
                 if not self._mesh_table.item(row, self._table_lat_column_index) \
@@ -89,12 +92,12 @@ class NodesTable:
             if self._parent.shortcut_filter_combobox.currentText() == "Neighbors":
                 if not self._mesh_table.item(row, self._table_hops_column_index) \
                     or not self._mesh_table.item(row, self._table_hops_column_index).text() \
-                         or int(self._mesh_table.item(row, self._table_hops_column_index).text().replace("✈️", "")) != 0:
+                         or int(self._mesh_table.item(row, self._table_hops_column_index).text().replace(self._hops_icon, "")) != 0:
                     should_hide = True
             if self._parent.shortcut_filter_combobox.currentText() in hopfilter.keys():
                 if not self._mesh_table.item(row, self._table_hops_column_index) \
                     or not self._mesh_table.item(row, self._table_hops_column_index).text() \
-                        or int(self._mesh_table.item(row, self._table_hops_column_index).text().replace("✈️", "")) != hopfilter[self._parent.shortcut_filter_combobox.currentText()]:
+                        or int(self._mesh_table.item(row, self._table_hops_column_index).text().replace(self._hops_icon, "")) != hopfilter[self._parent.shortcut_filter_combobox.currentText()]:
                     should_hide = True
             if len(self._parent.nodes_filter_linedit.text()) != 0:
                 pattern = self._parent.nodes_filter_linedit.text().lower()
@@ -158,11 +161,11 @@ class NodesTable:
                 "Long name": node.long_name,
                 "ID": node.id,
                 "Short name": node.short_name,
-                "Hops": f"✈️{node.hopsaway}" if node.hopsaway is not None else None,
+                "Hops": f"{self._hops_icon}{node.hopsaway}" if node.hopsaway is not None else None,
                 "SNR": node.snr if node.snr is not None and node.hopsaway == 0 else None,
                 "RSSI": node.rssi if node.rssi is not None and node.hopsaway == 0 else None,
-                "RX": f"⬊{node.rx_counter}" if node.rx_counter is not None and node.rx_counter > 0 else None,
-                "TX": f"⬈{node.tx_counter}" if node.tx_counter is not None and node.tx_counter > 0 else None,
+                "RX": f"{self._rx_icon}{node.rx_counter}" if node.rx_counter is not None and node.rx_counter > 0 else None,
+                "TX": f"{self._tx_icon}{node.tx_counter}" if node.tx_counter is not None and node.tx_counter > 0 else None,
                 "Details": self._generate_details_widget(node.id),
                 "Action": self._generate_action_widget(node.id),
                 "Relay node": f"0x{node.relay_node}" if node.relay_node else None,
