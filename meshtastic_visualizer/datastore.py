@@ -287,7 +287,7 @@ class MeshtasticDataStore(Thread):
             self._lock.release()
             return
 
-        if not str(node.id) in self.nodes.keys():
+        if str(node.id) not in self.nodes.keys():
             # not previously in nodedb and discovering at runtime
             # meaning we got a packet from this node
             self.nodes[str(node.id)] = node
