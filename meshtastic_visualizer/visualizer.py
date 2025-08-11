@@ -77,7 +77,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         # Variables
         self.status_var: str = ""
-        self._local_board_id: str = ""
+        self._local_board_id: Optional[str] = None
         self._action_buttons = []
         self._current_output_folder = self._settings.value("output_folder", os.getcwd())
         self._store = MeshtasticDataStore()
@@ -339,6 +339,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
     def connected_to_board(self, node_id:str) -> None:
         self.set_local_board_id(node_id)
+        self._messages_view.set_local_board_id(self._local_board_id)
 
     def set_local_board_id(self, node_id:str) -> None:
         self._local_board_id = node_id
@@ -699,7 +700,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
     def update_node(self, node:MeshtasticNode) -> None:
         if node.id == self._local_board_id:
             self._manager.refresh_local_node_infos()
-            self.update_local_node_config(node)
         self.update_message_combobox(node.id) # for DM
         self._nodes_table.update(node)
 
@@ -759,7 +759,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.retrieve_channels_signal.emit()
 
     def update_local_node_config(self, node:MeshtasticNode):
-        self._local_board_id = node.id
         self.id_label.setText(node.id)
         if node.long_name is not None:
             self.devicename_label.setText(node.long_name)
@@ -773,7 +772,6 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if node.battery_level is not None:
             self.batterylevel_progressbar.setValue(node.battery_level)
             self.batterylevel_progressbar.show()
-        self._messages_view.set_local_board_id(self._local_board_id)
 
     def traceroute(
             self,
