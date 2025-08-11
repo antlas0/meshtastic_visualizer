@@ -1680,7 +1680,7 @@
        </font>
       </property>
       <property name="sortingEnabled">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
      </widget>
      <widget class="QPushButton" name="export_nodes_button">
