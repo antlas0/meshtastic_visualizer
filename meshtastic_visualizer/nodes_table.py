@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QTableWidgetItem
-
+from threading import Lock
 from .node_actions_widget import NodeActionsWidget
 from .packet_viewer_widget import PacketViewerWidget
 from .resources import MeshtasticNode
