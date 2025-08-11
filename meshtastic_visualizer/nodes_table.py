@@ -14,6 +14,7 @@ class NodesTable:
         self._rx_icon = "⬊"
         self._tx_icon = "⬈"
         self._hops_icon = "✈️"
+        self._lock = Lock()
         self._table_ln_column_index = 1
         self._table_id_column_index = 2
         self._table_sn_column_index = 3
@@ -137,6 +138,7 @@ class NodesTable:
         )
 
     def update(self, node: MeshtasticNode) -> None:
+        self._lock.acquire()
         # update table
         row_to_update = {"Status": None, "Long name": None, "ID": None}
 
@@ -224,4 +226,5 @@ class NodesTable:
 
         self.filter_displayed_nodes()
         self.update_lcds()
+        self._lock.release()
 
