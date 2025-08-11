@@ -189,6 +189,8 @@ class NodesTable:
         found_row = -1
         for table_row in range(self._mesh_table.rowCount()):
             id_item = self._mesh_table.item(table_row, self._table_id_column_index)
+            if id_item is None:
+                continue
             if id_item.text() == row_to_update["ID"]:
                 found_row = table_row
                 break
