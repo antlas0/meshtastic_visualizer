@@ -38,15 +38,20 @@ For path analysis and RF experimentation, the `Packets` tab provides filters to 
 * Relay node (one byte) that requires `2.6.X` firmware on relayers.
 This is particularly helpful when debugging RF links. The average value is updated accordingly.
 
+## Quick start on Linux
 
-## How to download
+Download and launch last release AppImage.
+
+## More details
+
+### How to download
 
 ```bash
 $ git clone https://github.com/antlas0/meshtastic_visualizer.git
 $ git checkout v1.8
 ```
 
-## How to install and run
+### How to install and run
 [uv](https://github.com/astral-sh/uv) is used to manage dependencies, venv and packaging.
 To install dependencies and run on your computer:
 ```bash
@@ -57,7 +62,7 @@ Note: If you rely on Wayland, you may experience Qt event not properly managed. 
 Otherwise, you can try `QT_QPA_PLATFORM=xcb`, by having previously installed `libxcb-cursor0` package.
 
 
-## How to run with Docker
+### How to run with Docker
 
 Based on X11, build the dockerfile and run the docker container. This example assumes your node is accessible at `/dev/ttyACM0`.
 ```bash
@@ -73,7 +78,7 @@ $ docker run -it \
     meshtastic_visualizer:latest
 ```
 
-## How to use a local tiles server
+### How to use a local tiles server
 
 To setup a local tiles server, one solution is to use Docker to run a server and point to it from the application.
 
@@ -100,7 +105,7 @@ $ docker run \
 * Give to the application the tiles request `http://127.0.0.1:8080/tile/{z}/{x}/{y}.png`.
 ![Capture d’écran du 2025-06-05 15-46-54](https://github.com/user-attachments/assets/8ee0e3a1-730e-4d4c-8ad5-bbb55a1d771b)
 
-### Considerations for an offline map
+##### Considerations for an offline map
 I would appreciate providing this, but this is currently off the roadmap as `folium` package does not [provide this feature](https://github.com/python-visualization/folium/issues/1368).
 
 Worth to mention that the `offline_folium` [package](https://github.com/robintw/offline_folium) is intented to overcome this, but only partially at the moment (not all map widgets are supported). Based on that, next steps would be to iterate over all map widgets used in the application, submit a PR to `offline_folium` to support them (other choice would be to insource this package). 
@@ -133,6 +138,7 @@ Here is a list of things it could be intetesting to work on:
  - [ ] Automate non-regression build
  - [ ] Add backend unitary testing
  - [ ] Make Docker image available without having to build it
+ - [x] Provide AppImage 
 
 ## Contributing
 Please open a Pull Request.
