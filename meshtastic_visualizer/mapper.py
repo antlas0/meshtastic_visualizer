@@ -191,7 +191,7 @@ class Mapper:
                 for neigh_id in local_node.neighbors:
                     neigh_node  = self._store.get_node_from_id(neigh_id)
                     # we can trace a link
-                    if neigh_node.has_location():
+                    if neigh_node.has_location() and local_node.has_location():
                         link_coords = [
                             [float(local_node.lat), float(local_node.lon)],
                             [float(neigh_node.lat), float(neigh_node.lon)],
