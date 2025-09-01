@@ -1,6 +1,6 @@
 [project]
 name = "meshtastic-visualizer"
-version = "1.8.3"
+version = "1.8.4"
 description = "Qt desktop application to send messages, inspect packets, metrics from your Meshtastic node."
 readme = "README.md"
 requires-python = ">=3.10"
