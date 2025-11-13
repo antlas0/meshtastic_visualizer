@@ -38,10 +38,6 @@ For path analysis and RF experimentation, the `Packets` tab provides filters to 
 * Relay node (one byte) that requires `2.6.X` firmware on relayers.
 This is particularly helpful when debugging RF links. The average value is updated accordingly.
 
-## Quick start on Linux
-
-Download and launch last release AppImage.
-
 ### Overview
 ![Capture d’écran du 2025-05-30 09-43-22](https://github.com/user-attachments/assets/2df80a1d-7895-498c-9389-684419566568)
 ![Capture d’écran du 2025-03-24 15-55-21](https://github.com/user-attachments/assets/dd2f10ae-442e-4958-ac51-50eafd4b5df1)
@@ -50,7 +46,7 @@ Download and launch last release AppImage.
 ![Capture d’écran du 2025-05-30 09-43-36](https://github.com/user-attachments/assets/e0958a6a-ff74-4c32-b970-0664dcecf1c1)
 
 
-## More details
+## Quick start
 
 ### How to download
 
