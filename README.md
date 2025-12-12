@@ -142,7 +142,7 @@ Here is a list of things it could be intetesting to work on:
  - [ ] Automate non-regression build
  - [ ] Add backend unitary testing
  - [ ] Make Docker image available without having to build it
- - [x] Provide AppImage 
+ - [ ] Provide AppImage 
 
 ## Contributing
 Please open a Pull Request.
