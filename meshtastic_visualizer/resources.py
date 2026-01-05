@@ -241,9 +241,3 @@ class RadioPacket(Packet):
     decoded: Optional[dict] = None
     source: str = "radio"
     priority: Optional[str] = None
-
-
-# 67ea94
-MAINWINDOW_STYLESHEET = """
-
-"""
