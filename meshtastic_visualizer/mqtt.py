@@ -38,7 +38,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
     refresh_ui_signal = pyqtSignal()
     notify_node_update = pyqtSignal(MeshtasticNode)
     notify_nodes_metrics_signal = pyqtSignal()
-    notify_message_signal = pyqtSignal()
+    notify_message_signal = pyqtSignal(MeshtasticMessage)
     notify_new_packet = pyqtSignal(Packet)
     notify_mqtt_logs = pyqtSignal(str)
 
@@ -289,7 +289,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                             mp.rx_time),
                     )
                     self._store.store_or_update_messages(m)
-                    self.notify_message_signal.emit()
+                    self.notify_message_signal.emit(m)
 
             elif mp.decoded.portnum == portnums_pb2.NEIGHBORINFO_APP:
                 neigh = mesh_pb2.NeighborInfo()

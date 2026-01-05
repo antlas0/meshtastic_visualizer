@@ -52,7 +52,7 @@ class MeshtasticManager(QObject, threading.Thread):
     notify_device_connected_signal = pyqtSignal(str)
     notify_log_line = pyqtSignal(str)
     notify_new_packet = pyqtSignal(Packet)
-    notify_message_signal = pyqtSignal()
+    notify_message_signal = pyqtSignal(MeshtasticMessage)
     notify_ble_devices_signal = pyqtSignal(list)
     notify_serial_devices_signal = pyqtSignal(list)
     notify_channels_signal = pyqtSignal()
@@ -367,7 +367,7 @@ class MeshtasticManager(QObject, threading.Thread):
                     ack_status=ack_status[ack_label] if ack_label in ack_status else None,
                     ack_by=packet['fromId'])
                 self._data.store_or_update_messages(m, only_update=True)
-                self.notify_message_signal.emit()
+                self.notify_message_signal.emit(m)
 
         if decoded["portnum"] == PacketInfoType.PCK_TRACEROUTE_APP.value:
             route = self._extract_route_discovery(packet)
@@ -465,7 +465,7 @@ class MeshtasticManager(QObject, threading.Thread):
                     m.ack_by = self._local_board_id
 
                 self._data.store_or_update_messages(m)
-                self.notify_message_signal.emit()
+                self.notify_message_signal.emit(m)
 
         if nm.has_data():
             self._data.store_or_update_node_metrics(nm)
@@ -547,7 +547,7 @@ class MeshtasticManager(QObject, threading.Thread):
         message.mid = sent_packet.pid
         self.notify_new_packet.emit(sent_packet)
         self._data.store_or_update_messages(message)
-        self.notify_message_signal.emit()
+        self.notify_message_signal.emit(message)
 
     @run_in_thread
     def load_local_nodedb(self, only_self: bool = False) -> list:

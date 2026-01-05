@@ -123,6 +123,20 @@ class MeshtasticDataStore(Thread):
         self._lock.release()
         return res
 
+    def get_channel_name_from_index(self, index: int) -> str:
+        self._lock.acquire()
+        res: str = "unknown"
+        if self.channels is None:
+            pass
+        else:
+            channel = list(filter(lambda x: x.index == index, self.channels))
+            if len(channel) != 1:
+                pass
+            else:
+                res = channel[0].name
+        self._lock.release()
+        return res
+
     def has_seen_node_id(self, node_id:str) -> bool:
         res = False
         self._lock.acquire()

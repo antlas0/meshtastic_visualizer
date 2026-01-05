@@ -109,6 +109,11 @@ class MeshtasticMessage(JsonExporter):
     public_key: str = ""
     pki_encrypted: Optional[bool] = None
 
+    def is_mp(self) -> bool:
+        if self.to_id != BROADCAST_NAME and self.to_id != BROADCAST_ADDR:
+            return True
+        return False
+
 
 @dataclass
 class MeshtasticNode(JsonExporter):

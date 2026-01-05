@@ -8,6 +8,7 @@ import numpy as np
 from threading import Lock
 from datetime import datetime
 from typing import List, Optional
+from plyer import notification
 from importlib_resources import files
 from PyQt6 import QtCore
 from PyQt6 import QtWidgets, uic
@@ -255,7 +256,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.nm_update_button.pressed.connect(self.update_nodes_telemetry_metrics)
         self.pm_update_button.pressed.connect(self.update_packets_metrics)
         self.messagechannel_combobox.textActivated.connect(
-            self.update_received_message
+            self.update_messages_view
         )
         self.message_textedit.textChanged.connect(
             self.update_text_message_length)
@@ -786,9 +787,16 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         if node_sn not in already_present_sns:
             self.messagechannel_combobox.insertItem(self.messagechannel_combobox.count(), node_sn)
 
-    def update_received_message(self) -> None:
-        if self.tabWidget.currentIndex() != 3:
-            self.tabWidget.setTabText(3, "Messages 🔴")
+    def update_received_message(self, message:MeshtasticMessage) -> None:
+        if message.from_id != self._local_board_id and message.content is not None:
+            channel = "MP" if message.is_mp() else self._store.get_channel_name_from_index(message.channel_index)
+            notification.notify(
+                title=f"Meshtastic: new message from {self._store.get_short_name_from_id(message.from_id)} on {channel}",
+                message=message.content,
+                timeout=10,
+            )
+            if self.tabWidget.currentIndex() != 3:
+                self.tabWidget.setTabText(3, "Messages 🔴")
         self.update_messages_view()
 
     def update_messages_view(self) -> None:

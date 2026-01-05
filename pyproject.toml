@@ -16,6 +16,8 @@ dependencies = [
     "pyqt6-webengine==6.7",
     "pyqtgraph>=0.13.7",
     "pyserial==3.5",
+    "dbus-python>=1.4.0",
+    "plyer>=2.1.0",
 ]
 
 [tool.uv]
