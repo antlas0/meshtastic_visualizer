@@ -54,19 +54,23 @@ class NodesTable:
         self._parent.nodes_total_lcd.display(self._mesh_table.rowCount())
         positioned_nodes = list(
             filter(
-                lambda x: self._mesh_table.item(x, self._table_lat_column_index) and self._mesh_table.item(x, self._table_lat_column_index).text() and self._mesh_table.item(x, self._table_lon_column_index).text(),
+                lambda x: self._mesh_table.item(x, self._table_lat_column_index) \
+                    and self._mesh_table.item(x, self._table_lat_column_index).text() \
+                    and self._mesh_table.item(x, self._table_lon_column_index).text(),
                 range(self._mesh_table.rowCount())
                 )
             )
         self._parent.nodes_gps_lcd.display(len(positioned_nodes))
         recently_seen = list(
             filter(
-                lambda x: self._mesh_table.item(x, self._table_rx_column_index) and self._mesh_table.item(x, self._table_rx_column_index).text() and int(self._mesh_table.item(x, self._table_rx_column_index).text().replace(self._rx_icon, "")) > 0,
+                lambda x: self._mesh_table.item(x, self._table_rx_column_index) \
+                    and self._mesh_table.item(x, self._table_rx_column_index).text() \
+                    and int(self._mesh_table.item(x, self._table_rx_column_index).text().replace(self._rx_icon, "")) > 0,
                 range(self._mesh_table.rowCount())
                 )
             )
         self._parent.nodes_recently_lcd.display(len(recently_seen))
-    
+
     def filter_displayed_nodes(self) -> None:
         hopfilter = {
             "1-hop": 1,
@@ -203,9 +207,9 @@ class NodesTable:
         self._mesh_table.setHorizontalHeaderLabels(self._table_columns)
 
         for col_idx, value in enumerate(row_to_update.values()):
-            if col_idx == self._table_action_column_index:  
+            if col_idx == self._table_action_column_index:
                 if self._parent._manager.is_connected():
-                    self._mesh_table.setCellWidget(found_row, self._table_action_column_index, row_to_update["Action"])                                
+                    self._mesh_table.setCellWidget(found_row, self._table_action_column_index, row_to_update["Action"])
                 else:
                     self._mesh_table.setItem(found_row, col_idx, QTableWidgetItem(self._default_placeholder))
             elif col_idx == self._table_details_column_index:

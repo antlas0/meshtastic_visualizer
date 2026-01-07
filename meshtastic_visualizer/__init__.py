@@ -7,7 +7,7 @@ from .visualizer import MeshtasticQtApp
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
-    window = MeshtasticQtApp()
+    MeshtasticQtApp()
     app.exec()
 
 

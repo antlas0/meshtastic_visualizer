@@ -13,7 +13,7 @@ from importlib_resources import files
 from PyQt6 import QtCore
 from PyQt6 import QtWidgets, uic
 from PyQt6.QtGui import QTextCursor
-from PyQt6.QtWidgets import QTableWidgetItem, QTreeWidgetItem, QPushButton, QFileDialog, QMessageBox, QGridLayout
+from PyQt6.QtWidgets import QTableWidgetItem, QTreeWidgetItem, QFileDialog, QMessageBox, QGridLayout
 from PyQt6.QtCore import pyqtSignal, QSettings
 from dataclasses import asdict
 
@@ -66,7 +66,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
 
         self._map = None
         self._map_custom_tiles_uri = self._settings.value("map_custom_tiles_uri", "")
-       
+
         self.activate_custom_tiles_checkbox.setChecked(str2bool(self._settings.value("map_activate_custom_tiles_checkbox", "False")))
         self.custom_tiles_uri_linedit.setText(self._settings.value("map_custom_tiles_uri", ""))
         self.activate_custom_tiles(self.activate_custom_tiles_checkbox.isChecked())
@@ -107,8 +107,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._manager.notify_frontend_signal.connect(
             self.refresh_status_header)
         self._manager.notify_local_device_info_signal.connect(self.update_local_node_config)
-        self._mqtt_manager.notify_frontend_signal.connect(
-            self.refresh_status_header)
+        self._mqtt_manager.notify_frontend_signal.connect(self.refresh_status_header)
         self._manager.notify_local_device_configuration_signal.connect(
             self.update_device_details)
         self._manager.notify_new_packet.connect(
@@ -180,7 +179,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             try:
                 ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
                 result = ansi_escape.sub('', line)
-            except Exception as e:
+            except Exception:
                 pass
             else:
                 self.console_logs_textedit.append(result)
@@ -391,9 +390,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.ble_scan_button.setEnabled(True)
         for button in self._action_buttons:
             button.setEnabled(False)
-        self.connection_tabs.setTabEnabled(0, True);
-        self.connection_tabs.setTabEnabled(1, True);
-        self.connection_tabs.setTabEnabled(2, True);
+        self.connection_tabs.setTabEnabled(0, True)
+        self.connection_tabs.setTabEnabled(1, True)
+        self.connection_tabs.setTabEnabled(2, True)
 
         if self._manager.is_serial_connected():
             self.serial_scan_button.setEnabled(False)
@@ -401,18 +400,18 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.serial_disconnect_button.setEnabled(True)
             for button in self._action_buttons:
                 button.setEnabled(True)
-            self.connection_tabs.setTabEnabled(0, True);
-            self.connection_tabs.setTabEnabled(1, False);
-            self.connection_tabs.setTabEnabled(2, False);
+            self.connection_tabs.setTabEnabled(0, True)
+            self.connection_tabs.setTabEnabled(1, False)
+            self.connection_tabs.setTabEnabled(2, False)
 
         if self._manager.is_tcp_connected():
             self.tcp_connect_button.setEnabled(False)
             self.tcp_disconnect_button.setEnabled(True)
             for button in self._action_buttons:
                 button.setEnabled(True)
-            self.connection_tabs.setTabEnabled(0, False);
-            self.connection_tabs.setTabEnabled(1, True);
-            self.connection_tabs.setTabEnabled(2, False);
+            self.connection_tabs.setTabEnabled(0, False)
+            self.connection_tabs.setTabEnabled(1, True)
+            self.connection_tabs.setTabEnabled(2, False)
 
         if self._manager.is_ble_connected():
             self.ble_scan_button.setEnabled(False)
@@ -420,9 +419,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.ble_disconnect_button.setEnabled(True)
             for button in self._action_buttons:
                 button.setEnabled(True)
-            self.connection_tabs.setTabEnabled(0, False);
-            self.connection_tabs.setTabEnabled(1, False);
-            self.connection_tabs.setTabEnabled(2, True);
+            self.connection_tabs.setTabEnabled(0, False)
+            self.connection_tabs.setTabEnabled(1, False)
+            self.connection_tabs.setTabEnabled(2, True)
 
         if self._mqtt_manager.is_connected():
             self.mqtt_connect_button.setEnabled(False)
@@ -454,9 +453,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self._lock.release()
 
     def connect_device_serial(self):
-        self.connection_tabs.setTabEnabled(0, True);
-        self.connection_tabs.setTabEnabled(1, False);
-        self.connection_tabs.setTabEnabled(2, False);
+        self.connection_tabs.setTabEnabled(0, True)
+        self.connection_tabs.setTabEnabled(1, False)
+        self.connection_tabs.setTabEnabled(2, False)
         self.serial_scan_button.setEnabled(False)
         self.serial_connect_button.setEnabled(False)
         self.serial_disconnect_button.setEnabled(False)
@@ -466,14 +465,14 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.connect_device_signal.emit(ConnectionKind.SERIAL, device_path, self.load_nodedb_checkbox.isChecked())
             self._settings.setValue("serial_port", self.serial_devices_combobox.currentText())
         else:
-            self.set_status(f"Cannot connect. Please specify a device path.")
+            self.set_status("Cannot connect. Please specify a device path.")
             self.serial_connect_button.setEnabled(True)
             self.serial_scan_button.setEnabled(True)
 
     def connect_device_tcp(self):
-        self.connection_tabs.setTabEnabled(0, False);
-        self.connection_tabs.setTabEnabled(1, True);
-        self.connection_tabs.setTabEnabled(2, False);
+        self.connection_tabs.setTabEnabled(0, False)
+        self.connection_tabs.setTabEnabled(1, True)
+        self.connection_tabs.setTabEnabled(2, False)
         self.tcp_connect_button.setEnabled(False)
         self.tcp_disconnect_button.setEnabled(False)
         ip = self.ipaddress_textedit.text()
@@ -485,12 +484,12 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self._settings.setValue("tcp", ip)
             self.connect_device_signal.emit(ConnectionKind.TCP, ip, self.load_nodedb_checkbox_bis.isChecked())
         else:
-            self.set_status(f"Cannot connect. Please specify an accessible ip address.")
+            self.set_status("Cannot connect. Please specify an accessible ip address.")
 
     def connect_device_ble(self):
-        self.connection_tabs.setTabEnabled(0, False);
-        self.connection_tabs.setTabEnabled(1, False);
-        self.connection_tabs.setTabEnabled(2, True);
+        self.connection_tabs.setTabEnabled(0, False)
+        self.connection_tabs.setTabEnabled(1, False)
+        self.connection_tabs.setTabEnabled(2, True)
         self.ble_scan_button.setEnabled(False)
         self.ble_connect_button.setEnabled(False)
         self.ble_disconnect_button.setEnabled(False)
@@ -535,7 +534,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         dlg.setWindowTitle(f"Traceroute to {longname}")
         dlg.setText(node.last_traceroute)
         dlg.findChild(QGridLayout).setColumnMinimumWidth(1,len(dlg.informativeText()) * dlg.fontMetrics().averageCharWidth())
-        dlg.exec()        
+        dlg.exec()
 
     def activate_custom_tiles(self, activate:bool) -> None:
         self.custom_tiles_uri_linedit.setVisible(activate)
@@ -929,9 +928,9 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
             self.mapreport_packets_number.setRange(0, filtered_packets_number)
             self.mapreport_packets_number.setValue(len(list(filter(lambda x: x.port_num == PacketInfoType.PCK_MAP_REPORT_APP.value, filtered_packets))))
             self.unknown_packets_number.setRange(0, filtered_packets_number)
-            self.unknown_packets_number.setValue(len(list(filter(lambda x: x.is_encrypted == True, filtered_packets))))
+            self.unknown_packets_number.setValue(len(list(filter(lambda x: x.is_encrypted is True, filtered_packets))))
             self.node_external_packets_number.display(len(list(filter(lambda x: x.from_id != self._local_board_id, filtered_packets))))
-            self.node_external_decoded_packets_number.display(len(list(filter(lambda x: x.is_encrypted == True, filtered_packets))))
+            self.node_external_decoded_packets_number.display(len(list(filter(lambda x: x.is_encrypted is True, filtered_packets))))
 
     def update_device_details(self, configuration: dict):
         self.output_textedit.setText(configuration)
@@ -998,8 +997,10 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         self.write_to_file(fpath, self.console_logs_textedit.toPlainText(), "console")
 
     def _update_console_button(self, activated:bool) -> None:
-        if not activated: self.start_pause_console_button.setText("⏸️")
-        if activated: self.start_pause_console_button.setText("▶️")
+        if not activated:
+            self.start_pause_console_button.setText("⏸️")
+        if activated:
+            self.start_pause_console_button.setText("▶️")
 
     def export_packets(self) -> None:
         packets = self._store.get_radio_packets() + self._store.get_mqtt_packets()
@@ -1010,7 +1011,7 @@ class MeshtasticQtApp(QtWidgets.QMainWindow):
         for p in packets_list:
             try:
                 p["payload"] = str(p["payload"])
-            except Exception as e:
+            except Exception:
                 p["payload"] = "convertion error"
         data_json = json.dumps(packets_list, indent=4)
         nnow = datetime.now().strftime("%Y-%m-%d__%H_%M_%S")

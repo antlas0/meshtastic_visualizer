@@ -7,7 +7,7 @@ import datetime
 from pubsub import pub
 from typing import Union, Optional
 import google.protobuf.json_format
-from typing import List, Optional
+from typing import List
 import threading
 from threading import Lock
 import meshtastic
@@ -126,7 +126,7 @@ class MeshtasticManager(QObject, threading.Thread):
             self.refresh_ui_signal.emit()
         else:
             # Subscribe to received message events
-            pub.subscribe(self.on_log, "meshtastic.log.line") 
+            pub.subscribe(self.on_log, "meshtastic.log.line")
             pub.subscribe(self.on_receive, "meshtastic.receive")
             trace = f"Successfully connected to Meshtastic device {target}"
             if connection_kind == ConnectionKind.SERIAL:
@@ -170,7 +170,7 @@ class MeshtasticManager(QObject, threading.Thread):
             trace = f"Failed to disconnect from Meshtastic device: {str(e)}"
             self.notify_frontend_signal.emit( trace)
         else:
-            trace = f"Meshtastic device disconnected."
+            trace = "Meshtastic device disconnected."
             self._is_serial_connected = False
             self._is_tcp_connected = False
             self._is_ble_connected = False
@@ -188,7 +188,7 @@ class MeshtasticManager(QObject, threading.Thread):
             conf.append(str(self._interface.getNode("^local").localConfig))
             conf.append(str(self._interface.getNode("^local").moduleConfig))
             conf.extend([ str(x) for x in self._interface.getNode("^local").channels])
-        except Exception as e:
+        except Exception:
             pass
         else:
             self.notify_local_device_configuration_signal.emit("\n".join(conf))
@@ -241,7 +241,7 @@ class MeshtasticManager(QObject, threading.Thread):
             decoded = packet['decoded']
         except KeyError:
             # encrypted packet
-            decoded = {} 
+            decoded = {}
             decoded["payload"] = ""
             decoded["portnum"] = "UNKNOWN_APP"
 
@@ -302,7 +302,7 @@ class MeshtasticManager(QObject, threading.Thread):
             env = telemetry_pb2.Telemetry()
             try:
                 env.ParseFromString(decoded["payload"])
-            except Exception as e:
+            except Exception:
                 pass
             else:
                 node_from.lastseen = datetime.datetime.now()
@@ -337,7 +337,7 @@ class MeshtasticManager(QObject, threading.Thread):
             try:
                 position.ParseFromString(decoded["payload"])
 
-            except Exception as e:
+            except Exception:
                 pass
             else:
                 if position.latitude_i != 0 and position.longitude_i != 0:
@@ -394,9 +394,9 @@ class MeshtasticManager(QObject, threading.Thread):
                 pass
             else:
 
-                l = list(route)
-                l.pop(0)
-                for hop, node_id in enumerate(l):
+                route_list = list(route)
+                route_list.pop(0)
+                for hop, node_id in enumerate(route_list):
                     nodes_to_update.append(
                         MeshtasticNode(
                             id=node_id,
@@ -414,7 +414,7 @@ class MeshtasticManager(QObject, threading.Thread):
             info = mesh_pb2.User()
             try:
                 info.ParseFromString(decoded["payload"])
-            except Exception as e:
+            except Exception:
                 pass
             else:
                 node_from.long_name = info.long_name
@@ -628,10 +628,10 @@ class MeshtasticManager(QObject, threading.Thread):
     def send_telemetry(self) -> None:
         try:
             self._interface.sendTelemetry()
-        except Exception as e:
-            self.notify_frontend_signal.emit( f"Could not send telemetry")
+        except Exception:
+            self.notify_frontend_signal.emit( "Could not send telemetry")
         else:
-            self.notify_frontend_signal.emit( f"Telemetry broadcasted.")
+            self.notify_frontend_signal.emit( "Telemetry broadcasted.")
 
             sent_packet = RadioPacket(
                 date=datetime.datetime.now(),
@@ -651,14 +651,14 @@ class MeshtasticManager(QObject, threading.Thread):
     def send_position(self) -> None:
         try:
             node_infos = self._interface.getMyNodeInfo()
-            if not "position" in node_infos or not node_infos["position"]:
-                self.notify_frontend_signal.emit( f"Could not send position: not found.")
+            if "position" not in node_infos or not node_infos["position"]:
+                self.notify_frontend_signal.emit( "Could not send position: not found.")
             else:
                 self._interface.sendPosition(latitude=node_infos["position"]["latitude"], longitude=node_infos["position"]["longitude"])
         except Exception as e:
             self.notify_frontend_signal.emit( f"Could not send position: {e}")
         else:
-            self.notify_frontend_signal.emit( f"Position broadcasted.")
+            self.notify_frontend_signal.emit( "Position broadcasted.")
 
             sent_packet = RadioPacket(
                 date=datetime.datetime.now(),

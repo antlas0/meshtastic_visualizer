@@ -1,7 +1,6 @@
 import pyqtgraph as pg
-from pyqtgraph import DateAxisItem, AxisItem
+from pyqtgraph import DateAxisItem
 from enum import Enum
-import numpy as np
 
 
 class GraphKind(Enum):
@@ -20,12 +19,16 @@ class MeshtasticGraphs:
         self._packets_timeline_plot_item = self._packets_plot_widget.plot(pen=pg.mkPen('#007aff', width=1), symbol='o', symbolSize=8)
 
     def get_plot_item(self, kind:GraphKind) -> pg.GraphicsObject:
-        if kind == GraphKind.PACKETS_TIMELINE: return self._packets_timeline_plot_item
-        if kind == GraphKind.TELEMETRY_TIMELINE: return self._telemetry_timeline_plot_item
+        if kind == GraphKind.PACKETS_TIMELINE:
+            return self._packets_timeline_plot_item
+        if kind == GraphKind.TELEMETRY_TIMELINE:
+            return self._telemetry_timeline_plot_item
 
     def get_plot_widget(self, kind:GraphKind) -> pg.PlotWidget:
-        if kind == GraphKind.PACKETS_TIMELINE: return self._packets_plot_widget
-        if kind == GraphKind.TELEMETRY_TIMELINE: return self._telemetry_plot_widget
+        if kind == GraphKind.PACKETS_TIMELINE:
+            return self._packets_plot_widget
+        if kind == GraphKind.TELEMETRY_TIMELINE:
+            return self._telemetry_plot_widget
 
     def setup(self) -> bool:
         for kind in [GraphKind.PACKETS_TIMELINE, GraphKind.TELEMETRY_TIMELINE]:
@@ -40,7 +43,7 @@ class MeshtasticGraphs:
             widget.setAxisItems({'bottom': DateAxisItem()})
 
         return True
-    
+
     def clean_plot(self, kind:GraphKind) -> None:
         if item:= self.get_plot_item(kind):
             item.setData(x=None, y=None)

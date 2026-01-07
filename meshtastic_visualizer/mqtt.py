@@ -22,8 +22,7 @@ from .resources import run_in_thread, \
     NodeMetrics, \
     MeshtasticMQTTClientSettings, \
     Packet, \
-    MQTTPacket, \
-    TIME_FORMAT
+    MQTTPacket
 
 from .datastore import MeshtasticDataStore
 
@@ -103,7 +102,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
             try:
                 self._client.connect(
                     self._mqtt_settings.host, self._mqtt_settings.port, 60)
-            except Exception as e:
+            except Exception:
                 self.notify_frontend_signal.emit(f"Could not connect to MQTT server {self._mqtt_settings.host}:{self._mqtt_settings.port}")
             else:
                 self.notify_frontend_signal.emit(f"Succesfully connected to MQTT server {self._mqtt_settings.host}:{self._mqtt_settings.port}")
@@ -117,7 +116,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 self.notify_frontend_signal.emit(f"Connected to {self._mqtt_settings.host}:{self._mqtt_settings.port}")
                 try:
                     self._client.subscribe(self._mqtt_settings.topic)
-                except Exception as e:
+                except Exception:
                     self.notify_frontend_signal.emit(f"Could not subscribe to topic {self._mqtt_settings.topic}")
                 else:
                     self.notify_frontend_signal.emit(f"Subscribed to root topic {self._mqtt_settings.topic}")
@@ -164,7 +163,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
             data.ParseFromString(decrypted_bytes)
             mp.decoded.CopyFrom(data)
 
-        except Exception as e:
+        except Exception:
             return False
         else:
             return True
@@ -180,7 +179,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
         try:
             se.ParseFromString(msg.payload)
             mp = se.packet
-        except Exception as e:
+        except Exception:
             pass
         else:
             if len(msg.payload) > self._mqtt_settings.max_msg_len:
@@ -268,7 +267,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 text_payload = ""
                 try:
                     text_payload = mp.decoded.payload.decode("utf-8")
-                except Exception as e:
+                except Exception:
                     pass
                 else:
                     m = MeshtasticMessage(
@@ -295,7 +294,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 neigh = mesh_pb2.NeighborInfo()
                 try:
                     neigh.ParseFromString(mp.decoded.payload)
-                except Exception as e:
+                except Exception:
                     pass
                 else:
                     if getattr(mp, "from") != neigh.last_sent_by_id:
@@ -307,7 +306,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 info = mesh_pb2.User()
                 try:
                     info.ParseFromString(mp.decoded.payload)
-                except Exception as e:
+                except Exception:
                     pass
                 else:
                     node_from.long_name = info.long_name
@@ -324,7 +323,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 mapreport = mqtt_pb2.MapReport()
                 try:
                     mapreport.ParseFromString(mp.decoded.payload)
-                except Exception as e:
+                except Exception:
                     pass
                 else:
                     node_from.long_name = mapreport.long_name
@@ -341,7 +340,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 try:
                     position.ParseFromString(mp.decoded.payload)
 
-                except Exception as e:
+                except Exception:
                     pass
                 else:
                     if position.latitude_i != 0 and position.longitude_i != 0:
@@ -357,7 +356,7 @@ class MeshtasticMQTT(QObject, threading.Thread):
                 env = telemetry_pb2.Telemetry()
                 try:
                     env.ParseFromString(mp.decoded.payload)
-                except Exception as e:
+                except Exception:
                     pass
                 else:
                     node_from.lastseen = datetime.datetime.now()

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 
-import hashlib
 import datetime
 import io
 import folium
@@ -125,7 +124,7 @@ class Mapper:
                         tooltip = datetime.datetime.fromtimestamp(elt).strftime("%Y-%m-%d %H:%M:%S%z")
                         trace = folium.PolyLine(trace_coords, color="blue", tooltip=tooltip, dash_array="10")
                         trace.add_to(traces_group)
-                        if not node_id in traces:
+                        if node_id not in traces:
                             traces[node_id] = []
                         traces[node_id].append(trace)
 
