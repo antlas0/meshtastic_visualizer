@@ -1,3 +1,5 @@
+
+
 # Meshtastic Visualizer
 Python PyQt graphical desktop app to interface with a Meshtastic node using a TCP, Bluetooth or serial connection. Possibility to subscribe to MQTT servers and retrieve nodes, messages,...
 Objective is to use an already configured Meshtastic device, and be able to inspect messages, packets, metrics,...
@@ -40,7 +42,7 @@ This is particularly helpful when debugging RF links. The average value is updat
 
 ### Overview
 ![Capture d’écran du 2025-05-30 09-43-22](https://github.com/user-attachments/assets/2df80a1d-7895-498c-9389-684419566568)
-![Capture d’écran du 2025-03-24 15-55-21](https://github.com/user-attachments/assets/dd2f10ae-442e-4958-ac51-50eafd4b5df1)
+![Capture d’écran du 2025-03-24 15-55-21](https://github.com/user-attachments/assets/dd2f10ae-442e-4958-ac51-505afd4b5df1)
 ![Capture d’écran du 2025-03-24 15-55-30](https://github.com/user-attachments/assets/96f44374-dfa3-4e69-9d7f-a91b8038052b)
 ![Capture d’écran du 2025-03-24 15-55-36](https://github.com/user-attachments/assets/e16b66d1-79f4-4fc9-8d55-f1000f05ae13)
 ![Capture d’écran du 2025-05-30 09-43-36](https://github.com/user-attachments/assets/e0958a6a-ff74-4c32-b970-0664dcecf1c1)
@@ -52,7 +54,7 @@ This is particularly helpful when debugging RF links. The average value is updat
 
 ```bash
 $ git clone https://github.com/antlas0/meshtastic_visualizer.git
-$ git checkout v1.8
+$ git checkout v1.8.6
 ```
 
 ### How to install and run
@@ -148,4 +150,3 @@ Here is a list of things it could be intetesting to work on:
 
 ## Contributing
 Please open a Pull Request.
-
